@@ -1,0 +1,3 @@
+CREATE TABLE prfx_prefixed_objects (
+  id       INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  property INTEGER NOT NULL DEFAULT 5)

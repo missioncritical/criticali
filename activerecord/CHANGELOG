@@ -1,0 +1,8 @@
+0.2.2 2010-06-11
+ * Added before_destroy / after_destroy events
+0.2.3 2010-06-21
+ * Switched to using new db connection resource that is part of support
+0.2.4 2010-06-30
+ * Added the primary key to the attributes array in ActiveRecord classes,
+   but do not set it with any default value.  This fixes the dynamic
+   find_by_id method.

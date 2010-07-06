@@ -1,0 +1,5 @@
+0.2.1 2010-06-11
+ * Added assign_template_vars() method to Controller_Base
+0.2.2 2010-06-30
+ * Added template_cache_id() and template_compile_id() methods for
+   supporting multiple template directories.

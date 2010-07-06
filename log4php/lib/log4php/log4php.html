@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!-- $Revision: 1.4 $ -->
+<html>
+<head>
+<title>Untitled</title>
+<style>
+ADDRESS { font-size: 8pt; }
+BODY { background-color: White; }
+H1 { font-size: 18pt; }
+H2 { font-size: 12pt; }
+P  { font-size: 9pt; }
+UL { font-size: 9pt; }
+.fragment {
+    font-family: Courier;
+    background-color: #d4d6d6;
+    font-size: 8pt;
+}
+#revision {
+    font-size: 8pt;
+}
+</style>
+</head>
+<body>
+<p id="revision">$Revision: 1.4 $</p>
+<h1 align="center">Log4Php</h1>
+<h2>Summary</h2>
+<p>Log4php is a partial php port of the most popular java logging framework log4j 
+(see <a href="http://jakarta.apache.org/log4j/">http://jakarta.apache.org/log4j/</a> for details).</p>
+
+<h2>Features</h2>
+<ul>
+    <li>supports configuration throught xml file (same structure as log4j).</li>
+    <li>supports File, RollingFile, Console, PHP error, Syslog or NT events,  and Socket appenders.</li>
+    <li>supports Simple, TTCC, Html and Xml Layouts.</li>
+    <li>switchable internal debug.</li>
+</ul>
+<p>It can be used inside a class (see Usage below) or inside a main/sub function.</p> 
+
+<h2>Requirements</h2>
+<ul>
+    <li>PHP >= 4.1.x</li>
+    <li>PEAR XML_Parser class</li>
+</ul>
+
+<h2>Download</h2>
+<p>See <a href="http://www.vxr.it/log4php/download/">Log4php Download page</a>.</p>
+
+<h2>Installation</h2>
+<p>Extract tar package and copy the content of src/ tree to a php include_path directory in order to use:</p>
+<div class="fragment"><pre>
+require_once('log4php/LoggerManager.php');
+</pre></div>
+
+<h2>Configuration</h2>
+<p>To set up log4php configuration file (default: ./log4php.xml) see <b>log4php.xml</b> example and <b>log4php.dtd</b> in test/ directory.</p>
+
+<h2>Usage</h2>
+<p>Here is an example on how to use in your php code.<br>For more examples see <b>test/</b> directory.<br>Take also a look at original log4j (<a href="http://jakarta.apache.org/log4j/docs/documentation.html">documentation</a>).</p>
+<div class="fragment"><pre>
+&lt;?php
+require_once('log4php/LoggerManager.php');
+
+class Foo {
+
+    var $logger;
+    
+    function Foo()
+    {
+        // create or get a logger instance
+        $this-&gt;logger =&amp; LoggerManager::getLogger('foo'); 
+    }
+    
+    function doBar()
+    {
+        // debug
+        $this-&gt;logger-&gt;debug('Foo::doBar()', $this);
+    }
+
+}
+
+function Bar()
+{
+    $logger =&amp; LoggerManager::getLogger('bar');
+    $logger-&gt;debug('Bar()');
+}
+?&gt;
+</pre></div>
+<hr>
+<div align="center"><address>Author: <a href="mailto:vxr@vxr.it">Marco Vassura</a></address></div>
+</body>
+</html>

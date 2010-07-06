@@ -1,0 +1,7 @@
+0.2.1 2010-06-11
+ * Fixed kexclude_sorted in Support_ArrayHelper
+0.2.2 2010-06-21
+ * Added db connection as a new resource type
+0.2.3 2010-06-30
+ * Redefined the template engine interface to include cache and compile
+   ids

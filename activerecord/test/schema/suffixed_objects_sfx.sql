@@ -1,0 +1,3 @@
+CREATE TABLE suffixed_objects_sfx (
+  id       INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  property INTEGER NOT NULL DEFAULT 10)

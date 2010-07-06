@@ -1,0 +1,7 @@
+CREATE TABLE users (
+  id         INTEGER  NOT NULL PRIMARY KEY AUTOINCREMENT,
+  username   TEXT     NOT NULL UNIQUE,
+  password   TEXT     NOT NULL,
+  disabled   BOOLEAN  NOT NULL DEFAULT 0,
+  last_login TIMESTAMP NOT NULL
+)

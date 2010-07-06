@@ -1,0 +1,6 @@
+RewriteEngine On
+RewriteBase /
+RewriteRule ^(.*/)*\.svn(/.*)?$ - [F,L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* dispatch.php [QSA,L]

@@ -1,9 +1,12 @@
 <?php
+// Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// See the LICENSE file distributed with this work for restrictions.
+
 /**
  * Abstraction layer and cache for accessing class-level meta data in
  * ActiveRecord.
  *
- * @copyright Copyright (c) 2008-2009, Jeffrey Hunter and Mission Critical Labs, Inc.
+ * @copyright Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
  */
 
 /**

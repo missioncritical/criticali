@@ -1,4 +1,6 @@
 <?php
+// Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// See the LICENSE file distributed with this work for restrictions.
 
 /**
  * A validation for the foreign key field on a belongs_to relationship

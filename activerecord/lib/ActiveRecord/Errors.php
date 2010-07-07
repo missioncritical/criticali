@@ -1,8 +1,11 @@
 <?php
+// Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// See the LICENSE file distributed with this work for restrictions.
+
 /**
  * Errors collection for ActiveRecord.
  *
- * @copyright Copyright (c) 2008-2009, Jeffrey Hunter and Mission Critical Labs, Inc.
+ * @copyright Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
  */
 
 

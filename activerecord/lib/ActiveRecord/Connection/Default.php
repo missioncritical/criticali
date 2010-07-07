@@ -1,8 +1,11 @@
 <?php
+// Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// See the LICENSE file distributed with this work for restrictions.
+
 /**
  * The default implmentation of ActiveRecordConnection based on MySQL.
  *
- * @copyright Copyright (c) 2008-2009, Jeffrey Hunter and Mission Critical Labs, Inc.
+ * @copyright Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
  */
 
 /**

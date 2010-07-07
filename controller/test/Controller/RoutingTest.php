@@ -4,7 +4,7 @@ class Controller_RoutingTester extends Controller_Routing {
   public function normalize_proxy($url) { return $this->normalize($url); }
 }
 
-class Controller_RoutingTest extends Vulture_TestCase {
+class Controller_RoutingTest extends CriticalI_TestCase {
   
   public function testNormalize() {
     $rtg = new Controller_RoutingTester();

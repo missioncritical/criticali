@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Represents a project directory set up for managing with vulture.
+ * Represents a project directory set up for managing with criticali.
  */
-class Vulture_Project {
+class CriticalI_Project {
   const INSIDE_PUBLIC = 0;
   const OUTSIDE_PUBLIC = 1;
   
@@ -27,11 +27,11 @@ class Vulture_Project {
       $this->type = self::OUTSIDE_PUBLIC;
     else
       throw new Exception("The directory ".$this->directory." does not appear to be a ".
-                          "vulture project.  Please be sure it has been initialized with ".
-                          "'vulture project-init'.");
+                          "criticali project.  Please be sure it has been initialized with ".
+                          "'criticali project-init'.");
     
     $filename = $this->private_directory() . '/vendor/.packages';
-    $this->properties = Vulture_ConfigFile::read($filename);
+    $this->properties = CriticalI_ConfigFile::read($filename);
     
     $this->addStack = array();
   }
@@ -97,7 +97,7 @@ class Vulture_Project {
    */
   protected function write_properties() {
     $filename = $this->private_directory() . '/vendor/.packages';
-    Vulture_ConfigFile::write($filename, $this->properties);
+    CriticalI_ConfigFile::write($filename, $this->properties);
   }
   
   /**
@@ -129,7 +129,7 @@ class Vulture_Project {
   /**
    * Test to see if a package is already installed
    *
-   * @param mixed $pkg  A package name, Vulture_Package, or Vulture_Package_Version
+   * @param mixed $pkg  A package name, CriticalI_Package, or CriticalI_Package_Version
    * @param string $ver An optional version specification
    */
   public function is_installed($pkg, $ver = null) {
@@ -139,17 +139,17 @@ class Vulture_Project {
       if (!isset($pkgs[$pkg->package()->name()]))
         return false;
       $verNum = $pkgs[$pkg->package()->name()];
-      return ($pkg->compare_version_number(Vulture_Package_Version::canonify_version($verNum)) == 0);
+      return ($pkg->compare_version_number(CriticalI_Package_Version::canonify_version($verNum)) == 0);
       
-    } elseif ($pkg instanceof Vulture_Package) {
+    } elseif ($pkg instanceof CriticalI_Package) {
       if (!isset($pkgs[$pkg->name()]))
         return false;
       if (empty($ver))
         return true;
       // dummy version object
-      $verParts = Vulture_Package_Version::canonify_version($pkgs[$pkg->name()]);
-      $verObj = new Vulture_Package_Version(null, $verParts[0], $verParts[1], $verParts[2], '.');
-      $spec = Vulture_Package_Version::canonify_version_specification($ver);
+      $verParts = CriticalI_Package_Version::canonify_version($pkgs[$pkg->name()]);
+      $verObj = new CriticalI_Package_Version(null, $verParts[0], $verParts[1], $verParts[2], '.');
+      $spec = CriticalI_Package_Version::canonify_version_specification($ver);
       return ($verObj->compare_version_specification($spec) == 0);
       
     } else {
@@ -158,9 +158,9 @@ class Vulture_Project {
       if (empty($ver))
         return true;
       // dummy version object
-      $verParts = Vulture_Package_Version::canonify_version($pkgs[$pkg]);
-      $verObj = new Vulture_Package_Version(null, $verParts[0], $verParts[1], $verParts[2], '.');
-      $spec = Vulture_Package_Version::canonify_version_specification($ver);
+      $verParts = CriticalI_Package_Version::canonify_version($pkgs[$pkg]);
+      $verObj = new CriticalI_Package_Version(null, $verParts[0], $verParts[1], $verParts[2], '.');
+      $spec = CriticalI_Package_Version::canonify_version_specification($ver);
       return ($verObj->compare_version_specification($spec) == 0);
 
     }
@@ -172,19 +172,19 @@ class Vulture_Project {
    * By default this evaluates dependencies and adds any additional
    * packages required by the new package first.
    *
-   * @param Vulture_Package_Version $pkg  The package to add
+   * @param CriticalI_Package_Version $pkg  The package to add
    * @param boolean $evalDepends Whether or not to evaluate dependencies
    */
   public function add($pkg, $evalDepends = true) {
     // can't install a package that already exists
     if ($this->is_installed($pkg->package()->name()))
-      throw new Vulture_Project_AlreadyInstalledError($pkg->package()->name());
+      throw new CriticalI_Project_AlreadyInstalledError($pkg->package()->name());
     
-    $install = new Vulture_Project_InstallOperation($this, $pkg);
+    $install = new CriticalI_Project_InstallOperation($this, $pkg);
     
     // handle dependencies first
     if ($evalDepends) {
-      $packages = Vulture_Package_List::get();
+      $packages = CriticalI_Package_List::get();
       $this->addStack[] = $pkg;
       
       try {
@@ -201,12 +201,12 @@ class Vulture_Project {
       $this->statusListener->info($this, $pkg, "Installing ".$pkg->package()->name());
     
     // install the files
-    $pkgDir = $GLOBALS['VULTURE_ROOT'] . '/' . $pkg->installation_directory();
-    $bases = $pkg->property('library.install.from', Vulture_Defaults::LIBRARY_INSTALL_FROM);
+    $pkgDir = $GLOBALS['CRITICALI_ROOT'] . '/' . $pkg->installation_directory();
+    $bases = $pkg->property('library.install.from', CriticalI_Defaults::LIBRARY_INSTALL_FROM);
     foreach (explode(',', $bases) as $base) {
       $dir = $pkgDir . '/' . trim($base);
-      $matches = Vulture_Globber::match($dir,
-        $pkg->property('library.install.glob', Vulture_Defaults::LIBRARY_INSTALL_GLOB));
+      $matches = CriticalI_Globber::match($dir,
+        $pkg->property('library.install.glob', CriticalI_Defaults::LIBRARY_INSTALL_GLOB));
       
       $dest = ($this->type == self::INSIDE_PUBLIC) ? 'private/vendor' : 'vendor';
       
@@ -223,12 +223,12 @@ class Vulture_Project {
     }
 
     // register any init files
-    $initFiles = Vulture_Globber::match($pkgDir,
-      $pkg->property('init.hooks', Vulture_Defaults::INIT_HOOKS));
+    $initFiles = CriticalI_Globber::match($pkgDir,
+      $pkg->property('init.hooks', CriticalI_Defaults::INIT_HOOKS));
     $vendor = $this->private_directory() . '/vendor';
     foreach ($initFiles as $fullPath) {
-      $initClass = Vulture_ClassUtils::class_name($fullPath, $pkgDir);
-      $file = Vulture_ClassUtils::file_name($initClass);
+      $initClass = CriticalI_ClassUtils::class_name($fullPath, $pkgDir);
+      $file = CriticalI_ClassUtils::file_name($initClass);
       if (file_exists("$vendor/$file")) {
         if (isset($this->properties['init_files']) && (strlen($this->properties['init_files']) > 0))
           $this->properties['init_files'] .= ",$file";
@@ -238,18 +238,18 @@ class Vulture_Project {
     }
     
     // allow the package to do any custom work
-    $matches = Vulture_Globber::match($pkgDir,
-      $pkg->property('project.install.hooks', Vulture_Defaults::PROJECT_INSTALL_HOOKS));
+    $matches = CriticalI_Globber::match($pkgDir,
+      $pkg->property('project.install.hooks', CriticalI_Defaults::PROJECT_INSTALL_HOOKS));
     foreach ($matches as $hookFile) {
       try {
-        $hookClass = Vulture_ClassUtils::class_name($hookFile, $pkgDir);
+        $hookClass = CriticalI_ClassUtils::class_name($hookFile, $pkgDir);
         include_once($hookFile);
         if (!class_exists($hookClass, false))
           throw new Exception("File \"$hookFile\" did not declare class \"$hookClass\".");
           
         $hookInst = new $hookClass();
-        if (!($hookInst instanceof Vulture_Project_InstallHook))
-          throw new Exception("$hookClass does not implement Vulture_Project_InstallHook.");
+        if (!($hookInst instanceof CriticalI_Project_InstallHook))
+          throw new Exception("$hookClass does not implement CriticalI_Project_InstallHook.");
         
         $hookInst->install($pkg, $this, $install);
       } catch (Exception $e) {
@@ -277,10 +277,10 @@ class Vulture_Project {
     
     // register any uninstallers
     $uninstallers = array();
-    $matches = Vulture_Globber::match($pkgDir,
-      $pkg->property('project.uninstall.hooks', Vulture_Defaults::PROJECT_UNINSTALL_HOOKS));
+    $matches = CriticalI_Globber::match($pkgDir,
+      $pkg->property('project.uninstall.hooks', CriticalI_Defaults::PROJECT_UNINSTALL_HOOKS));
     foreach ($matches as $hookFile) {
-      $hookClass = Vulture_ClassUtils::class_name($hookFile, $pkgDir);
+      $hookClass = CriticalI_ClassUtils::class_name($hookFile, $pkgDir);
       if (!empty($hookClass)) $uninstallers[] = $hookClass;
     }
     if ($uninstallers) {
@@ -295,8 +295,8 @@ class Vulture_Project {
   /**
    * Adds dependencies for a package
    *
-   * @param Vulture_Package_Version $pkg  The package to add
-   * @param Vulture_Project_InstallOperation $install The install operation for the package being added
+   * @param CriticalI_Package_Version $pkg  The package to add
+   * @param CriticalI_Project_InstallOperation $install The install operation for the package being added
    */
   protected function add_dependencies($pkg, $install) {
     $depends = $pkg->property('dependencies', array());
@@ -307,11 +307,11 @@ class Vulture_Project {
         continue;
       $projectPackages = $this->packages();
       if (isset($projectPackages[$pkg->package()->name()]))
-        throw new Vulture_Project_ConflictingDependencyError($name, $version, $projectPackages[$pkg]);
+        throw new CriticalI_Project_ConflictingDependencyError($name, $version, $projectPackages[$pkg]);
         
       // infinite recursion is bad, so see if we're already installing this
       $found = false;
-      $spec = Vulture_Package_Version::canonify_version_specification($version);
+      $spec = CriticalI_Package_Version::canonify_version_specification($version);
       foreach ($this->addStack as $queued) {
         if (($queued->package()->name() == $name) &&
             ($queued->compare_version_specification($spec) == 0)) {
@@ -323,13 +323,13 @@ class Vulture_Project {
         continue;
     
       // get the package
-      $packages = Vulture_Package_List::get();
+      $packages = CriticalI_Package_List::get();
       if (!isset($packages[$name]))
-        throw new Vulture_Project_MissingDependencyError($name, $version);
+        throw new CriticalI_Project_MissingDependencyError($name, $version);
       $otherPkg = $packages[$name];
       $otherVer = $otherPkg->satisfy_dependency($version);
       if (!$otherVer)
-        throw new Vulture_Project_MissingDependencyError($name, $version);
+        throw new CriticalI_Project_MissingDependencyError($name, $version);
       
       // install it
       $this->add($otherVer, true);
@@ -382,7 +382,7 @@ class Vulture_Project {
    * Remove a package from the project.
    *
    * By default this evaluates dependencies and will fail (throws a
-   * Vulture_Project_ExistingDependencyError) if any other installed
+   * CriticalI_Project_ExistingDependencyError) if any other installed
    * package depends on the one to remove.
    *
    * @param string $pkgName The name of the page to remove
@@ -391,13 +391,13 @@ class Vulture_Project {
   public function remove($pkg, $evalDepends = true) {
     // the package has to be installed in order to remove it
     if (!$this->is_installed($pkg))
-      throw new Vulture_Project_NotInstalledError($pkg);
+      throw new CriticalI_Project_NotInstalledError($pkg);
     
     // check any dependencies
     if ($evalDepends) {
       $dependents = $this->get_dependents($pkg);
       if ($dependents)
-        throw new Vulture_Project_ExistingDependencyError($pkg, implode(', ', $dependents));
+        throw new CriticalI_Project_ExistingDependencyError($pkg, implode(', ', $dependents));
     }
     
     $manifest = (isset($this->properties['manifests']) &&
@@ -482,8 +482,8 @@ class Vulture_Project {
           throw new Exception("File $path did not declare class $className.");
         
         $uninstaller = new $className();
-        if (!($uninstaller instanceof Vulture_Project_UninstallHook))
-          throw new Exception("$className is not an instance of Vulture_Project_UninstallHook.");
+        if (!($uninstaller instanceof CriticalI_Project_UninstallHook))
+          throw new Exception("$className is not an instance of CriticalI_Project_UninstallHook.");
         
         $uninstaller->uninstall($this, $name);
         
@@ -574,12 +574,12 @@ class Vulture_Project {
    *
    * By default this evaluates dependencies and will add or upgrade any
    * needed dependencies of the package, but will fail (throws a
-   * Vulture_Project_ExistingDependencyError) if any other installed
+   * CriticalI_Project_ExistingDependencyError) if any other installed
    * package depends on the one to upgrade and cannot be upgraded to work
    * with the new version.
    *
    * @param string $oldPkgName The name of the page to uprade
-   * @param Vulture_Package_Version $newPkg The version to upgrade to
+   * @param CriticalI_Package_Version $newPkg The version to upgrade to
    * @param boolean $evalDepends Whether or not to evaluate dependencies
    */
   public function upgrade($oldPkgName, $newPkg, $evalDepends = true) {

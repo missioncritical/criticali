@@ -4,7 +4,7 @@
  * A base class for writing commands that must run within a project's
  * environment (as opposed to just within the repository environment).
  */
-abstract class Vulture_Command_ProjectEnvironment extends Vulture_Command {
+abstract class CriticalI_Command_ProjectEnvironment extends CriticalI_Command {
   
   protected $project;
   
@@ -13,7 +13,7 @@ abstract class Vulture_Command_ProjectEnvironment extends Vulture_Command {
    */
   protected function project_private_dir() {
     return $this->project->directory() .
-      ($this->project->type() == Vulture_Project::INSIDE_PUBLIC ? '/private' : '');
+      ($this->project->type() == CriticalI_Project::INSIDE_PUBLIC ? '/private' : '');
   }
    
   /**
@@ -21,7 +21,7 @@ abstract class Vulture_Command_ProjectEnvironment extends Vulture_Command {
    */
   protected function project_public_dir() {
     return $this->project->directory() .
-      ($this->project->type() == Vulture_Project::INSIDE_PUBLIC ? '' : '/public');
+      ($this->project->type() == CriticalI_Project::INSIDE_PUBLIC ? '' : '/public');
   }
    
   /**
@@ -34,7 +34,7 @@ abstract class Vulture_Command_ProjectEnvironment extends Vulture_Command {
    */
   protected function init_environment($package_dir = null) {
     // load the project
-    $this->project = Vulture_Project_Manager::load($package_dir);
+    $this->project = CriticalI_Project_Manager::load($package_dir);
     
     $prjDir = $this->project_private_dir();
     
@@ -45,8 +45,8 @@ abstract class Vulture_Command_ProjectEnvironment extends Vulture_Command {
     // autoload path
     foreach (array('models', 'controllers', 'config', 'lib', 'vendor') as $dir) {
       $path = "$prjDir/$dir";
-      if (!in_array($path, $GLOBALS['VULTURE_SEARCH_DIRECTORIES'])) {
-        $GLOBALS['VULTURE_SEARCH_DIRECTORIES'][] = $path;
+      if (!in_array($path, $GLOBALS['CRITICALI_SEARCH_DIRECTORIES'])) {
+        $GLOBALS['CRITICALI_SEARCH_DIRECTORIES'][] = $path;
         $GLOBALS['INCLUDE_PATH'] .= $GLOBALS['PATH_SEPARATOR'] . $path;
         ini_set('include_path', $GLOBALS['INCLUDE_PATH']);
       }
@@ -59,7 +59,7 @@ abstract class Vulture_Command_ProjectEnvironment extends Vulture_Command {
     
     // package init files
     if (file_exists("$prjDir/vendor/.packages")) {
-      $data = Vulture_ConfigFile::read("$prjDir/vendor/.packages");
+      $data = CriticalI_ConfigFile::read("$prjDir/vendor/.packages");
       if (isset($data['init_files'])) {
         $scripts = explode(',', $data['init_files']);
         foreach ($scripts as $script) { include_once($script); }

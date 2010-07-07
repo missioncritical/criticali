@@ -3,19 +3,19 @@
 /**
  * Test command
  */
-class Vulture_Command_Test extends Vulture_Command {
+class CriticalI_Command_Test extends CriticalI_Command {
   /**
    * Constructor
    */
   public function __construct() {
     parent::__construct('test', 'Run unit tests for the named packages in the repository', <<<DESC
-  vulture test package1 [...packageN]
+  criticali test package1 [...packageN]
   
 Run the unit tests for the given packages in the
 repository.
 DESC
-, array(new Vulture_OptionSpec('version', Vulture_OptionSpec::REQUIRED, 'number', 'Run tests for the specified version (by default, only the most recent version is run)'),
-        new Vulture_OptionSpec('filter', Vulture_OptionSpec::REQUIRED, 'pattern', 'Only run tests matching the provided regular expression.')));
+, array(new CriticalI_OptionSpec('version', CriticalI_OptionSpec::REQUIRED, 'number', 'Run tests for the specified version (by default, only the most recent version is run)'),
+        new CriticalI_OptionSpec('filter', CriticalI_OptionSpec::REQUIRED, 'pattern', 'Only run tests matching the provided regular expression.')));
   }
   
   /**
@@ -29,16 +29,16 @@ DESC
       exit(1);
     }
     
-    $pkgList = Vulture_Package_List::get();
+    $pkgList = CriticalI_Package_List::get();
     
     foreach($this->args as $pkgName) {
       if (!isset($pkgList[$pkgName]))
-        throw new Vulture_MissingPackageError($pkgName);
+        throw new CriticalI_MissingPackageError($pkgName);
       $pkg = $pkgList[$pkgName];
       
       if (isset($this->options['version'])) {
         if (!isset($pkg[$this->options['version']]))
-          throw new Vulture_MissingPackageVersionError($pkgName, $this->options['version']);
+          throw new CriticalI_MissingPackageVersionError($pkgName, $this->options['version']);
         $ver = $pkg[$this->options['version']];
       } else {
         $ver = $pkg->newest();
@@ -77,20 +77,20 @@ DESC
   /**
    * Run the tests for a given package
    *
-   * @param Vulture_Package $pkg  The package to run
-   * @param Vulture_Package_Version $ver  The specific version of the package to run
+   * @param CriticalI_Package $pkg  The package to run
+   * @param CriticalI_Package_Version $ver  The specific version of the package to run
    */
   protected function run_tests_for($pkg, $ver) {
     // see if the package even has tests
-    $testDir = $GLOBALS['VULTURE_ROOT'] . '/' .$ver->installation_directory() . '/' .
+    $testDir = $GLOBALS['CRITICALI_ROOT'] . '/' .$ver->installation_directory() . '/' .
       $ver->property('test.directory', 'test');
     if (!is_dir($testDir))
       return; // no tests
     
-    $oldDirs = $GLOBALS['VULTURE_SEARCH_DIRECTORIES'];
+    $oldDirs = $GLOBALS['CRITICALI_SEARCH_DIRECTORIES'];
     $oldInclude = $GLOBALS['INCLUDE_PATH'];
     
-    Vulture_Package_List::add_package_to_autoloader($pkg->name(), $ver->version_string().'!');
+    CriticalI_Package_List::add_package_to_autoloader($pkg->name(), $ver->version_string().'!');
     
     // always run from the test directory
     $oldCwd = getcwd();
@@ -114,7 +114,7 @@ DESC
     
     if ($oldCwd !== false) chdir($oldCwd);
     // restore the old include path settings; offers slight protection for the next test
-    $GLOBALS['VULTURE_SEARCH_DIRECTORIES'] = $oldDirs;
+    $GLOBALS['CRITICALI_SEARCH_DIRECTORIES'] = $oldDirs;
     $GLOBALS['INCLUDE_PATH'] = $oldInclude;
     ini_set('include_path', $oldInclude);
   }

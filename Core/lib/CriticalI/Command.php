@@ -1,11 +1,11 @@
 <?php
 
 /**
- * A Vulture_Command implements a command that can be used with the
- * command-line vulture utility.  This is the base class which all
+ * A CriticalI_Command implements a command that can be used with the
+ * command-line criticali utility.  This is the base class which all
  * implemented commands must extend.
  */
-abstract class Vulture_Command {
+abstract class CriticalI_Command {
   
   protected $name;
   protected $summary;
@@ -22,7 +22,7 @@ abstract class Vulture_Command {
    * @param string $name        The command literal
    * @param string $summary     A short description of the command (one sentence)
    * @param string $description A usage statement followed by a command description.
-   * @param array  $optionSpec  An array of Vulture_OptionSpec objects.
+   * @param array  $optionSpec  An array of CriticalI_OptionSpec objects.
    */
   public function __construct($name, $summary = '', $description = '', $optionSpec = null) {
     $this->name = $name;
@@ -60,25 +60,25 @@ abstract class Vulture_Command {
     if ($this->optionSpec)
       $str .= "\n" .
           "Valid options:\n\n" .
-          Vulture_OptionSpec::usage_text($this->optionSpec);
+          CriticalI_OptionSpec::usage_text($this->optionSpec);
     return $str;
   }
   
   /**
    * Execute the command
    *
-   * @param Vulture_Options $globalOptions  Any top-level options passed to vulture
+   * @param CriticalI_Options $globalOptions  Any top-level options passed to criticali
    * @param array $args                     The arguments passed to the command
    */
   public function execute($globalOptions, $args) {
     try {
       $this->globalOptions = $globalOptions;
-      $this->options = new Vulture_Options($args, $this->optionSpec);
+      $this->options = new CriticalI_Options($args, $this->optionSpec);
       $this->args = $this->options->arguments();
       
       $this->run_command();
   
-    } catch (Vulture_UsageError $e) {
+    } catch (CriticalI_UsageError $e) {
       fwrite(STDERR, $e->getMessage()."\n\n".$this->help_string());
       exit(1);
     }

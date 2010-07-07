@@ -2,7 +2,7 @@
 
 /**
  * This class exists as a convenience for writing PHPUnit tests for the
- * vulture framework and packages.  Currently its only special behavior
+ * criticali framework and packages.  Currently its only special behavior
  * is to turn off global variable "backup" operations by PHPUnit.  The
  * problem is that some classes in the framework rely on global data
  * (largely related to bootstrapping, notably the default configuration
@@ -14,7 +14,7 @@
  * may use a handful of global variables, so this is seems like a fair
  * trade-off.
  */
-abstract class Vulture_TestCase extends PHPUnit_Framework_TestCase {
+abstract class CriticalI_TestCase extends PHPUnit_Framework_TestCase {
   /**
    * Constructor
    * @param  string $name

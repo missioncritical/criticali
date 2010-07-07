@@ -3,7 +3,7 @@
 /**
  * Indicates a config file could not be successfully read
  */
-class Vulture_ConfigFileReadError extends Vulture_ConfigFileError {
+class CriticalI_ConfigFileReadError extends CriticalI_ConfigFileError {
   public function __construct($filename) {
     parent::__construct("Could not read config file \"$filename\"");
   }
@@ -12,7 +12,7 @@ class Vulture_ConfigFileReadError extends Vulture_ConfigFileError {
 /**
  * Indicates a config file could not be successfully written
  */
-class Vulture_ConfigFileWriteError extends Vulture_ConfigFileError {
+class CriticalI_ConfigFileWriteError extends CriticalI_ConfigFileError {
   public function __construct($filename) {
     parent::__construct("Could not read write to config file \"$filename\"");
   }
@@ -21,16 +21,16 @@ class Vulture_ConfigFileWriteError extends Vulture_ConfigFileError {
 /**
  * Indicates a config file specified an incorrect version
  */
-class Vulture_ConfigFileVersionError extends Vulture_ConfigFileError {
+class CriticalI_ConfigFileVersionError extends CriticalI_ConfigFileError {
   public function __construct($filename) {
     parent::__construct("Incorrect version or no version specified in config file \"$filename\"");
   }
 }
 
 /**
- * Utilities for working with config files used by vulture.
+ * Utilities for working with config files used by criticali.
  */
-class Vulture_ConfigFile {
+class CriticalI_ConfigFile {
   const CONFIG_VERSION = 1;
   
   /**
@@ -39,7 +39,7 @@ class Vulture_ConfigFile {
    * Not allowed.  All methods are static.
    */
   private function __construct() {
-    throw new Exception("Cannot instantiate Vulture_ConfigFile class.");
+    throw new Exception("Cannot instantiate CriticalI_ConfigFile class.");
   }
   
   /**
@@ -54,9 +54,9 @@ class Vulture_ConfigFile {
     
     $data = parse_ini_file($filename, true);
     if ($data === false)
-      throw new Vulture_ConfigFileReadError($filename);
+      throw new CriticalI_ConfigFileReadError($filename);
     if ((!isset($data['version'])) || ($data['version'] != self::CONFIG_VERSION))
-      throw new Vulture_ConfigFileVersionError($filename);
+      throw new CriticalI_ConfigFileVersionError($filename);
     
     return $data;
   }
@@ -65,7 +65,7 @@ class Vulture_ConfigFile {
    * Write configuration data to a file.
    *
    * @param string $filename  The filename to write to
-   * @param array  $data      Structured data as returned by Vulture_ConfigFile::read()
+   * @param array  $data      Structured data as returned by CriticalI_ConfigFile::read()
    * @param string $msg       Optional warning message to include at the beginning of the file
    */
   public static function write($filename, $data, $msg = null) {
@@ -74,7 +74,7 @@ class Vulture_ConfigFile {
     
     $fh = fopen($filename, 'wb');
     if ($fh === false)
-      throw new Vulture_ConfigFileWriteError($filename);
+      throw new CriticalI_ConfigFileWriteError($filename);
     
     try {
       $data['version'] = self::CONFIG_VERSION;
@@ -82,7 +82,7 @@ class Vulture_ConfigFile {
       $msg = '; ' . str_replace("\n", "\n; ", wordwrap($msg)) . "\n";
       
       if (fwrite($fh, $msg, strlen($msg)) === false)
-        throw new Vulture_ConfigFileWriteError($filename);
+        throw new CriticalI_ConfigFileWriteError($filename);
       
       $sections = array();
       
@@ -96,7 +96,7 @@ class Vulture_ConfigFile {
           // everything else is a normal entry
           $line = "$key=".self::quote($value) . "\n";
           if (fwrite($fh, $line, strlen($line)) === false)
-            throw new Vulture_ConfigFileWriteError($filename);
+            throw new CriticalI_ConfigFileWriteError($filename);
           
         }
       }
@@ -104,12 +104,12 @@ class Vulture_ConfigFile {
       foreach ($sections as $section=>$sectionData) {
         $line = "[$section]\n";
         if (fwrite($fh, $line, strlen($line)) === false)
-          throw new Vulture_ConfigFileWriteError($filename);
+          throw new CriticalI_ConfigFileWriteError($filename);
           
         foreach ($sectionData as $key=>$value) {
           $line = "$key=".self::quote($value) . "\n";
           if (fwrite($fh, $line, strlen($line)) === false)
-            throw new Vulture_ConfigFileWriteError($filename);
+            throw new CriticalI_ConfigFileWriteError($filename);
         }
       }
       

@@ -3,13 +3,13 @@
 /**
  * ProjectInit command
  */
-class Vulture_Command_ProjectList extends Vulture_Command {
+class CriticalI_Command_ProjectList extends CriticalI_Command {
   /**
    * Constructor
    */
   public function __construct() {
     parent::__construct('project-list', 'List packages in a project', <<<DESC
-  vulture project-list [project_root]
+  criticali project-list [project_root]
   
 List the packages installed in a project.  If no project
 root directory is given, assumes the current working
@@ -27,7 +27,7 @@ DESC
       exit(1);
     }
 
-    $prj = Vulture_Project_Manager::load(count($this->args) > 0 ? $this->args[0] : null);
+    $prj = CriticalI_Project_Manager::load(count($this->args) > 0 ? $this->args[0] : null);
     
     $pkgs = $prj->packages();
     ksort($pkgs);

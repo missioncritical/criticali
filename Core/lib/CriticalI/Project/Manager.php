@@ -1,41 +1,41 @@
 <?php
 
-class Vulture_Project_Manager {
+class CriticalI_Project_Manager {
   /**
    * Initialize a project
    *
    * @param string $name  Project name or directory (relative to cwd)
-   * @param int $type Vulture_Project::INSIDE_PUBLIC or Vulture_Project::OUTSIDE_PUBLIC
-   * @return Vulture_Project
+   * @param int $type CriticalI_Project::INSIDE_PUBLIC or CriticalI_Project::OUTSIDE_PUBLIC
+   * @return CriticalI_Project
    */
   public static function init($name, $type) {
     self::mkdir($name);
 
-    if ($type == Vulture_Project::INSIDE_PUBLIC) {
+    if ($type == CriticalI_Project::INSIDE_PUBLIC) {
       self::mkdir("$name/private");
       self::mkdir("$name/private/vendor");
       self::write_htaccess("$name/private/.htaccess");
-      Vulture_ConfigFile::write("$name/private/vendor/.packages", array());
+      CriticalI_ConfigFile::write("$name/private/vendor/.packages", array());
     } else {
       self::mkdir("$name/vendor");
       self::mkdir("$name/public");
-      Vulture_ConfigFile::write("$name/vendor/.packages", array());
+      CriticalI_ConfigFile::write("$name/vendor/.packages", array());
     }
     
-    return new Vulture_Project($name);
+    return new CriticalI_Project($name);
   }
   
   /**
    * Load a project
    *
    * @param string $dir  Directory to load (or cwd if not present)
-   * @return Vulture_Project
+   * @return CriticalI_Project
    */
   public static function load($name = null) {
     if (empty($name)) $name = getcwd();
     if ($name === false)
       $name = '.';
-    return new Vulture_Project($name);
+    return new CriticalI_Project($name);
   }
   
   /**

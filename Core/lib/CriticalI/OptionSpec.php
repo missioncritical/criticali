@@ -3,7 +3,7 @@
 /**
  * Specification for a command line option
  */
-class Vulture_OptionSpec {
+class CriticalI_OptionSpec {
   const NONE = 0;
   const REQUIRED = 1;
   const OPTIONAL = 2;
@@ -30,9 +30,9 @@ class Vulture_OptionSpec {
   
   /**
    * Helper function to produce partial usage text from a list of
-   * Vulture_OptionSpec objects.
+   * CriticalI_OptionSpec objects.
    *
-   * @param array $specs  The array of Vulture_OptionSpec objects to produce usage text for
+   * @param array $specs  The array of CriticalI_OptionSpec objects to produce usage text for
    * @return string
    */
   public static function usage_text($specs) {

@@ -3,13 +3,13 @@
 /**
  * Utilities for working with classes and files containing them
  */
-class Vulture_ClassUtils {
+class CriticalI_ClassUtils {
   
   /**
    * Construtor -- may not be instantiated
    */
   private function __construct() {
-    throw new Exception("Vulture_ClassUtils may not be instantiated.");
+    throw new Exception("CriticalI_ClassUtils may not be instantiated.");
   }
   
   /**

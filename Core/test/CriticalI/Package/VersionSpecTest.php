@@ -1,9 +1,9 @@
 <?php
 
-class Vulture_Package_VersionSpecTest extends Vulture_TestCase {
+class CriticalI_Package_VersionSpecTest extends CriticalI_TestCase {
   
   public function testDefault() {
-    $result = Vulture_Package_Version::canonify_version_specification('1.2.3');
+    $result = CriticalI_Package_Version::canonify_version_specification('1.2.3');
     $this->assertEquals(array('1','2','3'), $result->start);
     $this->assertEquals(null, $result->end);
     $this->assertFalse($result->exact);
@@ -13,7 +13,7 @@ class Vulture_Package_VersionSpecTest extends Vulture_TestCase {
   }
   
   public function testGreaterThan() {
-    $result = Vulture_Package_Version::canonify_version_specification('1.2.3+');
+    $result = CriticalI_Package_Version::canonify_version_specification('1.2.3+');
     $this->assertEquals(array('1','2','3'), $result->start);
     $this->assertEquals(null, $result->end);
     $this->assertFalse($result->exact);
@@ -23,7 +23,7 @@ class Vulture_Package_VersionSpecTest extends Vulture_TestCase {
   }
   
   public function testLessThan() {
-    $result = Vulture_Package_Version::canonify_version_specification('1.2.3-');
+    $result = CriticalI_Package_Version::canonify_version_specification('1.2.3-');
     $this->assertEquals(array('1','2','3'), $result->start);
     $this->assertEquals(null, $result->end);
     $this->assertFalse($result->exact);
@@ -33,7 +33,7 @@ class Vulture_Package_VersionSpecTest extends Vulture_TestCase {
   }
   
   public function testExact() {
-    $result = Vulture_Package_Version::canonify_version_specification('1.2.3!');
+    $result = CriticalI_Package_Version::canonify_version_specification('1.2.3!');
     $this->assertEquals(array('1','2','3'), $result->start);
     $this->assertEquals(null, $result->end);
     $this->assertTrue($result->exact);
@@ -43,7 +43,7 @@ class Vulture_Package_VersionSpecTest extends Vulture_TestCase {
   }
   
   public function testRange() {
-    $result = Vulture_Package_Version::canonify_version_specification('1.2.3-4.5.6');
+    $result = CriticalI_Package_Version::canonify_version_specification('1.2.3-4.5.6');
     $this->assertEquals(array('1','2','3'), $result->start);
     $this->assertEquals(array('4','5','6'), $result->end);
     $this->assertFalse($result->exact);
@@ -51,7 +51,7 @@ class Vulture_Package_VersionSpecTest extends Vulture_TestCase {
     $this->assertFalse($result->minus);
     $this->assertFalse($result->any);
 
-    $result = Vulture_Package_Version::canonify_version_specification('4.5.6-1.2.3');
+    $result = CriticalI_Package_Version::canonify_version_specification('4.5.6-1.2.3');
     $this->assertEquals(array('1','2','3'), $result->start);
     $this->assertEquals(array('4','5','6'), $result->end);
     $this->assertFalse($result->exact);
@@ -61,7 +61,7 @@ class Vulture_Package_VersionSpecTest extends Vulture_TestCase {
   }
   
   public function testAny() {
-    $result = Vulture_Package_Version::canonify_version_specification('*');
+    $result = CriticalI_Package_Version::canonify_version_specification('*');
     $this->assertEquals(null, $result->start);
     $this->assertEquals(null, $result->end);
     $this->assertFalse($result->exact);

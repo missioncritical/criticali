@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Vulture_Command_List is the collection of installed packages.  It is a
+ * CriticalI_Command_List is the collection of installed packages.  It is a
  * singleton whose instance can be obtained by calling the static
  * function list().  The actual instance behaves like many other objects
  * in the system in that it is a first class object that behaves like an
  * array.  Commands are keyed in the list by their name.
  */
-class Vulture_Command_List implements IteratorAggregate, ArrayAccess {
+class CriticalI_Command_List implements IteratorAggregate, ArrayAccess {
   protected static $list = null;
   
   protected $commands;
@@ -21,26 +21,26 @@ class Vulture_Command_List implements IteratorAggregate, ArrayAccess {
     $this->commands = array();
     
     // get the list of packages that contain commands
-    $allPackages = Vulture_Package_List::get();
+    $allPackages = CriticalI_Package_List::get();
     $cmdPackages = $allPackages->commandVersions();
     
     // load the commands from each package version
     foreach ($cmdPackages as $pkg) {
       $this->add_commands_by_glob($pkg->installation_directory(),
-        $pkg->property('command.glob', Vulture_Defaults::COMMAND_GLOB));
+        $pkg->property('command.glob', CriticalI_Defaults::COMMAND_GLOB));
     }
     
     // load the core commands
-    $this->add_commands_by_glob('Core', Vulture_Defaults::CORE_COMMAND_GLOB);
+    $this->add_commands_by_glob('Core', CriticalI_Defaults::CORE_COMMAND_GLOB);
   }
   
   /**
    * Returns the shared list instance
-   * @return Vulture_Command_List
+   * @return CriticalI_Command_List
    */
   public static function get() {
     if (!self::$list)
-      self::$list = new Vulture_Command_List();
+      self::$list = new CriticalI_Command_List();
     return self::$list;
   }
 
@@ -64,7 +64,7 @@ class Vulture_Command_List implements IteratorAggregate, ArrayAccess {
   /**
    * Retrieves the command at an array index.
    * @param string $idx  The index to get
-   * @return Vulture_Command
+   * @return CriticalI_Command
    */
   public function offsetGet($idx) {
     return $this->commands[$idx];
@@ -73,7 +73,7 @@ class Vulture_Command_List implements IteratorAggregate, ArrayAccess {
   /**
    * Sets the value at an array index
    * @param string $idx   The index to set
-   * @param Vulture_Command $value The value to set
+   * @param CriticalI_Command $value The value to set
    */
   public function offsetSet($idx, $value) {
     $this->commands[$idx] = $value;
@@ -88,7 +88,7 @@ class Vulture_Command_List implements IteratorAggregate, ArrayAccess {
   }
   
   /**
-   * Adds command classes given a base directory relative to VULTURE_ROOT
+   * Adds command classes given a base directory relative to CRITICALI_ROOT
    * and a file globbing pattern.
    *
    * @param string $base    The base directory
@@ -96,10 +96,10 @@ class Vulture_Command_List implements IteratorAggregate, ArrayAccess {
    */
   public function add_commands_by_glob($base, $pattern) {
     // get the matching file names
-    $files = Vulture_Globber::match("$GLOBALS[VULTURE_ROOT]/$base", $pattern);
+    $files = CriticalI_Globber::match("$GLOBALS[CRITICALI_ROOT]/$base", $pattern);
     if (!$files) return;
     foreach ($files as $file) {
-      $classname = Vulture_ClassUtils::class_name($file, "$GLOBALS[VULTURE_ROOT]/$base");
+      $classname = CriticalI_ClassUtils::class_name($file, "$GLOBALS[CRITICALI_ROOT]/$base");
       
       // load the file
       include_once($file);
@@ -109,11 +109,11 @@ class Vulture_Command_List implements IteratorAggregate, ArrayAccess {
       // instantiate the class
       $inst = new $classname();
       
-      // must be an instance of Vulture_Command
-      if ($inst instanceof Vulture_Command)
+      // must be an instance of CriticalI_Command
+      if ($inst instanceof CriticalI_Command)
         $this->commands[$inst->name()] = $inst;
       else
-        trigger_error("Class \"$classname\" is not an instance of Vulture_Command.  Command will be ignored.", E_USER_WARNING);
+        trigger_error("Class \"$classname\" is not an instance of CriticalI_Command.  Command will be ignored.", E_USER_WARNING);
     }
   }
   

@@ -4,7 +4,7 @@
  * Utilities for tracking and performing install operations for a given
  * package in a project.
  */
-class Vulture_Project_InstallOperation {
+class CriticalI_Project_InstallOperation {
   protected $project;
   protected $packageVersion;
   protected $dependencies;
@@ -13,8 +13,8 @@ class Vulture_Project_InstallOperation {
   /**
    * Constructor
    *
-   * @param Vulture_Project $project  The project the install operation is for
-   * @param Vulture_Package_Version $packageVersion The package being installed
+   * @param CriticalI_Project $project  The project the install operation is for
+   * @param CriticalI_Package_Version $packageVersion The package being installed
    */
   public function __construct($project, $packageVersion) {
     $this->project = $project;
@@ -25,7 +25,7 @@ class Vulture_Project_InstallOperation {
   
   /**
    * Return the project associated with this installation
-   * @return Vulture_Project
+   * @return CriticalI_Project
    */
   public function project() {
     return $this->project;
@@ -33,7 +33,7 @@ class Vulture_Project_InstallOperation {
   
   /**
    * Return the package being installed
-   * @param Vulture_Project_Version
+   * @param CriticalI_Project_Version
    */
   public function package_version() {
     return $this->packageVersion;

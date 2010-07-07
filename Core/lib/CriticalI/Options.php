@@ -3,7 +3,7 @@
 /**
  * Exception thrown for unknown/unsupported options
  */
-class Vulture_UnknownOptionError extends Vulture_UsageError {
+class CriticalI_UnknownOptionError extends CriticalI_UsageError {
   public function __construct($option) {
     parent::__construct("Unknown option \"$option\".");
   }
@@ -12,7 +12,7 @@ class Vulture_UnknownOptionError extends Vulture_UsageError {
 /**
  * Exception thrown for invalid argument provided
  */
-class Vulture_InvalidOptionArgumentError extends Vulture_UsageError {
+class CriticalI_InvalidOptionArgumentError extends CriticalI_UsageError {
   public function __construct($option, $argument) {
     parent::__construct("The option \"$option\" does not accept an argument (\"$argument\" provided, none expected).");
   }
@@ -21,7 +21,7 @@ class Vulture_InvalidOptionArgumentError extends Vulture_UsageError {
 /**
  * Exception thrown for missing argument
  */
-class Vulture_MissingOptionArgumentError extends Vulture_UsageError {
+class CriticalI_MissingOptionArgumentError extends CriticalI_UsageError {
   public function __construct($option) {
     parent::__construct("The option \"$option\" requires an argument (none provided, one expected).");
   }
@@ -30,7 +30,7 @@ class Vulture_MissingOptionArgumentError extends Vulture_UsageError {
 /**
  * An processed command line option
  */
-class Vulture_Option {
+class CriticalI_Option {
   public $name;
   public $argument;
   
@@ -43,13 +43,13 @@ class Vulture_Option {
 /**
  * Processes command line options.
  *
- * Once options have been processed, the Vulture_Options object can be
+ * Once options have been processed, the CriticalI_Options object can be
  * treated as an array.  Treating it as a numerically indexed list allows
  * access to all options passed on the command line when an option is
  * specified more than once.  It can also be treated as an associative
  * array with the option names as keys.
  */
-class Vulture_Options implements IteratorAggregate, ArrayAccess {
+class CriticalI_Options implements IteratorAggregate, ArrayAccess {
   protected $arguments;
   protected $optionSpec;
   protected $scriptName;
@@ -59,7 +59,7 @@ class Vulture_Options implements IteratorAggregate, ArrayAccess {
   /**
    * Constructor
    *
-   * The option specification is a list of Vulture_OptionSpec objects.
+   * The option specification is a list of CriticalI_OptionSpec objects.
    *
    * @param array $args       The argument list (first item is the script name, not an option)
    * @param array $optionSpec Option specification list.
@@ -111,7 +111,7 @@ class Vulture_Options implements IteratorAggregate, ArrayAccess {
   
   /**
    * Retrieves the value at an array index.  A numeric index returns a
-   * Vulture_Option, a non-numeric index returns only the argument for
+   * CriticalI_Option, a non-numeric index returns only the argument for
    * the option.
    * @param string $idx  The index to get
    * @return mixed The value for the given option or option index
@@ -136,8 +136,8 @@ class Vulture_Options implements IteratorAggregate, ArrayAccess {
       if (is_null($value)) {
         $this->offsetUnset($idx, $value);
         return;
-      } elseif (!($value instanceof Vulture_Option))
-        throw new Exception("Invalid parameter supplied.  Vulture_Option required, but received ".get_class($value));
+      } elseif (!($value instanceof CriticalI_Option))
+        throw new Exception("Invalid parameter supplied.  CriticalI_Option required, but received ".get_class($value));
       $this->options[$idx] = $value;
       $this->hash = null; // invalidate the hash
     } else {
@@ -145,7 +145,7 @@ class Vulture_Options implements IteratorAggregate, ArrayAccess {
       if (isset($hash[$idx])) {
         $this->hash[$idx]->argument = $value;
       } else {
-        $newOpt = new Vulture_Option($idx, $value);
+        $newOpt = new CriticalI_Option($idx, $value);
         $this->options[] = $newOpt;
         $this->hash[$idx] = $newOpt;
       }
@@ -226,15 +226,15 @@ class Vulture_Options implements IteratorAggregate, ArrayAccess {
     
     // see if this is a known option
     if ($spec = $this->find_option_spec($name)) {
-      if ($spec->argument_type == Vulture_OptionSpec::OPTIONAL) {
+      if ($spec->argument_type == CriticalI_OptionSpec::OPTIONAL) {
         $this->parse_option_optional_arg($name, $optArg);
-      } elseif ($spec->argument_type == Vulture_OptionSpec::REQUIRED) {
+      } elseif ($spec->argument_type == CriticalI_OptionSpec::REQUIRED) {
         $this->parse_option_required_arg($name, $optArg);
       } else {
         $this->parse_option_prohibited_arg($name, $optArg);
       }
     } else {
-      throw new Vulture_UnknownOptionError($name);
+      throw new CriticalI_UnknownOptionError($name);
     }
   }
   
@@ -249,11 +249,11 @@ class Vulture_Options implements IteratorAggregate, ArrayAccess {
       if (count($this->arguments) > 0) {
         $optArg = array_shift($this->arguments);
       } else {
-        throw new Vulture_MissingOptionArgumentError($name);
+        throw new CriticalI_MissingOptionArgumentError($name);
       }
     }
     
-    $this->options[] = new Vulture_Option($name, $optArg);
+    $this->options[] = new CriticalI_Option($name, $optArg);
   }
   
   /**
@@ -271,7 +271,7 @@ class Vulture_Options implements IteratorAggregate, ArrayAccess {
       }
     }
     
-    $this->options[] = new Vulture_Option($name, $optArg);
+    $this->options[] = new CriticalI_Option($name, $optArg);
   }
   
   /**
@@ -282,10 +282,10 @@ class Vulture_Options implements IteratorAggregate, ArrayAccess {
    */
   protected function parse_option_prohibited_arg($name, $optArg) {
     if (!is_null($optArg)) {
-      throw new Vulture_InvalidOptionArgumentError($name, $optArg);
+      throw new CriticalI_InvalidOptionArgumentError($name, $optArg);
     }
     
-    $this->options[] = new Vulture_Option($name, true);
+    $this->options[] = new CriticalI_Option($name, true);
   }
   
   /**

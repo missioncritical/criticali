@@ -5,7 +5,7 @@
  * that require a database.  Creating and/or resetting a database for
  * each test involves significant overhead, so confining that behavior to
  * this class allows that to be skipped for test cases that don't require
- * it (test cases that inherit directly from Vulture_TestCase).
+ * it (test cases that inherit directly from CriticalI_TestCase).
  *
  * This class includes a number of special behaviors.  By default it
  * connects to or creates a SQLite database named .db in the current
@@ -25,7 +25,7 @@
  * into the database, and the data becomes available by calling the
  * fixture method with the fixture name and key.
  */
-abstract class Vulture_DBTestCase extends Vulture_TestCase {
+abstract class CriticalI_DBTestCase extends CriticalI_TestCase {
   protected static $allConnections = null;
   
   protected $schemaLoaded = false;
@@ -84,7 +84,7 @@ abstract class Vulture_DBTestCase extends Vulture_TestCase {
    * @param PDO $conn  The database connection
    */
   protected function init_schema($conn) {
-    $matches = Vulture_Globber::match($this->working_directory(), "schema/*.sql");
+    $matches = CriticalI_Globber::match($this->working_directory(), "schema/*.sql");
     foreach ($matches as $file) {
       $tableName = basename($file, '.sql');
       $conn->exec("DROP TABLE IF EXISTS $tableName");
@@ -129,7 +129,7 @@ abstract class Vulture_DBTestCase extends Vulture_TestCase {
   protected function load_fixture_files() {
     $this->fixtures = array();
     
-    $matches = Vulture_Globber::match($this->working_directory(), "fixtures/*.ini");
+    $matches = CriticalI_Globber::match($this->working_directory(), "fixtures/*.ini");
     foreach ($matches as $file) {
       $tableName = basename($file, '.ini');
 

@@ -26,7 +26,7 @@
  * lock instead of releasing it explicitly which could adversely affect
  * locking if used within a larger transaction.
  */
-class Vulture_RepositoryLock {
+class CriticalI_RepositoryLock {
   const UNLOCKED = 0;
   const READ_LOCKED = 1;
   const WRITE_LOCKED = 2;
@@ -38,7 +38,7 @@ class Vulture_RepositoryLock {
    * Constructor -- instantiation not allowed
    */
   private function __construct() {
-    throw new Exception("Instantiation of class Vulture_RepositoryLog not allowed.");
+    throw new Exception("Instantiation of class CriticalI_RepositoryLog not allowed.");
   }
   
   /**
@@ -48,7 +48,7 @@ class Vulture_RepositoryLock {
     if (self::$fileHandle)
       return;
       
-    $filename = "$GLOBALS[VULTURE_ROOT]/.lock";
+    $filename = "$GLOBALS[CRITICALI_ROOT]/.lock";
     $flags = ((!file_exists($filename)) || is_writable($filename)) ? 'a+' : 'r';
     self::$fileHandle = fopen($filename, $flags);
     if (!self::$fileHandle)
@@ -56,7 +56,7 @@ class Vulture_RepositoryLock {
 
     self::$lockState = self::UNLOCKED;
     
-    register_shutdown_function(array('Vulture_RepositoryLock', 'cleanup'));
+    register_shutdown_function(array('CriticalI_RepositoryLock', 'cleanup'));
   }
   
   /**

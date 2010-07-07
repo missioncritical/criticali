@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Vulture_Package_List is the collection of installed packages.  It is a
+ * CriticalI_Package_List is the collection of installed packages.  It is a
  * singleton whose instance can be obtained by calling the static
  * function list().  The actual instance behaves like many other objects
  * in the system in that it is a first class object that behaves like an
  * array.  Packages are keyed in the list by their name.
  */
-class Vulture_Package_List implements IteratorAggregate, ArrayAccess {
+class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
   protected static $list = null;
   
   protected $packages;
@@ -26,54 +26,54 @@ class Vulture_Package_List implements IteratorAggregate, ArrayAccess {
       return;
     }
     
-    Vulture_RepositoryLock::read_lock();
-    $this->packageInfo = Vulture_ConfigFile::read("$GLOBALS[VULTURE_ROOT]/.packages");
+    CriticalI_RepositoryLock::read_lock();
+    $this->packageInfo = CriticalI_ConfigFile::read("$GLOBALS[CRITICALI_ROOT]/.packages");
     
     foreach($this->packageInfo['packages'] as $package=>$version) {
-      $this->packages[$package] = new Vulture_Package($package, $version,
+      $this->packages[$package] = new CriticalI_Package($package, $version,
                                                       $this->packageInfo['directories']);
     }
   }
   
   /**
    * Returns the shared list instance
-   * @return Vulture_Package_List
+   * @return CriticalI_Package_List
    */
   public static function get() {
     if (!self::$list)
-      self::$list = new Vulture_Package_List();
+      self::$list = new CriticalI_Package_List();
     return self::$list;
   }
   
   /**
-   * Forces Vulture_Package_List to skip loading of packages and present
+   * Forces CriticalI_Package_List to skip loading of packages and present
    * an empty list for subsequent class to get.
    */
   public static function clear() {
-    self::$list = new Vulture_Package_List(false);
+    self::$list = new CriticalI_Package_List(false);
   }
   
   /**
    * Rebuild the installation list file and repopulate the list
    */
   public static function rebuild() {
-    global $VULTURE_ROOT;
-    Vulture_RepositoryLock::write_lock();
+    global $CRITICALI_ROOT;
+    CriticalI_RepositoryLock::write_lock();
     
     $data = array('packages'=>array(), 'directories'=>array(), 'commands'=>array());
     
-    $dh = opendir($VULTURE_ROOT);
+    $dh = opendir($CRITICALI_ROOT);
     if ($dh === false)
-      throw new Exception("Cannot access vulture root directory \"$VULTURE_ROOT\"");
+      throw new Exception("Cannot access criticali root directory \"$CRITICALI_ROOT\"");
     
     while (($filename = readdir($dh)) !== false) {
       try {
         if ($filename == '.' || $filename == '..') continue;
-        $path = "$VULTURE_ROOT/$filename";
+        $path = "$CRITICALI_ROOT/$filename";
         if (!is_dir($path)) continue;
         if (!file_exists("$path/package.ini")) continue;
         
-        $pkg = new Vulture_Package_Directory($filename, $path);
+        $pkg = new CriticalI_Package_Directory($filename, $path);
         $name = $pkg->name();
         $version = $pkg->version();
       
@@ -96,9 +96,9 @@ class Vulture_Package_List implements IteratorAggregate, ArrayAccess {
     
     closedir($dh);
     
-    Vulture_ConfigFile::write("$VULTURE_ROOT/.packages", $data);
+    CriticalI_ConfigFile::write("$CRITICALI_ROOT/.packages", $data);
     
-    self::$list = new Vulture_Package_List();
+    self::$list = new CriticalI_Package_List();
   }
   
   /**
@@ -114,17 +114,17 @@ class Vulture_Package_List implements IteratorAggregate, ArrayAccess {
     $version = empty($version) ? '*' : $version;
     $list = self::get();
     if (!isset($list[$package]))
-      throw new Vulture_MissingPackageError($package);
+      throw new CriticalI_MissingPackageError($package);
 
     $ver = $list[$package]->satisfy_dependency($version);
     if (!$ver)
-      throw new Vulture_MissingPackageVersionError($package, $version);
+      throw new CriticalI_MissingPackageVersionError($package, $version);
     
-    $path = $GLOBALS['VULTURE_ROOT'] . '/' . $ver->installation_directory() . '/lib';
-    if (in_array($path, $GLOBALS['VULTURE_SEARCH_DIRECTORIES']))
+    $path = $GLOBALS['CRITICALI_ROOT'] . '/' . $ver->installation_directory() . '/lib';
+    if (in_array($path, $GLOBALS['CRITICALI_SEARCH_DIRECTORIES']))
       return; // already included
     
-    $GLOBALS['VULTURE_SEARCH_DIRECTORIES'][] = $path;
+    $GLOBALS['CRITICALI_SEARCH_DIRECTORIES'][] = $path;
     $GLOBALS['INCLUDE_PATH'] .= $GLOBALS['PATH_SEPARATOR'] . $path;
     ini_set('include_path', $GLOBALS['INCLUDE_PATH']);
     
@@ -143,7 +143,7 @@ class Vulture_Package_List implements IteratorAggregate, ArrayAccess {
   protected static function add_to_version_list($list, $value) {
     $items = explode(',', $list);
     $items[] = $value;
-    usort($items, array('Vulture_Package_Version', 'compare_version_strings'));
+    usort($items, array('CriticalI_Package_Version', 'compare_version_strings'));
     return implode(',', $items);
   }
 
@@ -167,7 +167,7 @@ class Vulture_Package_List implements IteratorAggregate, ArrayAccess {
   /**
    * Retrieves the package at an array index.
    * @param string $idx  The index to get
-   * @return Vulture_Package
+   * @return CriticalI_Package
    */
   public function offsetGet($idx) {
     return $this->packages[$idx];
@@ -176,7 +176,7 @@ class Vulture_Package_List implements IteratorAggregate, ArrayAccess {
   /**
    * Sets the value at an array index
    * @param string $idx   The index to set
-   * @param Vulture_Package $value The value to set
+   * @param CriticalI_Package $value The value to set
    */
   public function offsetSet($idx, $value) {
     $this->packages[$idx] = $value;

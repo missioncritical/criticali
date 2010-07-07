@@ -3,23 +3,23 @@
 /**
  * List command
  */
-class Vulture_Command_ReposList extends Vulture_Command {
+class CriticalI_Command_ReposList extends CriticalI_Command {
   /**
    * Constructor
    */
   public function __construct() {
     parent::__construct('list', 'List the packages in the repository', <<<DESC
-  vulture [options] [search]
+  criticali [options] [search]
   
 Lists the packages currently installed in the repository.
 If a search term is provided, only packages whose names
 contain the search string are displayed.
 DESC
 , array(
-  new Vulture_OptionSpec('details', Vulture_OptionSpec::NONE, null, 'Output details, including full description, with each package.'),
-  new Vulture_OptionSpec('no-versions', Vulture_OptionSpec::NONE, null, 'Do not include version numbers in output.'),
-  new Vulture_OptionSpec('verbose', Vulture_OptionSpec::NONE, null, 'Include summary in listing.'),
-  new Vulture_OptionSpec('version', Vulture_OptionSpec::REQUIRED, 'version', 'The version number to list.')));
+  new CriticalI_OptionSpec('details', CriticalI_OptionSpec::NONE, null, 'Output details, including full description, with each package.'),
+  new CriticalI_OptionSpec('no-versions', CriticalI_OptionSpec::NONE, null, 'Do not include version numbers in output.'),
+  new CriticalI_OptionSpec('verbose', CriticalI_OptionSpec::NONE, null, 'Include summary in listing.'),
+  new CriticalI_OptionSpec('version', CriticalI_OptionSpec::REQUIRED, 'version', 'The version number to list.')));
   }
   
   /**
@@ -40,12 +40,12 @@ DESC
     
     // evaluate any name criteria
     if (count($this->args) > 0) {
-      foreach (Vulture_Package_List::get() as $pkg) {
+      foreach (CriticalI_Package_List::get() as $pkg) {
         if (strpos(strtolower($pkg->name()), strtolower($this->args[0])) !== false)
           $matches[] = $pkg;
       }
     } else {
-      $matches = Vulture_Package_List::get();
+      $matches = CriticalI_Package_List::get();
     }
     
     // evaluate any version criteria

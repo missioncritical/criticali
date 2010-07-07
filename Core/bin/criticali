@@ -1,10 +1,10 @@
 #!/bin/sh
 
-vulture_root="<?php echo $vulture_root ?>"
-if [ ! -d "$vulture_root" ]
+criticali_root="<?php echo $criticali_root ?>"
+if [ ! -d "$criticali_root" ]
 then
-  vulture_root=`dirname $0`
-  vulture_root="$vulture_root/../.."
+  criticali_root=`dirname $0`
+  criticali_root="$criticali_root/../.."
 fi
 
 php="<?php echo $php_binary ?>"
@@ -13,4 +13,4 @@ then
   php="php"
 fi
 
-$php $vulture_root/Core/vulture_command.php $*
+$php $criticali_root/Core/criticali_command.php $*

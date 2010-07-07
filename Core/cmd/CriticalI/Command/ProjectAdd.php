@@ -3,14 +3,14 @@
 /**
  * Listener for installation status
  */
-class Vulture_Command_ProjectAdd_Listener implements Vulture_Project_StatusListener {
+class CriticalI_Command_ProjectAdd_Listener implements CriticalI_Project_StatusListener {
   public $showDebug = false;
   
 /**
  * Normal informational message
  *
- * @param Vulture_Project $project  The project the operation is occurring on
- * @param Vulture_Package $package  The package the operation is occurring on (may be null)
+ * @param CriticalI_Project $project  The project the operation is occurring on
+ * @param CriticalI_Package $package  The package the operation is occurring on (may be null)
  * @param string          $message  The message
  */
   public function info($project, $package, $message) {
@@ -20,8 +20,8 @@ class Vulture_Command_ProjectAdd_Listener implements Vulture_Project_StatusListe
 /**
  * Debug-level message
  *
- * @param Vulture_Project $project  The project the operation is occurring on
- * @param Vulture_Package $package  The package the operation is occurring on (may be null)
+ * @param CriticalI_Project $project  The project the operation is occurring on
+ * @param CriticalI_Package $package  The package the operation is occurring on (may be null)
  * @param string          $message  The message
  */
   public function debug($project, $package, $message) {
@@ -33,13 +33,13 @@ class Vulture_Command_ProjectAdd_Listener implements Vulture_Project_StatusListe
 /**
  * ProjectAdd command
  */
-class Vulture_Command_ProjectAdd extends Vulture_Command {
+class CriticalI_Command_ProjectAdd extends CriticalI_Command {
   /**
    * Constructor
    */
   public function __construct() {
     parent::__construct('project-add', 'Add a package to a project', <<<DESC
-  vulture project-add [options] package1 [...packageN]
+  criticali project-add [options] package1 [...packageN]
   
 Adds one or more packages to a project.  Only packages
 which exist in the repository may be added.  Automatically
@@ -48,10 +48,10 @@ added.  This can be forcibly disabled through the use of
 the --ignore-dependencies option. 
 DESC
 , array(
-  new Vulture_OptionSpec('project', Vulture_OptionSpec::REQUIRED, 'directory', 'Specify the project directory.  Defaults to the current working directory.'),
-  new Vulture_OptionSpec('version', Vulture_OptionSpec::REQUIRED, 'number', 'Specify the version number of the package to install.  Defaults to the most current version in the repository.'),
-  new Vulture_OptionSpec('ignore-dependencies', Vulture_OptionSpec::NONE, null, 'Skips dependency handling and installs the package whether its dependencies are satisfied or not.  This may result in a non-functional package if dependencies are missing from the project.'),
-  new Vulture_OptionSpec('verbose', Vulture_OptionSpec::NONE, null, 'Displays lots of information as the installation progresses.')));
+  new CriticalI_OptionSpec('project', CriticalI_OptionSpec::REQUIRED, 'directory', 'Specify the project directory.  Defaults to the current working directory.'),
+  new CriticalI_OptionSpec('version', CriticalI_OptionSpec::REQUIRED, 'number', 'Specify the version number of the package to install.  Defaults to the most current version in the repository.'),
+  new CriticalI_OptionSpec('ignore-dependencies', CriticalI_OptionSpec::NONE, null, 'Skips dependency handling and installs the package whether its dependencies are satisfied or not.  This may result in a non-functional package if dependencies are missing from the project.'),
+  new CriticalI_OptionSpec('verbose', CriticalI_OptionSpec::NONE, null, 'Displays lots of information as the installation progresses.')));
   }
   
   /**
@@ -64,23 +64,23 @@ DESC
     }
     
     // load the project
-    $prj = Vulture_Project_Manager::load(isset($this->options['project']) ?
+    $prj = CriticalI_Project_Manager::load(isset($this->options['project']) ?
                                           $this->options['project'] : null);
     
-    $status = new Vulture_Command_ProjectAdd_Listener();
+    $status = new CriticalI_Command_ProjectAdd_Listener();
     if ($this->options['verbose'])
       $status->showDebug = true;
     $prj->set_status_listener($status);
     
     // find the packages
     $pkgs = array();
-    $allPkgs = Vulture_Package_List::get();
+    $allPkgs = CriticalI_Package_List::get();
     foreach ($this->args as $arg) {
       if (!isset($allPkgs[$arg]))
-        throw new Vulture_UnknownPackageError($arg);
+        throw new CriticalI_UnknownPackageError($arg);
       if (isset($this->options['version'])) {
         if (!isset($allPkgs[$arg][$this->options['version']]))
-          throw new Vulture_UnknownPackageVersionError($arg, $this->options['version']);
+          throw new CriticalI_UnknownPackageVersionError($arg, $this->options['version']);
         $pkgs[] = $allPkgs[$arg][$this->options['version']];
       } else {
         $pkgs[] = $allPkgs[$arg]->newest();

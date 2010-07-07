@@ -1,24 +1,24 @@
 <?php
 
-class Vulture_ClassUtilsTest extends Vulture_TestCase {
+class CriticalI_ClassUtilsTest extends CriticalI_TestCase {
   
   public function testClassName() {
-    $this->assertEquals('Vulture', Vulture_ClassUtils::class_name('Vulture.php'));
-    $this->assertEquals('Vulture', Vulture_ClassUtils::class_name('lib/Vulture.php'));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name('lib/Vulture/Test.php'));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name('lib/Vulture/Test.php', ''));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name('lib/Vulture/Test.php', 'bogus'));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name('lib/Vulture/Test'));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name('lib/Vulture/Test.inc'));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name('/usr/local/vulture/Core/lib/Vulture/Test.php', '/usr/local/vulture/Core'));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name('/usr/local/vulture/Core/lib/Vulture/Test.php', '/usr/local/vulture/Core/'));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name("\\usr\\local\\vulture\\Core\\lib\\Vulture\\Test.php", '/usr/local/vulture/Core/'));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name('/usr/local/vulture/Core/lib/Vulture/Test.php', "\\usr\\local\\vulture/Core/"));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name("C:\\usr\\local\\vulture\\core\\lib\\Vulture\\Test.php"));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name("\\\\SERVER\\usr\\local\\vulture\\core\\lib\\Vulture\\Test.php"));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name("Http://LocalHost/usr/local/vulture/core/lib/Vulture/Test.php"));
-    $this->assertEquals('Vulture_Test', Vulture_ClassUtils::class_name("Http://Someone@LocalHost/usr/local/vulture/core/lib/Vulture/Test.php"));
-    $this->assertEquals('', Vulture_ClassUtils::class_name('/usr/local/bin'));
+    $this->assertEquals('CriticalI', CriticalI_ClassUtils::class_name('CriticalI.php'));
+    $this->assertEquals('CriticalI', CriticalI_ClassUtils::class_name('lib/CriticalI.php'));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name('lib/CriticalI/Test.php'));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name('lib/CriticalI/Test.php', ''));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name('lib/CriticalI/Test.php', 'bogus'));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name('lib/CriticalI/Test'));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name('lib/CriticalI/Test.inc'));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name('/usr/local/criticali/Core/lib/CriticalI/Test.php', '/usr/local/criticali/Core'));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name('/usr/local/criticali/Core/lib/CriticalI/Test.php', '/usr/local/criticali/Core/'));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name("\\usr\\local\\criticali\\Core\\lib\\CriticalI\\Test.php", '/usr/local/criticali/Core/'));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name('/usr/local/criticali/Core/lib/CriticalI/Test.php', "\\usr\\local\\criticali/Core/"));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name("C:\\usr\\local\\criticali\\core\\lib\\CriticalI\\Test.php"));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name("\\\\SERVER\\usr\\local\\criticali\\core\\lib\\CriticalI\\Test.php"));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name("Http://LocalHost/usr/local/criticali/core/lib/CriticalI/Test.php"));
+    $this->assertEquals('CriticalI_Test', CriticalI_ClassUtils::class_name("Http://Someone@LocalHost/usr/local/criticali/core/lib/CriticalI/Test.php"));
+    $this->assertEquals('', CriticalI_ClassUtils::class_name('/usr/local/bin'));
   }
   
 }

@@ -4,7 +4,7 @@
  * A Version is the most granular form of a package.  It represents a
  * single installed version.
  */
-class Vulture_Package_Version {
+class CriticalI_Package_Version {
   protected $package;
   protected $major;
   protected $minor;
@@ -15,11 +15,11 @@ class Vulture_Package_Version {
   /**
    * Constructor
    *
-   * @param Vulture_Package $package  The containing package
+   * @param CriticalI_Package $package  The containing package
    * @param int $major Major version number
    * @param int $minor Minor version number
    * @param int $revision Revision number
-   * @param string $dir Installation directory, relative to VULTURE_ROOT
+   * @param string $dir Installation directory, relative to CRITICALI_ROOT
    */
   public function __construct($package, $major, $minor, $revision, $dir) {
     $this->package = $package;
@@ -32,14 +32,14 @@ class Vulture_Package_Version {
   
   /**
    * Return the containing package
-   * @return Vulture_Package
+   * @return CriticalI_Package
    */
   public function package() {
     return $this->package;
   }
   
   /**
-   * Return the installation directory (relative to VULTURE_ROOT)
+   * Return the installation directory (relative to CRITICALI_ROOT)
    * @return string
    */
   public function installation_directory() {
@@ -55,7 +55,7 @@ class Vulture_Package_Version {
    */
   public function property($name, $default = null) {
     if (is_null($this->properties))
-      $this->properties = Vulture_ConfigFile::read("$GLOBALS[VULTURE_ROOT]/".$this->directory."/package.ini");
+      $this->properties = CriticalI_ConfigFile::read("$GLOBALS[CRITICALI_ROOT]/".$this->directory."/package.ini");
     return isset($this->properties[$name]) ? $this->properties[$name] : $default;
   }
   
@@ -103,7 +103,7 @@ class Vulture_Package_Version {
    * version.  Returns -1, 0, or -1 when this version is less than,
    * within, or greater than the specified range, respectively.
    *
-   * @param Vulture_Pacakge_VersionSpec $ver  The version specification to compare
+   * @param CriticalI_Pacakge_VersionSpec $ver  The version specification to compare
    * @return int
    */
   public function compare_version_specification($ver) {
@@ -159,14 +159,14 @@ class Vulture_Package_Version {
   
   /**
    * Returns a comparable version spec object given a version dependency
-   * string.  See Vulture_Package::satisify_dependency for formation
+   * string.  See CriticalI_Package::satisify_dependency for formation
    * information.
    *
    * @param string $version  The version dependency string
-   * @return Vulture_Package_VersionSpec
+   * @return CriticalI_Package_VersionSpec
    */
   public static function canonify_version_specification($version) {
-    return new Vulture_Package_VersionSpec($version);
+    return new CriticalI_Package_VersionSpec($version);
   }
   
   /**
@@ -205,7 +205,7 @@ class Vulture_Package_Version {
 /**
  * Internally used to represent a parsed version dependency specification
  */
-class Vulture_Package_VersionSpec {
+class CriticalI_Package_VersionSpec {
   public $start;
   public $end;
   public $exact;
@@ -237,13 +237,13 @@ class Vulture_Package_VersionSpec {
       $this->minus = true;
     } elseif (strpos($str, '-') !== false) {
       $parts = explode('-', $str, 2);
-      $this->end = Vulture_Package_Version::canonify_version($parts[1]);
+      $this->end = CriticalI_Package_Version::canonify_version($parts[1]);
       $str = $parts[0];
     }
     
-    $this->start = Vulture_Package_Version::canonify_version($str);
+    $this->start = CriticalI_Package_Version::canonify_version($str);
     
-    if ($this->end && (Vulture_Package_Version::compare_version_arrays($this->start, $this->end) > 0)) {
+    if ($this->end && (CriticalI_Package_Version::compare_version_arrays($this->start, $this->end) > 0)) {
       $tmp = $this->start;
       $this->start = $this->end;
       $this->end = $tmp;

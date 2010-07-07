@@ -8,7 +8,7 @@
  * directory.  Whitespace is also trimmed from patterns, allowing for
  * easier creation of long pattern sets.
  */
-class Vulture_Globber {
+class CriticalI_Globber {
   /**
    * Return an array of pathnames matching the provided pattern and
    * origin directory.  Returned filenames are complete paths (not

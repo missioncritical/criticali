@@ -1,6 +1,6 @@
 <?php
 
-class Vulture_GlobberTest extends Vulture_TestCase {
+class CriticalI_GlobberTest extends CriticalI_TestCase {
   public function setUp() {
     if (!mkdir('globber/foo', 0777, true)) throw new Exception("Couldn't create directory");
     if (!mkdir('globber/bar', 0777, true)) throw new Exception("Couldn't create directory");
@@ -27,31 +27,31 @@ class Vulture_GlobberTest extends Vulture_TestCase {
   
   public function testMatch() {
     // single pattern
-    $matches = Vulture_Globber::match('globber', 'foo/*.txt');
+    $matches = CriticalI_Globber::match('globber', 'foo/*.txt');
     sort($matches);
     $this->assertEquals($matches, array('globber/foo/foo.txt', 'globber/foo/foo2.txt'));
 
     // no match
-    $matches = Vulture_Globber::match('globber', 'foo/*.tar');
+    $matches = CriticalI_Globber::match('globber', 'foo/*.tar');
     $this->assertEquals($matches, array());
 
     // no origin
-    $matches = Vulture_Globber::match('', 'globber/foo/*.txt');
+    $matches = CriticalI_Globber::match('', 'globber/foo/*.txt');
     sort($matches);
     $this->assertEquals($matches, array('globber/foo/foo.txt', 'globber/foo/foo2.txt'));
 
     // multiple patterns
-    $matches = Vulture_Globber::match('globber', 'foo/*.txt,bar/README');
+    $matches = CriticalI_Globber::match('globber', 'foo/*.txt,bar/README');
     sort($matches);
     $this->assertEquals($matches, array('globber/bar/README', 'globber/foo/foo.txt', 'globber/foo/foo2.txt'));
 
     // multiple patterns with whitespace
-    $matches = Vulture_Globber::match('globber', "foo/*.txt,\n     bar/README");
+    $matches = CriticalI_Globber::match('globber', "foo/*.txt,\n     bar/README");
     sort($matches);
     $this->assertEquals($matches, array('globber/bar/README', 'globber/foo/foo.txt', 'globber/foo/foo2.txt'));
 
     // multiple patterns, only one match
-    $matches = Vulture_Globber::match('globber', 'foo/*.tar,bar/README');
+    $matches = CriticalI_Globber::match('globber', 'foo/*.tar,bar/README');
     sort($matches);
     $this->assertEquals($matches, array('globber/bar/README'));
   }

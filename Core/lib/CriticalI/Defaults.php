@@ -4,10 +4,10 @@
  * A collection of built-in default values which are shared between
  * classes.
  */
-class Vulture_Defaults {
+class CriticalI_Defaults {
   
   const COMMAND_GLOB = 'cmd/*/Command/*.php';
-  const CORE_COMMAND_GLOB = 'cmd/Vulture/Command/*.php';
+  const CORE_COMMAND_GLOB = 'cmd/CriticalI/Command/*.php';
   
   const LIBRARY_INSTALL_FROM = 'lib';
   const LIBRARY_INSTALL_GLOB = '*';
@@ -21,7 +21,7 @@ class Vulture_Defaults {
    * Constructor -- instantiation is not allowed
    */
   private function __constructor() {
-    throw new Exception("Vulture_Defaults may not be instantiated.");
+    throw new Exception("CriticalI_Defaults may not be instantiated.");
   }
 }
 

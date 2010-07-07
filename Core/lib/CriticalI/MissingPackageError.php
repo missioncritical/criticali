@@ -3,7 +3,7 @@
 /**
  * Indicates a required package could not be found
  */
-class Vulture_MissingPackageError extends Exception {
+class CriticalI_MissingPackageError extends Exception {
   /**
    * Constructor
    *

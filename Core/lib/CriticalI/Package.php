@@ -7,7 +7,7 @@
  * ascending order.  Accessing versions by string index allows you access
  * them by version number.
  */
-class Vulture_Package implements IteratorAggregate, ArrayAccess {
+class CriticalI_Package implements IteratorAggregate, ArrayAccess {
   protected $name;
   protected $versions;
   
@@ -40,17 +40,17 @@ class Vulture_Package implements IteratorAggregate, ArrayAccess {
    */
   public function populate_versions_from_string($str, $directories) {
     foreach(explode(',', $str) as $rawVersion) {
-      list($maj, $min, $rev) = Vulture_Package_Version::canonify_version($rawVersion);
+      list($maj, $min, $rev) = CriticalI_Package_Version::canonify_version($rawVersion);
       $dir = (isset($directories[$this->name."-$maj.$min.$rev"]) ?
         $directories[$this->name."-$maj.$min.$rev"] : ($this->name."-$maj.$min.$rev"));
-      $this->versions[] = new Vulture_Package_Version($this, $maj, $min, $rev, $dir);
-      usort($this->versions, array('Vulture_Package_Version', 'compare_versions'));
+      $this->versions[] = new CriticalI_Package_Version($this, $maj, $min, $rev, $dir);
+      usort($this->versions, array('CriticalI_Package_Version', 'compare_versions'));
     }
   }
   
   /**
    * Return the oldest version of this package
-   * @return Vulture_Package_Version
+   * @return CriticalI_Package_Version
    */
   public function oldest() {
     return $this->versions[0];
@@ -58,7 +58,7 @@ class Vulture_Package implements IteratorAggregate, ArrayAccess {
   
   /**
    * Return the newest version of the package
-   * @return Vulture_Package_Version
+   * @return CriticalI_Package_Version
    */
   public function newest() {
     return $this->versions[count($this->versions) - 1];
@@ -99,10 +99,10 @@ class Vulture_Package implements IteratorAggregate, ArrayAccess {
    * an asterisk (*) may be specified to indicate any version.
    *
    * @param string $version  The version dependency specification
-   * @return Vulture_Package_Version
+   * @return CriticalI_Package_Version
    */
   public function satisfy_dependency($version) {
-    $spec = Vulture_Package_Version::canonify_version_specification($version);
+    $spec = CriticalI_Package_Version::canonify_version_specification($version);
     
     // find the first newest version that satisfies the dependency
     for ($i = count($this->versions) - 1; $i >= 0; $i--) {
@@ -121,7 +121,7 @@ class Vulture_Package implements IteratorAggregate, ArrayAccess {
    * @return int
    */
   public function index_of_version($ver) {
-    $version = Vulture_Package_Version::canonify_version($ver);
+    $version = CriticalI_Package_Version::canonify_version($ver);
     foreach ($this->versions as $idx=>$test) {
       $result = $test->compare_version_number($version);
       if ($result == 0) return $idx;
@@ -154,7 +154,7 @@ class Vulture_Package implements IteratorAggregate, ArrayAccess {
   /**
    * Retrieves the value at an array index.
    * @param string $idx  The index to get
-   * @return Vulture_Package_Version
+   * @return CriticalI_Package_Version
    */
   public function offsetGet($idx) {
     if (is_string($idx)) {
@@ -167,7 +167,7 @@ class Vulture_Package implements IteratorAggregate, ArrayAccess {
   /**
    * Sets the value at an array index
    * @param string $idx   The index to set
-   * @param Vulture_Package_Version $value The value to set
+   * @param CriticalI_Package_Version $value The value to set
    */
   public function offsetSet($idx, $value) {
     // special case for an empty value
@@ -175,8 +175,8 @@ class Vulture_Package implements IteratorAggregate, ArrayAccess {
       $this->offsetUnset($idx);
       return;
     }
-    if (!($value instanceof Vulture_Package_Version))
-      throw new Exception("Invalid parameter supplied.  Vulture_Package_Version required, but received ".get_class($value));
+    if (!($value instanceof CriticalI_Package_Version))
+      throw new Exception("Invalid parameter supplied.  CriticalI_Package_Version required, but received ".get_class($value));
     if ($value->parent() !== $this)
       throw new Exception("Invalid parameter supplied.  Version is not a part of this package.");
     
@@ -190,7 +190,7 @@ class Vulture_Package implements IteratorAggregate, ArrayAccess {
       $this->versions[$idx] = $value;
     }
     
-    usort($this->versions, array('Vulture_Package_Version', 'compare_versions'));
+    usort($this->versions, array('CriticalI_Package_Version', 'compare_versions'));
   }
   
   /**
@@ -204,7 +204,7 @@ class Vulture_Package implements IteratorAggregate, ArrayAccess {
       unset($this->versions[$idx]);
     }
 
-    usort($this->versions, array('Vulture_Package_Version', 'compare_versions'));
+    usort($this->versions, array('CriticalI_Package_Version', 'compare_versions'));
   }
   
 }

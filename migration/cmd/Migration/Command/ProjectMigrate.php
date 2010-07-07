@@ -27,7 +27,7 @@ DESC
    * Run the command
    */
   protected function run_command() {
-    if (count($this->args) < 1) {
+    if (count($this->args) > 0) {
       fwrite(STDERR, $this->help_string());
       exit(1);
     }

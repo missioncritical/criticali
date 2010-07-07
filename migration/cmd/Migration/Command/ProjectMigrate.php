@@ -3,21 +3,21 @@
 /**
  * ProjectMigrate command
  */
-class Migration_Command_ProjectMigrate extends Vulture_Command_ProjectEnvironment {
+class Migration_Command_ProjectMigrate extends CriticalI_Command_ProjectEnvironment {
   
   /**
    * Constructor
    */
   public function __construct() {
     parent::__construct('project-migrate', 'Run database migrations', <<<DESC
-  vulture project-migrate [options]
+  criticali project-migrate [options]
   
 Run database migrations to reach the specified version
 (the default is the most current version).
 DESC
 , array(
-  new Vulture_OptionSpec('project', Vulture_OptionSpec::REQUIRED, 'directory', 'Specify the project directory.  Defaults to the current working directory.'),
-  new Vulture_OptionSpec('version', Vulture_OptionSpec::REQUIRED, 'version_number', 'Specify the target version number.  Defaults to the most current version.')
+  new CriticalI_OptionSpec('project', CriticalI_OptionSpec::REQUIRED, 'directory', 'Specify the project directory.  Defaults to the current working directory.'),
+  new CriticalI_OptionSpec('version', CriticalI_OptionSpec::REQUIRED, 'version_number', 'Specify the target version number.  Defaults to the most current version.')
   ));
   }
   

@@ -1,6 +1,6 @@
 <?php
 
-class Migration_RunnerTest extends Vulture_DBTestCase {
+class Migration_RunnerTest extends CriticalI_DBTestCase {
   
   public function setUp() {
     $conn = $this->dbConnection();

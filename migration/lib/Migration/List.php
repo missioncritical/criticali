@@ -149,7 +149,7 @@ class Migration_List implements IteratorAggregate, ArrayAccess {
    */
   protected function load_migration_files() {
     $files = array();
-    foreach (Vulture_Globber::match($this->directory, '*_*.php') as $file) {
+    foreach (CriticalI_Globber::match($this->directory, '*_*.php') as $file) {
       $files[] = basename($file, '.php');
     }
     

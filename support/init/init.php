@@ -11,7 +11,7 @@ $INCLUDE_PATH = implode($PATH_SEPARATOR, array(
     "$ROOT_DIR/lib",
     "$ROOT_DIR/vendor",
     $INCLUDE_PATH));
-$VULTURE_RUNTIME_SEARCH_DIRECTORIES = explode($PATH_SEPARATOR, $INCLUDE_PATH);
+$CRITICALI_RUNTIME_SEARCH_DIRECTORIES = explode($PATH_SEPARATOR, $INCLUDE_PATH);
 
 ini_set('include_path', $INCLUDE_PATH);
 
@@ -22,12 +22,12 @@ if (Cfg::exists('logging/config'))
 
 // define an autoload function
 function __autoload($classname) {
-  global $VULTURE_RUNTIME_SEARCH_DIRECTORIES;
+  global $CRITICALI_RUNTIME_SEARCH_DIRECTORIES;
   
   $parts = explode('_', $classname);
   $filename = implode('/', $parts) . ".php";
   
-  foreach ($VULTURE_RUNTIME_SEARCH_DIRECTORIES as $dir) {
+  foreach ($CRITICALI_RUNTIME_SEARCH_DIRECTORIES as $dir) {
     if (file_exists("$dir/$filename")) {
       require_once($filename);
       return;

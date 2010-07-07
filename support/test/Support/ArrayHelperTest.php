@@ -1,6 +1,6 @@
 <?php
 
-class Support_ArrayHelperTest extends Vulture_TestCase {
+class Support_ArrayHelperTest extends CriticalI_TestCase {
 
   public function testMergeSorted() {
     $a = array(1, 3, 5, 6, 7, 9);

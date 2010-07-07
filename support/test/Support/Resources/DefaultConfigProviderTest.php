@@ -1,6 +1,6 @@
 <?php
 
-class Support_Resources_DefaultConfigProviderTest extends Vulture_TestCase {
+class Support_Resources_DefaultConfigProviderTest extends CriticalI_TestCase {
   
   public function testGet() {
     $this->assertEquals(Support_Resources::config_data(), $GLOBALS['APP_CONFIG']);

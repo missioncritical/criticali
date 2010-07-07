@@ -1,6 +1,6 @@
 <?php
 
-class Support_InflectorTest extends Vulture_TestCase {
+class Support_InflectorTest extends CriticalI_TestCase {
   
   public function testCamelize() {
     $this->assertEquals('TableName', Support_Inflector::camelize('table_name'));

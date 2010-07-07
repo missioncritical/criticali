@@ -1,4 +1,6 @@
 <?php
+// Copyright (c) 2009-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// See the LICENSE file distributed with this work for restrictions.
 
 /**
  * A collection of built-in default values which are shared between

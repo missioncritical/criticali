@@ -1,4 +1,6 @@
 <?php
+// Copyright (c) 2009-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// See the LICENSE file distributed with this work for restrictions.
 
 /**
  * Thrown if a removal fails due to the package not being installed.

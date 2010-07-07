@@ -1,4 +1,6 @@
 <?php
+// Copyright (c) 2009-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// See the LICENSE file distributed with this work for restrictions.
 
 /**
  * This class exists as a convenience for writing PHPUnit tests for the

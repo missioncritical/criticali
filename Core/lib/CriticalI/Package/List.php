@@ -1,4 +1,6 @@
 <?php
+// Copyright (c) 2009-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// See the LICENSE file distributed with this work for restrictions.
 
 /**
  * CriticalI_Package_List is the collection of installed packages.  It is a

@@ -1,4 +1,6 @@
 <?php
+// Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// See the LICENSE file distributed with this work for restrictions.
 
 // set the include path
 $ROOT_DIR = dirname(__FILE__);

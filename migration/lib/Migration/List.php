@@ -1,4 +1,6 @@
 <?php
+// Copyright (c) 2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// See the LICENSE file distributed with this work for restrictions.
 
 /**
  * Migration_List keeps track of the migrations for a single directory

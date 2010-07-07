@@ -22,7 +22,7 @@ class BelongsTo_Profile_NoKeyValidation extends ActiveRecord_Base {
   }
 }
 
-class ActiveRecord_Base_BelongsToTest extends Vulture_DBTestCase {
+class ActiveRecord_Base_BelongsToTest extends CriticalI_DBTestCase {
   
   public function testAssociationAccessor() {
     $profile = new BelongsTo_Profile();

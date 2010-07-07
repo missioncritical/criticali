@@ -19,7 +19,7 @@ class CachedAttributeTest_Name extends ActiveRecord_Base {
   }
 }
 
-class ActiveRecord_Base_CachedAttributeTest extends Vulture_DBTestCase {
+class ActiveRecord_Base_CachedAttributeTest extends CriticalI_DBTestCase {
   
   public function testHasCachedAttribute() {
     $name = new CachedAttributeTest_Name();

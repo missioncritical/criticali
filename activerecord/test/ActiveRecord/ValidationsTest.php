@@ -23,7 +23,7 @@ class ConditionalName extends ActiveRecord_Base {
   public function should_validate_last() { return $this->doValidateLast; }
 }
 
-class ActiveRecord_ValidationsTest extends Vulture_DBTestCase {
+class ActiveRecord_ValidationsTest extends CriticalI_DBTestCase {
 
   public function testValidatesPresenceOf() {
     $name = new ValidationName();

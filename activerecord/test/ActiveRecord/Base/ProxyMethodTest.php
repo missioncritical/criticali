@@ -44,7 +44,7 @@ class ProxyMethodTest_Name extends ActiveRecord_Base {
   
 }
 
-class ActiveRecord_Base_ProxyMethodTest extends Vulture_DBTestCase {
+class ActiveRecord_Base_ProxyMethodTest extends CriticalI_DBTestCase {
   
   public function testReadProxyCall() {
     $name = new ProxyMethodTest_Name();

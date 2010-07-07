@@ -16,7 +16,7 @@ class HasOne_Profile extends ActiveRecord_Base {
 }
 
 
-class ActiveRecord_Base_HasOneTest extends Vulture_DBTestCase {
+class ActiveRecord_Base_HasOneTest extends CriticalI_DBTestCase {
   
   public function testAssociationAccessor() {
     $user = new HasOne_User();

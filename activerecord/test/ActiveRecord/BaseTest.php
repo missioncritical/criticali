@@ -62,7 +62,7 @@ class Base_ProtectedUser extends ActiveRecord_Base {
   }
 }
 
-class ActiveRecord_BaseTest extends Vulture_DBTestCase {
+class ActiveRecord_BaseTest extends CriticalI_DBTestCase {
 
   /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    * TESTS FOR PUBLIC GENERAL CLASS-LEVEL OPERATIONS

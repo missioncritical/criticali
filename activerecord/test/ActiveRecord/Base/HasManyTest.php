@@ -23,7 +23,7 @@ class HasMany_User_Ordered extends ActiveRecord_Base {
 }
 
 
-class ActiveRecord_Base_HasManyTest extends Vulture_DBTestCase {
+class ActiveRecord_Base_HasManyTest extends CriticalI_DBTestCase {
   
   public function testAssociationAccessor() {
     $user = new HasMany_User();

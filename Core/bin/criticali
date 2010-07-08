@@ -13,4 +13,4 @@ then
   php="php"
 fi
 
-$php $criticali_root/Core/criticali_command.php $*
+$php $criticali_root/Core/criticali_command.php "$@"

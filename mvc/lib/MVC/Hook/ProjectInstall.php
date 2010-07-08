@@ -1,6 +1,7 @@
 <?php
 // Copyright (c) 2009-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
 // See the LICENSE file distributed with this work for restrictions.
+/** @package mvc */
 
 /**
  * Custom install tasks for the mvc package

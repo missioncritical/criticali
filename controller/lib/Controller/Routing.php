@@ -1,6 +1,7 @@
 <?php
 // Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
 // See the LICENSE file distributed with this work for restrictions.
+/** @package controller */
 
 /**
  * Handles simple routing rules for dispatching requests to controllers

@@ -1,4 +1,5 @@
 <?php
+/** @package smarty */
 
 /**
  * number_format Smarty modifier

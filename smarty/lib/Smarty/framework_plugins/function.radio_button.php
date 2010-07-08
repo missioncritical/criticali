@@ -1,4 +1,5 @@
 <?php
+/** @package smarty */
 
 /**
  * radio_button Smarty function

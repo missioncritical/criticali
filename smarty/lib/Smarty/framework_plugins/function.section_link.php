@@ -1,4 +1,5 @@
 <?php
+/** @package smarty */
 
 /**
  * section_link Smarty function

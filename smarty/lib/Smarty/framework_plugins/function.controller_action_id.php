@@ -1,4 +1,5 @@
 <?php
+/** @package smarty */
 
 /**
  * controller_action_id Smarty function

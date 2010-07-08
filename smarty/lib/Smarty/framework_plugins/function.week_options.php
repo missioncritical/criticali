@@ -1,4 +1,6 @@
 <?php
+/** @package smarty */
+
 /**
  * week_options Smarty function
  *

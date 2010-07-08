@@ -1,4 +1,5 @@
 <?php
+/** @package smarty */
 
 /**
  * Custom install tasks for the Smarty package

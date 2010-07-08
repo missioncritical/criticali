@@ -1,4 +1,5 @@
 <?php
+/** @package smarty */
 
 /**
  * include_text Smarty function

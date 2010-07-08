@@ -1,4 +1,5 @@
 <?php
+/** @package smarty */
 
 /**
  * obfuscate Smarty modifier

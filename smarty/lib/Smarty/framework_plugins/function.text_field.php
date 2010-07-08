@@ -1,4 +1,5 @@
 <?php
+/** @package smarty */
 
 /**
  * text_field Smarty function

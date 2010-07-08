@@ -1,4 +1,6 @@
 <?php
+/** @package smarty */
+
 /**
  * Escape a string for flash HTML
  *

@@ -1,4 +1,5 @@
 <?php
+/** @package smarty */
 
 /**
  * password_field Smarty function

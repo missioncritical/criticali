@@ -1,4 +1,5 @@
 <?php
+/** @package smarty */
 
 /**
  * message_area Smarty function

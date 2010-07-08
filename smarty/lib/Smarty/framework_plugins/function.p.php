@@ -1,4 +1,6 @@
 <?php
+/** @package smarty */
+
 /**
  * p Smarty function (URL prefix)
  *

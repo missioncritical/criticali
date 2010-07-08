@@ -1,10 +1,12 @@
 <?php
-/**
+/** @package log4php */
+/*
  * This file is Copyright 2009 Jeffrey Hunter.  It is provided under the
  * same license as log4php, Apache License 1.1.  See LICENSE file for
  * details.
  */
 
+/** Constant required by log4php to locate the config file */
 if (Cfg::exists('logging/config') && (!defined('LOG4PHP_CONFIG_FILENAME')))
   define('LOG4PHP_CONFIG_FILENAME', Cfg::get('logging/config'));
 

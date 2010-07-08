@@ -5,7 +5,7 @@
 /**
  * An ActiveRecord_Connection for SQLite.
  *
- * @copyright Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+ * @package activerecord
  */
 
 /**

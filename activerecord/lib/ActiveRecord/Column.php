@@ -5,7 +5,7 @@
 /**
  * Column meta-data for ActiveRecord.
  *
- * @copyright Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+ * @package activerecord
  */
 
 

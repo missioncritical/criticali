@@ -6,7 +6,7 @@
  * An ActiveRecord implementation for PHP 5 based on the far-superior
  * Ruby on Rails implemenation.
  *
- * @copyright Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+ * @package activerecord
  */
 
 /**

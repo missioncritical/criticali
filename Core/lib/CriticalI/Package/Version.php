@@ -1,6 +1,7 @@
 <?php
 // Copyright (c) 2009-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
 // See the LICENSE file distributed with this work for restrictions.
+/** @package criticali */
 
 /**
  * A Version is the most granular form of a package.  It represents a

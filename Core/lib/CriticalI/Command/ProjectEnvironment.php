@@ -1,6 +1,7 @@
 <?php
 // Copyright (c) 2009-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
 // See the LICENSE file distributed with this work for restrictions.
+/** @package criticali */
 
 /**
  * A base class for writing commands that must run within a project's

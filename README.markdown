@@ -340,3 +340,9 @@ Now if I try to create or save a note without these, I'll get an error
 message:
 
 ![add page screen shot](http://criticali.missioncriticallabs.com/images/notes/notes_screenshot008.png "Add page of Notes controller with error message after trying to save a blank note")
+
+More Information
+----------------
+
+Ready to dig deeper into Critical I and find out more about it?  The best
+place to start is the [API documentation](http://criticali.missioncriticallabs.com/docs/).

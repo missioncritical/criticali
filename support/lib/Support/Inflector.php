@@ -5,7 +5,7 @@
 /**
  * Implementation of rules for converting words to singular or plural form.
  *
- * @copyright Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+ * @package support
  */
 
 /**

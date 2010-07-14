@@ -224,6 +224,14 @@ class CriticalI_Project {
       }
       
     }
+    
+    // set any property defaults
+    $defaults = $pkg->property('config.defaults');
+    if ($defaults) {
+      foreach ($defaults as $prop=>$default) {
+        $install->set_default_config_value($prop, $default);
+      }
+    }
 
     // register any init files
     $initFiles = CriticalI_Globber::match($pkgDir,

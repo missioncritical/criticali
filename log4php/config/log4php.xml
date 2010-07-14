@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<configuration threshold="all" debug="false">
+  <appender name="default" class="LoggerAppenderFile">
+    <param name="file" value="var/log/debug.log" />
+    <layout class="LoggerLayoutTTCC">
+      <param name="dateFormat" value="%Y-%m-%d %H:%M:%S" />
+    </layout>
+  </appender>
+  <root>
+    <priority value="debug" />
+    <appender_ref ref="default" />
+  </root>
+</configuration>

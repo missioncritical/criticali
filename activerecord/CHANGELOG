@@ -6,3 +6,5 @@
  * Added the primary key to the attributes array in ActiveRecord classes,
    but do not set it with any default value.  This fixes the dynamic
    find_by_id method.
+0.2.5 2010-07-13
+ * Added a default configuration property for the database dsn.

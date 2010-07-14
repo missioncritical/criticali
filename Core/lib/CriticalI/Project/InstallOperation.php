@@ -12,6 +12,7 @@ class CriticalI_Project_InstallOperation {
   protected $packageVersion;
   protected $dependencies;
   protected $filesAdded;
+  protected $configWriter;
   
   /**
    * Constructor
@@ -24,6 +25,7 @@ class CriticalI_Project_InstallOperation {
     $this->packageVersion = $packageVersion;
     $this->dependencies = array();
     $this->filesAdded = array();
+    $this->configWriter = null;
   }
   
   /**
@@ -178,6 +180,44 @@ class CriticalI_Project_InstallOperation {
   }
   
   /**
+   * Set a default configuration value in the project.  If no
+   * corresponding key in the configuration is set, defines a new value
+   * for it.
+   *
+   * @param string $key   The key to (potentially) set a default value for
+   * @param string $value The new default value
+   *
+   * @return boolean Returns true if a value was set, false otherwise
+   */
+  public function set_default_config_value($key, $value) {
+    if (!$this->configWriter) {
+      $this->ensure_config_file_exists();
+      $this->configWriter = new CriticalI_Project_ConfigFileWriter(
+        $this->project->private_directory() . '/config/config.php');
+    }
+    $success = $this->configWriter->set_default($key, $value);
+    if ($success) $this->configWriter->write_file();
+    return $success;
+  }
+  
+  /**
+   * Set a configuration value in the project.  This will override any
+   * existing value.
+   *
+   * @param string $key   The key to set the value for
+   * @param string $value The new default value
+   */
+  public function set_config_value($key, $value) {
+    if (!$this->configWriter) {
+      $this->ensure_config_file_exists();
+      $this->configWriter = new CriticalI_Project_ConfigFileWriter(
+        $this->project->private_directory() . '/config/config.php');
+    }
+    $this->configWriter->set_value($key, $value);
+    $this->configWriter->write_file();
+  }
+
+  /**
    * Abort a failed installation.  Removes all files that were created
    * and any directories that were created as long as they contain no
    * files (after removing added files).
@@ -187,6 +227,10 @@ class CriticalI_Project_InstallOperation {
     
     if ($this->project->status_listener())
       $this->project->status_listener()->debug($this->project, null, "Aborting installation");
+      
+    // revert config contents
+    if ($this->configWriter)
+      $this->configWriter->revert_file();
     
     // remove added files
     $dirs = array();
@@ -234,6 +278,28 @@ class CriticalI_Project_InstallOperation {
     closedir($dh);
     
     return $count;
+  }
+  
+  /**
+   * Create a config file on the fly if default properties are requested
+   */
+  protected function ensure_config_file_exists() {
+    $prefix = $this->project->type() == CriticalI_Project::INSIDE_PUBLIC ? 'private/' : '';
+    
+    if (!file_exists($this->project->private_directory() . '/config/config.php')) {
+      if (!is_dir($this->project->private_directory() . '/config'))
+        $this->mkdir("{$prefix}config");
+      
+      $file = $this->project->directory() . "/{$prefix}config/config.php";
+      if (($fh = fopen($file, 'wb')) === false)
+        throw new Exception("Could not create $file");
+      if (fwrite($fh, "<?php\n?>") === false)
+        throw new Exception("Error writing to $file");
+      
+      fclose($fh);
+      
+      $this->filesAdded[] = "{$prefix}config/config.php";
+    }
   }
 
 }

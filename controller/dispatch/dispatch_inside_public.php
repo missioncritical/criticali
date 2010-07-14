@@ -4,7 +4,8 @@
 
 require_once('private/init.php');
 
-$routing = new Controller_Routing();
+$routing_class = Cfg::get('routes/routing_class', 'Controller_Routing');
+$routing = new $routing_class();
 
 $params = array();
 $controller = $routing->controller_for($_SERVER['REQUEST_URI'], $params);

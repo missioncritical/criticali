@@ -3,3 +3,6 @@
 0.2.2 2010-06-30
  * Added template_cache_id() and template_compile_id() methods for
    supporting multiple template directories.
+0.2.3 2010-07-13
+ * The routing class used by the dispatch script is now configurable
+   through routes/routing_class.

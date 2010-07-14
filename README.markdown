@@ -60,39 +60,6 @@ simply a matter of copying the directory up to the server.  Critical I
 provides commands for managing the library components that are part of a
 project.
 
-### Configure The Project
-
-I'm going to use SQLite for my database, so I'll use my favorite text
-editor to create the file private/config/config.php inside of the notes
-directory and give it this content:
-
-    <?php
-    
-    $APP_CONFIG = array();
-    $APP_CONFIG['logging'] = array();
-    $APP_CONFIG['logging']['config'] = dirname(__FILE__).'/log4php.xml';
-    $APP_CONFIG['database'] = array();
-    $APP_CONFIG['database']['dsn'] = 'sqlite:'.dirname(__FILE__).'/../var/.db';
-    
-    ?>
-
-Then I'll configure some logging by creating the file
-private/config/log4php.xml with this content:
-
-    <?xml version="1.0"?>
-    <configuration threshold="all" debug="false">
-      <appender name="default" class="LoggerAppenderFile">
-        <param name="file" value="var/log/debug.log" />
-        <layout class="LoggerLayoutTTCC">
-          <param name="dateFormat" value="%Y-%m-%d %H:%M:%S" />
-        </layout>
-      </appender>
-      <root>
-        <priority value="debug" />
-        <appender_ref ref="default" />
-      </root>
-    </configuration>
-
 ### Setup The Database
 
 I'll use a migration to create the database table for my application.

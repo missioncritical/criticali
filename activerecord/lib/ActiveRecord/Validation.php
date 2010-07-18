@@ -267,6 +267,10 @@ class ActiveRecord_UniqueValidation extends ActiveRecord_Validation {
    * Scoping conditions
    */
   protected $scope;
+  /**
+   * Declaring class
+   */
+  protected $for_class;
 
   /**
    * Constructor
@@ -278,14 +282,16 @@ class ActiveRecord_UniqueValidation extends ActiveRecord_Validation {
    * @param bool   $allowNull  If true and the value is null, validation is skipped
    * @param int    $type       The validation type (ON_SAVE, ON_CREATE, or ON_UPDATE)
    * @param string $condition Optional method to call for determining whether to run the validation or not
+   * @param string $forClass   Optional class name to operate on (defaults to whatever record type it is given to validate)
    */
-  public function __construct($attrNames, $caseInsensitive = false, $scope = false, $msg = false, $allowNull = false, $type = ActiveRecord_Validation::ON_SAVE, $condition = false) {
+  public function __construct($attrNames, $caseInsensitive = false, $scope = false, $msg = false, $allowNull = false, $type = ActiveRecord_Validation::ON_SAVE, $condition = false, $forClass = null) {
     parent::__construct($type, $condition);
     $this->attrNames       = $attrNames;
     $this->caseInsensitive = $caseInsensitive;
     $this->allowNull       = $allowNull;
     $this->scope           = $scope;
     $this->msg             = $msg ? $msg : "is not unique (that value has already been used)";
+    $this->for_class       = $forClass;
   }
 
 
@@ -299,6 +305,14 @@ class ActiveRecord_UniqueValidation extends ActiveRecord_Validation {
   public function validate($obj) {
     if (!$this->should_validate($obj)) return;
 
+    // determine which class to use for DB searches
+    if ($this->for_class) {
+      $klassName = $this->for_class;
+      $klass = new $klassName();
+    } else {
+      $klass = $obj;
+    }
+
     foreach ($this->attrNames as $attr) {
       $value = $obj->$attr;
       $conditions = '';
@@ -308,22 +322,24 @@ class ActiveRecord_UniqueValidation extends ActiveRecord_Validation {
         $conditions = $attr . ' IS NULL';
       } else {
         if ($this->caseInsenstive)
-          $conditions = "LOWER($attr)=" . $obj->connection()->quote(strtolower($value));
+          $conditions = "LOWER($attr)=" . $klass->connection()->quote(strtolower($value));
         else
-          $conditions = $attr . '=' . $obj->connection()->quote($value);
+          $conditions = $attr . '=' . $klass->connection()->quote($value);
       }
 
       if ($this->scope) {
         foreach ($this->scope as $scopeAttr) {
           $scopeVal = $obj->$scopeAttr;
-          $conditions .= " AND $scopeAttr" . (is_null($scopeVal) ? ' IS NULL' : '=' . $obj->connection()->quote($scopeVal));
+          $conditions .= " AND $scopeAttr" . (is_null($scopeVal) ? ' IS NULL' : '=' . $klass->connection()->quote($scopeVal));
         }
       }
 
-      if (!$obj->new_record())
-        $conditions .= " AND ".$obj->primary_key()."<>".$obj->connection()->quote($obj->id);
+      if (!$obj->new_record()) {
+        $pk = $klass->primary_key();
+        $conditions .= " AND $pk<>".$klass->connection()->quote($obj->$pk);
+      }
 
-      if ($obj->find_first(array('conditions'=>$conditions)))
+      if ($klass->find_first(array('conditions'=>$conditions)))
         $obj->errors()->add($attr, $this->msg);
     }
   }

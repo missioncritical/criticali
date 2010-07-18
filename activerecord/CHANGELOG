@@ -8,3 +8,9 @@
    find_by_id method.
 0.2.5 2010-07-13
  * Added a default configuration property for the database dsn.
+0.2.6 2010-07-18
+ * Fixed double validations and validates_uniqueness_of for child classes
+   making use of single table inheritance.
+ * Fixed general issue with init_class potentially being invoked in the
+   base class when initializing a child class.
+ * Added class_name attribute to ActiveRecord_MetaInfo.

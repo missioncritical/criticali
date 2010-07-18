@@ -191,6 +191,7 @@ require_once('ActiveRecord/Validation.php');
 class ActiveRecord_MetaInfo {
   public $parent;
   public $connection;
+  public $class_name;
   public $table_name;
   public $table_name_prefix;
   public $table_name_suffix;
@@ -1044,7 +1045,9 @@ abstract class ActiveRecord_Base {
    * @return ActiveRecord_MetaInfo
    */
   public function load_meta_info() {
+    $thisKlassName = get_class($this);
     $this->metaInf = new ActiveRecord_MetaInfo();
+    $this->metaInf->class_name = $thisKlassName;
 
     if (!$this->is_first_concrete_descendent()) {
       $mom = get_parent_class($this);
@@ -1052,7 +1055,11 @@ abstract class ActiveRecord_Base {
       $this->metaInf->parent = ActiveRecord_InfoMgr::meta_info($momObj);
     }
 
-    $this->init_class();
+    // only call init_class for the class in which it was delcared or you get duplicate information
+    $meth = new ReflectionMethod($thisKlassName, 'init_class');
+    $klass = $meth->getDeclaringClass();
+    if ($klass->getName() == $thisKlassName)
+      $this->init_class();
 
     return $this->metaInf;
   }
@@ -1754,7 +1761,8 @@ abstract class ActiveRecord_Base {
                                                  isset($options['message']) ? $options['message'] : false,
                                                  isset($options['allow_null']) ? $options['allow_null'] : false,
                                                  isset($options['on']) ? $this->validation_name_to_type($options['on']) : ActiveRecord_Validation::ON_SAVE,
-                                                 isset($options['if']) ? $options['if'] : false);
+                                                 isset($options['if']) ? $options['if'] : false,
+                                                 get_class($this));
   }
 
   /**

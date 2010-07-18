@@ -123,6 +123,17 @@ class ActiveRecord_Proxy {
     if (is_null($this->metaInf->validations)) $this->metaInf->valiations = array();
     $this->metaInf->validations[] = $validation;
   }
+  
+  /**
+   * Return the class information object
+   *
+   * @return ActiveRecord_MetaInfo
+   */
+  public function get_meta_info() {
+    if (!$this->metaInf)
+      $this->metaInf = ActiveRecord_InfoMgr::meta_info($this->record);
+    return $this->metaInf;
+  }
 
 }
 

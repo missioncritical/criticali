@@ -14,3 +14,5 @@
  * Fixed general issue with init_class potentially being invoked in the
    base class when initializing a child class.
  * Added class_name attribute to ActiveRecord_MetaInfo.
+0.2.7 2010-07-18
+ * Add get_meta_info function to ActiveRecord_Proxy.

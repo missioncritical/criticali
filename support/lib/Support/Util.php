@@ -58,6 +58,24 @@ class Support_Util {
       exit;
   }
   
+  /**
+   * Validate an options array against a set of permitted options.  The
+   * permitted options are specified as an array whose keys are the
+   * allowable option keys (e.g. <code>array('a'=>1, 'b'=>1)</code> would
+   * allow option keys of <code>'a'</code> and <code>'b'</code> but not
+   * <code>'c'</code>.  If any invalid option is specified in the test
+   * array, a Support_UnknownOptionError is thrown.
+   *
+   * @param array $test  The options array to test
+   * @param array $allowed The list of permitted options (see description)
+   */
+  public static function validate_options($test, $allowed) {
+    foreach ($test as $key=>$value) {
+      if (!array_key_exists($key, $allowed))
+        throw new Support_UnknownOptionError($key);
+    }
+  }
+  
 }
 
 ?>

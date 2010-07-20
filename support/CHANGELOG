@@ -5,3 +5,5 @@
 0.2.3 2010-06-30
  * Redefined the template engine interface to include cache and compile
    ids
+0.2.4 2010-07-20
+ * Added validate_options method to Support_Util

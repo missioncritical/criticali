@@ -4,6 +4,33 @@
 /** @package controller */
 
 /**
+ * Class for event listener information
+ */
+class Controller_Base_EventListener {
+  public $event;
+  public $callback;
+  public $only;
+  public $except;
+  
+  public function __construct($event, $callback, $only, $except) {
+    $this->event    = $event;
+    $this->callback = $callback;
+    $this->only     = ((!$only) || is_array($only)) ? $only : array($only);
+    $this->except   = ((!$except) || is_array($except)) ? $except : array($except);
+  }
+  
+  public function can_call($action) {
+    if ($this->only) {
+      return (array_search($action, $this->only) !== false);
+    } elseif ($this->except) {
+      return (array_search($action, $this->except) === false);
+    } else {
+      return true;
+    }
+  }
+}
+
+/**
  * Base class for controllers
  */
 abstract class Controller_Base {
@@ -408,23 +435,34 @@ abstract class Controller_Base {
   }
 
   /**
-   * Register a method on this class to be called before any save
-   * operation is performed.
+   * Register a method on this class to be called before any request is
+   * processed.  If the method that is called returns false, all
+   * processing of the request is stopped.
+   *
+   * Options for the filter are:
+   *  - <b>only:</b>  Only apply the filter for the specified actions (string or array of action names)
+   *  - <b>except:</b> Apply the filter for all actions except the specified ones (string or array of action names)
    *
    * @param string $name  The name of the method to register.
+   * @param array  $options The list of options for the filter
    */
-  protected function before_filter($name) {
-    $this->add_event_listener('before_filter', array($this, $name));
+  protected function before_filter($name, $options = null) {
+    $this->add_event_listener('before_filter', array($this, $name), $options);
   }
 
   /**
-   * Register a method on this class to be called before any save
-   * operation is performed.
+   * Register a method on this class to be called before any request is
+   * processed.
+   *
+   * Options for the filter are:
+   *  - <b>only:</b>  Only apply the filter for the specified actions (string or array of action names)
+   *  - <b>except:</b> Apply the filter for all actions except the specified ones (string or array of action names)
    *
    * @param string $name  The name of the method to register.
+   * @param array  $options The list of options for the filter
    */
-  protected function after_filter($name) {
-    $this->add_event_listener('after_filter', array($this, $name));
+  protected function after_filter($name, $options = null) {
+    $this->add_event_listener('after_filter', array($this, $name), $options);
   }
 
   /**
@@ -448,15 +486,30 @@ abstract class Controller_Base {
   /**
    * Add an event listener to this class.
    *
+   * Options for the listener are:
+   *  - <b>only:</b>  Only invoke the listener for the specified actions (string or array of action names)
+   *  - <b>except:</b> Invoke the listener for all actions except the specified ones (string or array of action names)
+   *
    * @param string $eventName  Name of the event to bind the listener to
    * @param callback $function A callback function or method (will receive no arguments)
+   * @param array  $options The list of options for the callback
    */
-  protected function add_event_listener($eventName, $function) {
+  protected function add_event_listener($eventName, $function, $options = null) {
+    $options = is_array($options) ? $options : array();
+    Support_Util::validate_options($options, array('only'=>1, 'except'=>1));
+
+    if (isset($options['only']) && isset($options['except']))
+      throw new Exception("Options \"only\" and \"except\" are mutually exclusive.");
+    $only = isset($options['only']) ? $options['only'] : null;
+    $except = isset($options['except']) ? $options['except'] : null;
+    
+    $listener = new Controller_Base_EventListener($eventName, $function, $only, $except);
+    
     if (!isset($this->event_listeners))
       $this->event_listeners = array();
     if (!isset($this->event_listeners[$eventName]))
       $this->event_listeners[$eventName] = array();
-    $this->event_listeners[$eventName][] = $function;
+    $this->event_listeners[$eventName][] = $listener;
   }
 
   /**
@@ -473,7 +526,13 @@ abstract class Controller_Base {
     if (!isset($this->event_listeners[$eventName]))
       return false;
 
-    $pos = array_search($function, $this->event_listeners[$eventName]);
+    $pos = false;
+    foreach ($this->event_listeners[$eventName] as $key=>$listener) {
+      if ($listener->callback == $function) {
+        $pos = $key;
+        break;
+      }
+    }
     if ($pos === false)
       return false;
 
@@ -495,11 +554,13 @@ abstract class Controller_Base {
 
     $returnedTrue = true;
 
-    foreach ($this->event_listeners[$eventName] as $func) {
-      $result = call_user_func($func);
-      if ($result === false) {
-        $returnedTrue = false;
-        if ($vetoable) return;
+    foreach ($this->event_listeners[$eventName] as $listener) {
+      if ($listener->can_call($this->action())) {
+        $result = call_user_func($listener->callback);
+        if ($result === false) {
+          $returnedTrue = false;
+          if ($vetoable) return false;
+        }
       }
     }
 

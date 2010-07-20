@@ -6,3 +6,7 @@
 0.2.3 2010-07-13
  * The routing class used by the dispatch script is now configurable
    through routes/routing_class.
+0.2.4 2010-07-20
+ * Fixed the return value of fire_event when a vetoable event returns
+   false.
+ * Added except and only options to before_filter and after_filter.

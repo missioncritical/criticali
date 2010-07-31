@@ -7,3 +7,6 @@
    ids
 0.2.4 2010-07-20
  * Added validate_options method to Support_Util
+0.2.5 2010-07-31
+ * Added Support_ErrorLogger class and updated the init script to
+   register it by default.

@@ -61,6 +61,11 @@ function unhandled_exception($exception) {
 
 set_exception_handler('unhandled_exception');
 
+// register any error handler
+$errorHandler = Cfg::get('errors/handler', 'Support_ErrorLogger');
+if ($errorHandler && class_exists($errorHandler))
+  call_user_func(array($errorHandler, 'register'));
+
 // start the session
 session_start();
 

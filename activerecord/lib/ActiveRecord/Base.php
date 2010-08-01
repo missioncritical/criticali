@@ -3196,24 +3196,6 @@ abstract class ActiveRecord_Base {
     $inf->proxied_methods[$name] = new ActiveRecord_ProxyMethod($name, $callback);
   }
 
-  /**
-   * Extend class functionality.
-   * 
-   * @param mixed $object
-   *    An ActiveRecord_Extension object, or the name of a child class.
-   */
-  public function extend ( $object ) {
-    if ( is_string($object) ) {
-      $object = new $object();
-    }
-    
-    foreach ( $object->get_proxies($this) as $name ) {
-      $this->add_method_proxy($name, array ( $object, $name ));
-    }
-    
-    $object->extend_model($this);
-  }
-
 
 
 
@@ -3528,6 +3510,18 @@ abstract class ActiveRecord_Base {
       return ActiveRecord_Validation::ON_UPDATE;
 
     throw new Exception("Unrecognized value for on: $name");
+  }
+  
+  /**
+   * Return a proxy object for this class.
+   *
+   * @return ActiveRecord_Proxy
+   */
+  protected function proxy() {
+    $inf = $this->get_meta_info();
+    $proxy = new ActiveRecord_Proxy();
+    $proxy->initialize($this, $this->attributes, $this->cached_attributes, $inf);
+    return $proxy;
   }
 
 }

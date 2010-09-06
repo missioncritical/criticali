@@ -196,7 +196,7 @@ abstract class Controller_Base {
         
         $end = microtime(true);
         $elapsed = $end - $start;
-        $this->logger()->info("Completed in $elapsed sec [$_SERVER[REQUEST_URI] for $_SERVER[REMOTE_ADDR]]");
+        $this->logger()->info("Completed in $elapsed sec [$_SERVER[REQUEST_URI] for $_SERVER[REMOTE_ADDR]]\n");
         
         return;
       }
@@ -269,6 +269,7 @@ abstract class Controller_Base {
    * @param string $url  URL or fragment to redirect to
    */
   protected function redirect_to($url) {
+    $this->logger()->info("Redirect to $url");
     Support_Util::redirect($url, false);
     $this->set_rendered(true);
   }

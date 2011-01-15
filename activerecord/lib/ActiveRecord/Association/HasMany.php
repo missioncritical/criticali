@@ -370,6 +370,10 @@ class ActiveRecord_Association_HasMany extends ActiveRecord_Association {
       if ($result->$id) $ids[$aKlass->connection()->quote($result->$id)] = 1;
     }
     
+    // stop on an empty set
+    if (!$ids)
+      return;
+    
     // fetch them
     $options = array('conditions'=>"$key IN(".implode(',', array_keys($ids)).')');
     if ($this->order)

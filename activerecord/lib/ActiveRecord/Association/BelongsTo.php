@@ -217,6 +217,10 @@ class ActiveRecord_Association_BelongsTo extends ActiveRecord_Association {
       if ($result->$key) $ids[$aKlass->connection()->quote($result->$key)] = 1;
     }
     
+    // stop on an empty set
+    if (!$ids)
+      return;
+    
     // fetch them
     $associates = $aKlass->find_all(array('conditions'=>$aKlass->primary_key().
       ' IN('.implode(',', array_keys($ids)).')'));

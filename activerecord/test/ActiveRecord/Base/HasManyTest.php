@@ -661,6 +661,21 @@ class ActiveRecord_Base_HasManyTest extends CriticalI_DBTestCase {
         $this->assertEquals($user->id, $item->user_id);
       }
     }
+    
+    // test an empty set
+    $newUser = new HasMany_user(array('username'=>'testing#1', 'password'=>'*',
+      'disabled'=>false, 'last_login'=>date('Y-m-d H:i:s')));
+    $newUser->save_or_fail();
+    
+    $users = $user->find_all(array('conditions'=>array('username=?', 'testing#1'),
+      'include'=>'blog_posts'));
+    $this->assertEquals(1, count($users));
+    $this->assertEquals(0, $users[0]->blog_posts->count());
+
+    // test no results
+    $users = $user->find_all(array('conditions'=>array('username=?', 'testing#9'),
+      'include'=>'blog_posts'));
+    $this->assertEquals(0, count($users));
   }
 
 }

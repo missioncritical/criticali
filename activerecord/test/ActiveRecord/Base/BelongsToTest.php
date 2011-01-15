@@ -143,6 +143,11 @@ class ActiveRecord_Base_BelongsToTest extends CriticalI_DBTestCase {
     foreach ($profiles as $prof) {
       $this->assertEquals($prof->user_id, $prof->cached_user->id);
     }
+
+    // test no results
+    $profiles = $profile->find_all(array('conditions'=>array('email=?', 'none@example.com'),
+      'include'=>'user'));
+    $this->assertEquals(0, count($profiles));
   }
   
 }

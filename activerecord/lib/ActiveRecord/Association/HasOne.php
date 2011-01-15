@@ -192,6 +192,10 @@ class ActiveRecord_Association_HasOne extends ActiveRecord_Association {
       if ($result->$id) $ids[$aKlass->connection()->quote($result->$id)] = 1;
     }
     
+    // stop on an empty set
+    if (!$ids)
+      return;
+    
     // fetch them
     $associates = $aKlass->find_all(array('conditions'=>"$key IN(".
       implode(',', array_keys($ids)).')'));

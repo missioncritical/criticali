@@ -184,6 +184,11 @@ class ActiveRecord_Base_HasOneTest extends CriticalI_DBTestCase {
     foreach ($users as $user) {
       $this->assertEquals($user->id, $user->cached_profile->user_id);
     }
+
+    // test no results
+    $users = $user->find_all(array('conditions'=>array('username=?', 'testing#9'),
+      'include'=>'profile'));
+    $this->assertEquals(0, count($users));
   }
 
 }

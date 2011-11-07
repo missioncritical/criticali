@@ -210,6 +210,15 @@ class CriticalI_Package implements IteratorAggregate, ArrayAccess {
     usort($this->versions, array('CriticalI_Package_Version', 'compare_versions'));
   }
   
+  /**
+   * Return the count of versions of this package
+   *
+   * @return int
+   */
+  public function count() {
+    return count($this->versions);
+  }
+  
 }
 
 ?>

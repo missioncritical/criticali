@@ -23,6 +23,7 @@ class CriticalI_ChangeManager_PlannerTest_Package extends CriticalI_Package {
     foreach ($versions as $ver=>$depends) {
       $this->versions[] = new CriticalI_ChangeManager_PlannerTest_Version($this, $ver, $depends);
     }
+    usort($this->versions, array('CriticalI_Package_Version', 'compare_versions'));
   }
 }
 
@@ -66,14 +67,16 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
     // upgrade
     $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABC'),
       $this->buildPackageList('abProject'), false);
+    /*
     $this->assertTrue($this->planMatches($planner->install_plan('C', '1.0'),
       array('B'=>'1.2.0', 'C'=>'1.0.0'), array('B'=>'1.0.0')));
+    */
     
     // fail when upgrade not allowed
     try {
-      $planner->install_plan('C', '1.0', true, false);
+      $planner->install_plan('C', '1.0');
       $this->fail("Upgraded a package when not allowed");
-    } catch (CriticalI_Project_AlreadyInstalledError $e) {
+    } catch (CriticalI_ChangeManager_ResolutionError $e) {
       // expected
     }
     
@@ -83,11 +86,33 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
     $this->assertTrue($this->planMatches($planner->install_plan('D', '1.0'),
       array('B'=>'1.0.0', 'C'=>'1.0.0', 'D'=>'1.0.0'), array()));
     
-    // downgrade to meet requirements
-    
     // impossible dependencies
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDEF'),
+      $this->buildPackageList('emptyProject'), false);
+    try {
+      $planner->install_plan('F');
+      $this->fail("Installed a package with impossible dependencies");
+    } catch (CriticalI_ChangeManager_ResolutionError $e) {
+      // expected
+    }
     
     // multiple versions allowed
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABC'),
+      $this->buildPackageList('abProject'), true);
+    $this->assertTrue($this->planMatches($planner->install_plan('C', '1.0'),
+      array('C'=>'1.0.0', 'B'=>'1.2.0'), array()));
+    
+    // cycle
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDEFG'),
+      $this->buildPackageList('emptyProject'), false);
+    $this->assertTrue($this->planMatches($planner->install_plan('E'),
+      array('A'=>'1.0.0', 'E'=>'1.0.0', 'F'=>'1.0.0', 'G'=>'1.0.0'), array()));
+    
+    // ignore dependencies
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDEF'),
+      $this->buildPackageList('emptyProject'), false);
+    $this->assertTrue($this->planMatches($planner->install_plan('F', '1.0', false),
+      array('F'=>'1.0.0'), array()));
   }
   
   /**
@@ -220,6 +245,20 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
     'D'=>array('1.0.0'=>array('C'=>'1.0')),
     'E'=>array('1.0.0'=>array('A'=>'1.0')));
 
+  protected $repositoryABCDEF = array('A'=>array('1.0.0'=>array(), '2.0.0'=>array()),
+    'B'=>array('1.0.0'=>array('A'=>'1.0'), '1.2.0'=>array('A'=>'2.0')),
+    'C'=>array('1.0.0'=>array('B'=>'1.0'), '1.2.0'=>array('A'=>'2.0', 'B'=>'1.2')),
+    'D'=>array('1.0.0'=>array('C'=>'1.0')),
+    'E'=>array('1.0.0'=>array('A'=>'1.0')),
+    'F'=>array('1.0.0'=>array('A'=>'1.0', 'B'=>'1.2')));
+
+  protected $repositoryABCDEFG = array('A'=>array('1.0.0'=>array(), '2.0.0'=>array()),
+    'B'=>array('1.0.0'=>array('A'=>'1.0'), '1.2.0'=>array('A'=>'2.0')),
+    'C'=>array('1.0.0'=>array('B'=>'1.0'), '1.2.0'=>array('A'=>'2.0', 'B'=>'1.2')),
+    'D'=>array('1.0.0'=>array('C'=>'1.0')),
+    'E'=>array('1.0.0'=>array('A'=>'1.0', 'F'=>'1.0')),
+    'F'=>array('1.0.0'=>array('A'=>'1.0', 'G'=>'1.0')),
+    'G'=>array('1.0.0'=>array('E'=>'1.0')));
 }
 
 ?>

@@ -12,7 +12,7 @@ class CriticalI_ChangeManager_Planner {
   protected $sourceList;
   protected $installedList;
   protected $allowMultipleVersions;
-  protected $dependentsList;
+  protected $errors;
 
   /**
    * Constructor
@@ -21,266 +21,191 @@ class CriticalI_ChangeManager_Planner {
     $this->sourceList = $sourceList;
     $this->installedList = $installedList;
     $this->allowMultipleVersions = $allowMultipleVersions;
-    $this->dependentsList = null;
   }
-  
+
   /**
-   * Create a plan for installing the specified package
+   * Create a plan for installing the specified package or packages.
    *
-   * @param string $packageName          The name of the package to install
-   * @param string $versionSpecification The version specification for the package
-   * @param boolean $evalDepends         If true (default), evaluates package dependencies
-   * @param boolean $canUpgrade          If true (default), upgrades are allowed
+   * A few notes on the usage of the parameters. `packageName` may be a
+   * string specifying a single package or an array of package names.
+   * Likewise `version` may be a single version specification string or
+   * an array of version specifications. When `packageName` is a single
+   * string, `version` must also be a single string, and when
+   * `packageName` is an array, `version` must either be an array of the
+   * same size or a single string (indicating the same version
+   * specification applies to packages). If no version specification is
+   * provided, the specification "*" (meaning any version) is used.
+   *
+   * @param mixed $packageName          The name or array of packages to install 
+   * @param mixed $version              The version specification (or array of specification)
+   * @param boolean $evalDepends        If true (default), evaluates package dependencies
    *
    * @return CriticalI_ChangeManager_Plan
    */
-  public function install_plan($packageName, $versionSpecification = null, $evalDepends = true, $canUpgrade = true) {
-    // create a new plan
+  public function install_plan($packageName, $version = null, $evalDepends = true) {
+    // we're building a new plan
     $plan = new CriticalI_ChangeManager_Plan();
+    $this->errors = array();
     
-    // normalize the version specification
-    if ($versionSpecification == '' || is_null($versionSpecification))
-      $versionSpecification = '*';
+    // normalize the package name
+    $packageName = is_array($packageName) ? $packageName : array($packageName);
     
-    // build the plan
-    $this->add_to_plan($plan, $packageName, $versionSpecification, $evalDepends, $canUpgrade);
+    // and the version specification
+    if (!is_array($version)) {
+      $version = ($version == '' || is_null($version)) ? '*' : $version;
+      $version = array_fill(0, count($packageName), $version);
+    }
+    if (count($version) != count($packageName))
+      throw new CriticalI_UsageError(
+        "Number of parameters provided for packageName and version do not match.");
+    
+    // add the requirements to our plan
+    foreach ($packageName as $idx=>$name) {
+      $plan->push_requirement($name, $version[$idx]);
+    }
+    
+    // build out the plan
+    $plan = $this->eval_requirements($plan, $evalDepends);
+    
+    if ($plan === false)
+      throw new CriticalI_ChangeManager_ResolutionError($this->errors);
     
     return $plan;
   }
   
   /**
-   * Add a package to a plan
+   * Evaluate the requirements of a plan by adding packages to meet the
+   * requirements.
    *
-   * @param CriticalI_ChangeManager_Plan $plan The plan to add the package to
-   * @param string $packageName The name of the package to add
-   * @param string $version The version specification for the package
-   * @param boolean $evalDepends If true (default), evaluates package dependencies
-   * @param boolean $canUpgrade If true (default), upgrades are allowed
-   * @param CriticalI_Package_Version $requiredBy The package requiring the addition for dependency tracking
+   * @param CriticalI_ChangeManager_Plan $plan  The plan to evaluate
+   * @param boolean $evalDepends If true, evaluates package dependencies
+   *
+   * @return CriticalI_ChangeManager_Plan
    */
-  protected function add_to_plan($plan, $packageName, $version, $evalDepends = true, $canUpgrade = true, $requiredBy = null) {
-    // determine if the destination already has the package
-    if ($this->satisfies_dependency($plan, $packageName, $version)) {
-      // make sure the requirement is captured
-      $plan->add_requirement($packageName, $version, $requiredBy);
-      // no other changes needed
-      return;
-    }
+  protected function eval_requirements($plan, $evalDepends) {
+    $plans = array($plan);
     
-    // make sure the source provides the package
-    if (!isset($this->sourceList[$packageName]))
-      throw new CriticalI_UnknownPackageError($packageName);
-    $pkg = $this->sourceList[$packageName];
-    $pkgVer = $pkg->satisfy_dependency($version);
-    if (is_null($pkgVer))
-      throw new CriticalI_UnknownPackageVersionError($arg, $version);
+    while (count($plans) > 0) {
+      $plan = array_pop($plans);
       
-    // handle conflicts and automatic upgrades
-    if ($this->has_conflict($plan, $packageName, $version, $canUpgrade, $pkgVer, $requiredBy))
-      throw new CriticalI_Project_AlreadyInstalledError($packageName);
-
-    // add the package
-    $plan->add_package($pkgVer, $packageName, $version, $requiredBy);
-
-    // evaluate dependencies
-    if ($evalDepends) {
-      $depends = $pkgVer->property('dependencies', array());
-      foreach ($depends as $name=>$version) {
-        if ($version == '' || is_null($version))
-          $version = '*';
-        $this->add_to_plan($plan, $name, $version, true, $canUpgrade, $pkgVer);
-        // always check to make sure we weren't replaced
-        if ($plan->was_substituted($pkgVer))
-          return;
-      }
-    }
-  }
+      if ($plan->requirement_count() == 0)
+        return $plan;
+      
+      list($package, $version) = $plan->pop_requirement();
   
-  /**
-   * Return true if the current system or planned changes satisfy the
-   * dependency.
-   *
-   * @param CriticalI_ChangeManager_Plan $plan The plan to add the package to
-   * @param string $packageName The name of the package to add
-   * @param string $version The version specification for the package
-   *
-   * @return boolean
-   */
-  protected function satisfies_dependency($plan, $packageName, $version) {
-    // check the current system
-    if (isset($this->installedList[$packageName])) {
-      $pkgVer = $this->installedList[$packageName]->satisfy_dependency($version);
-      if (!is_null($pkgVer)) {
-        // only true if the specified package is not being removed
-        if (!$plan->is_on_remove_list($pkgVer)) {
-          return true;
-        }
+      if ($this->satisfies_requirement($package, $version) ||
+          $plan->satisfies_requirement($package, $version)) {
+        $plans[] = $plan;
+        continue;
       }
-    }
+
+      // see what our options are
+      $options = $this->matching_versions($package, $version);
     
-    // check the packages being added
-    if ($plan->will_satisfy_dependency($packageName, $version))
-      return true;
+      foreach ($options as $pkg) {
+        $newPlan = $this->try_add($plan, $pkg, $evalDepends);
+        if ($newPlan !== false)
+          $plans[] = $newPlan;
+      }
+      
+    }
     
     return false;
   }
   
   /**
-   * Returns the list of installed dependents indexed by package name
+   * Clone a package and attempt to add a package to it
+   */
+  protected function try_add($plan, $pkg, $evalDepends) {
+    if ($this->will_conflict($pkg, $plan)) {
+      $this->errors[] = "\"" . $pkg->package()->name() . ' (' . $pkg->version_string() .
+        ")\" would conflict with an installed or required package.";
+      return false;
+    }
+    
+    $newPlan = new CriticalI_ChangeManager_Plan($plan);
+    $newPlan->add_package($pkg);
+    
+    if ($evalDepends) {
+      $depends = $pkg->property('dependencies', array());
+      foreach ($depends as $name=>$version) {
+        $version = ($version == '' || is_null($version)) ? '*' : $version;
+        $newPlan->push_requirement($name, $version);
+      }
+    }
+    
+    try {
+      return $this->eval_requirements($newPlan, $evalDepends);
+    } catch (Exception $e) {
+      $this->errors[] = $e->getMessage();
+      return false;
+    }
+  }
+  
+  /**
+   * Determine if the installed set of packages satisfy the requirement
+   * for the named package and version.
+   *
+   * @param string $package  The name of the package
+   * @param string $version  The version specification
+   *
+   * @return boolean
+   */
+  protected function satisfies_requirement($package, $version) {
+    if (isset($this->installedList[$package])) {
+      $pkg = $this->installedList[$package]->satisfy_dependency($version);
+      if (!is_null($pkg))
+        return true;
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Return the list of suitable package versions for installation
+   * matching the given package name and version specification.
+   *
+   * @param string $package  The name of the package
+   * @param string $version  The version specification
    *
    * @return array
    */
-  protected function dependents_list() {
-    if (is_null($this->dependentsList)) {
-      $this->dependentsList = array();
+  protected function matching_versions($package, $version) {
+    if (!isset($this->sourceList[$package]))
+      throw new CriticalI_UnknownPackageError($package);
       
-      foreach ($this->installedList as $name=>$pkg) {
-        foreach ($pkg as $pkgVer) {
-          $depends = $pkgVer->property('dependencies', array());
-          foreach ($depends as $n=>$v) {
-            if ($v == '' || is_null($v)) $v = '*';
-            if (!isset($this->dependentsList[$n])) $this->dependentsList[$n] = array();
-            $this->dependentsList[$n][] = array('requirement'=>$v, 'version'=>$pkgVer);
-          }
-        }
-      }
-    }
+    $pkg = $this->sourceList[$package];
     
-    return $this->dependentsList;
+    $matches = array();
+    $spec = CriticalI_Package_Version::canonify_version_specification($version);
+    
+    // find all versions that satisfy the requirements
+    for ($i = $pkg->count() - 1; $i >= 0; $i--) {
+      $result = $pkg[$i]->compare_version_specification($spec);
+      if ($result < 0) break;
+      if ($result == 0) $matches[] = $pkg[$i];
+    }
+
+    if (count($matches) == 0)
+      throw new CriticalI_UnknownPackageVersionError($package, $version);
+    
+    return $matches;
   }
   
   /**
-   * Determine if there is a conflict with adding the given package in the
-   * existing system or planned changes.
-   *
-   * @param CriticalI_ChangeManager_Plan $plan The plan to add the package to
-   * @param string $packageName The name of the package to add
-   * @param string $version The version specification for the package
-   * @param boolean $canUpgrade If true, upgrades are allowed
-   * @param CriticalI_Package_Version $newPkgVer The new version object to install
-   * @param CriticalI_Package_Version $requiredBy The package requiring the addition for dependency tracking
+   * Determine if a conflicting package is already installed (or,
+   * optionally, will be installed).
    *
    * @return boolean
    */
-  protected function has_conflict($plan, $packageName, $version, $canUpgrade, $newPkgVer, $requiredBy) {
-    if ($this->allowMultipleVersions) {
-      // conflicts aren't possible
-      return false;
-    }
-    
-    // is this installed?
-    if (isset($this->installedList[$packageName])) {
-      $oldPkgVer = $this->installedList[$packageName]->newest();
-
-      // fall through if it's being removed
-      if (!$plan->is_on_remove_list($oldPkgVer)) {
-        // if we can't upgrade, it's a conflict
-        if (!$canUpgrade)
-          return true;
-
-        // any upgrade must meet the requirements of the current and planned system
-        if ($this->will_meet_requirements($plan, $oldPkgVer, $newPkgVer)) {
-          // okay, do the upgrade
-          $this->upgrade_package($plan, $oldPkgVer, $newPkgVer, $packageName, $version, $requiredBy);
-          return false;
-        } else {
-          return true;
-        }
-      }
-    }
-    
-    // not a part of the install, so determined by the plan
-    return $this->plan_will_conflict($plan, $packageName, $version, $newPkgVer, $requiredBy);
-  }
-
-  /**
-   * Determine if there is a planned change which will conflict with
-   * adding the given package.
-   *
-   * @param CriticalI_ChangeManager_Plan $plan The plan to add the package to
-   * @param string $packageName The name of the package to add
-   * @param string $version The version specification for the package
-   * @param CriticalI_Package_Version $newPkgVer The new version object to install
-   * @param CriticalI_Package_Version $requiredBy The package requiring the addition for dependency tracking
-   *
-   * @return boolean
-   */
-  protected function plan_will_conflict($plan, $packageName, $version, $newPkgVer, $requiredBy) {
-    // see if the plan has the same package
-    if ($plan->is_package_on_add_list($packageName)) {
-      // see if we can replace the planned version with this one
-      $oldPkgVer = $plan->package_on_add_list($packageName);
-
-      // it must meet the requirements of the current system
-      // and the requirements of the planned changes
-      if ($this->will_meet_requirements($plan, $oldPkgVer, $newPkgVer)) {
-        // make the substitution
-        $this->upgrade_planned_package($plan, $oldPkgVer, $newPkgVer, $packageName, $version, $requiredBy);
-        return false;
-      } else {
-        return true;
-      }
-    }
-    
-    return false;
-  }
-  
-  /**
-   * Test if a project substitution will meet the requirements of the
-   * current and planned system.
-   *
-   * @param CriticalI_ChangeManager_Plan $plan The plan being constructed
-   * @param CriticalI_Package_Version $oldPkgVer The package to remove
-   * @param CriticalI_Package_Version $newPkgVer The package to replace it with
-   *
-   * @return boolean
-   */
-  protected function will_meet_requirements($plan, $oldPkgVer, $newPkgVer) {
-    $depends = $this->dependents_list();
-    if (isset($depends[$oldPkgVer->package()->name()])) {
-      $requirements = $depends[$oldPkgVer->package()->name()];
-      
-      foreach ($requirements as $req) {
-        if ( ($req['version'] === $oldPkgVer) || ($plan->is_on_remove_list($req['version'])) )
-          continue;
-        
-        $spec = CriticalI_Package_Version::canonify_version_specification($req['requirement']);
-        if ($newPkgVer->compare_version_specification($spec) != 0)
-          return false;
-      }
-    }
-    
-    if ($plan->was_substituted($newPkgVer))
+  protected function will_conflict($pkg, $plan = null) {
+    if ($this->allowMultipleVersions)
       return false;
     
-    return $plan->will_meet_requirements($oldPkgVer, $newPkgVer);
-  }
-  
-  /**
-   * Called internally when upgrading an installed package to meet requirements
-   *
-   * @param CriticalI_ChangeManager_Plan $plan The plan to add the package to
-   * @param CriticalI_Package_Version $oldPkgVer The package being upgraded
-   * @param CriticalI_Package_Version $newPkgVer The new version object to install
-   * @param string $packageName The name of the package to add
-   * @param string $version The version specification for the package
-   */
-  protected function upgrade_package($plan, $oldPkgVer, $newPkgVer, $packageName, $version, $requiredBy) {
-          $plan->remove_package($oldPkgVer);
-          $plan->add_package($newPkgVer, $packageName, $version, $requiredBy);
-  }
-  
-  /**
-   * Called internally when replacing a planned package installation to meet requirements
-   *
-   * @param CriticalI_ChangeManager_Plan $plan The plan to add the package to
-   * @param CriticalI_Package_Version $oldPkgVer The package being upgraded
-   * @param CriticalI_Package_Version $newPkgVer The new version object to install
-   * @param string $packageName The name of the package to add
-   * @param string $version The version specification for the package
-   */
-  protected function upgrade_planned_package($plan, $oldPkgVer, $newPkgVer, $packageName, $version, $requiredBy) {
-    $plan->replace_planned_package($oldPkgVer, $newPkgVer, $packageName, $version, $requiredBy);
+    if (isset($this->installedList[$pkg->package()->name()]))
+      return true;
+    
+    return $plan ? $plan->will_conflict($pkg) : false;
   }
   
 }

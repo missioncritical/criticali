@@ -115,6 +115,41 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
       array('F'=>'1.0.0'), array()));
   }
   
+  public function testRemovePlan() {
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABC'),
+      $this->buildPackageList('abProject'), false);
+    
+    // no dependencies
+    $this->assertTrue($this->planMatches($planner->remove_plan('B'),
+      array(), array('B'=>'1.0.0')));
+    $this->assertTrue($this->planMatches($planner->remove_plan('B', '1.0'),
+      array(), array('B'=>'1.0.0')));
+    
+    // not installed
+    try {
+      $planner->remove_plan('C');
+      $this->fail("Removed non-existent package C");
+    } catch (CriticalI_ChangeManager_NotInstalledError $e) {
+      // expected
+    }
+    
+    // unable because of dependencies
+    try {
+      $planner->remove_plan('A');
+      $this->fail("Removed package with dependencies");
+    } catch (CriticalI_ChangeManager_HasDependentError $e) {
+      // expected
+    }
+
+    // two dependent packages
+    $this->assertTrue($this->planMatches($planner->remove_plan(array('A', 'B')),
+      array(), array('A'=>'1.0.0', 'B'=>'1.0.0')));
+
+    // ignore dependencies
+    $this->assertTrue($this->planMatches($planner->remove_plan('A', '1.0', false),
+      array(), array('A'=>'1.0.0')));
+  }
+  
   /**
    * Return data for testing
    */

@@ -47,17 +47,8 @@ class CriticalI_ChangeManager_Planner {
     $plan = new CriticalI_ChangeManager_Plan();
     $this->errors = array();
     
-    // normalize the package name
-    $packageName = is_array($packageName) ? $packageName : array($packageName);
-    
-    // and the version specification
-    if (!is_array($version)) {
-      $version = ($version == '' || is_null($version)) ? '*' : $version;
-      $version = array_fill(0, count($packageName), $version);
-    }
-    if (count($version) != count($packageName))
-      throw new CriticalI_UsageError(
-        "Number of parameters provided for packageName and version do not match.");
+    // normalize the arguments
+    $this->normalize_package_args($packageName, $version);
     
     // add the requirements to our plan
     foreach ($packageName as $idx=>$name) {
@@ -73,6 +64,58 @@ class CriticalI_ChangeManager_Planner {
     return $plan;
   }
   
+  /**
+   * Create a plan for removing the specified package or packages.
+   *
+   * See install_plan() for more information on the parameter format.
+   *
+   * @param mixed $packageName          The name or array of packages to remove
+   * @param mixed $version              The version specification (or array of specification)
+   * @param boolean $evalDepends        If true (default), fails when removal would break dependencies
+   *
+   * @return CriticalI_ChangeManager_Plan
+   */
+  public function remove_plan($packageName, $version = null, $evalDepends = true) {
+    $plan = new CriticalI_ChangeManager_Plan();
+    
+    // normalize the arguments
+    $this->normalize_package_args($packageName, $version);
+    
+    // add the requirements to our plan
+    foreach ($packageName as $idx=>$name) {
+      $pkg = $this->installed_package_instance($name, $version[$idx]);
+      $plan->remove_package($pkg);
+    }
+    
+    if ($evalDepends) {
+      $missing = $this->list_missing_dependencies($plan);
+      if (count($missing) > 0)
+        throw new CriticalI_ChangeManager_HasDependentError();
+    }
+
+    return $plan;
+  }
+  
+  /**
+   * Normalize $packageName and $version arguments as passed to public methods
+   *
+   * @param mixed $packageName          The name or array of packages
+   * @param mixed $version              The version specification (or array of specification)
+   */
+  protected function normalize_package_args(&$packageName, &$version) {
+    // normalize the package name
+    $packageName = is_array($packageName) ? $packageName : array($packageName);
+    
+    // and the version specification
+    if (!is_array($version)) {
+      $version = ($version == '' || is_null($version)) ? '*' : $version;
+      $version = array_fill(0, count($packageName), $version);
+    }
+    if (count($version) != count($packageName))
+      throw new CriticalI_UsageError(
+        "Number of parameters provided for packageName and version do not match.");
+  }
+
   /**
    * Evaluate the requirements of a plan by adding packages to meet the
    * requirements.
@@ -148,14 +191,15 @@ class CriticalI_ChangeManager_Planner {
    *
    * @param string $package  The name of the package
    * @param string $version  The version specification
+   * @param CriticalI_ChangeManager_Plan $plan Optional plan listing removed packages
    *
    * @return boolean
    */
-  protected function satisfies_requirement($package, $version) {
+  protected function satisfies_requirement($package, $version, $plan = null) {
     if (isset($this->installedList[$package])) {
       $pkg = $this->installedList[$package]->satisfy_dependency($version);
-      if (!is_null($pkg))
-        return true;
+      if ( (!is_null($pkg)) && ((!$plan) || (!$plan->is_on_remove_list($pkg))) )
+          return true;
     }
     
     return false;
@@ -208,6 +252,68 @@ class CriticalI_ChangeManager_Planner {
     return $plan ? $plan->will_conflict($pkg) : false;
   }
   
+  /**
+   * Return the named CriticalI_Package_Version instance from the
+   * installed list.
+   *
+   * @param string $package  The name of the package
+   * @param string $version  The version specification
+   *
+   * @return CriticalI_Package_Version
+   */
+  protected function installed_package_instance($package, $version) {
+    if (!isset($this->installedList[$package]))
+      throw new CriticalI_ChangeManager_NotInstalledError($package);
+      
+    $pkg = $this->installedList[$package];
+    
+    $ver = $pkg->satisfy_dependency($version);
+    
+    if (!$ver)
+      throw new CriticalI_ChangeManager_NotInstalledError($package, $version);
+    
+    return $ver;
+  }
+  
+  /**
+   * Return the list of dependencies that are not fulfilled in the system
+   * represented by the current installation and the given plan.
+   *
+   * @param CriticalI_ChangeManager_Plan $plan  The plan to evaluate
+   *
+   * @return array
+   */
+  protected function list_missing_dependencies($plan) {
+    $missing = array();
+    $check = array();
+
+    // begin with the list of installed packages
+    foreach ($this->installedList as $package) {
+      foreach ($package as $pkg) {
+        if (!$plan->is_on_remove_list($pkg))
+          $check[] = $pkg;
+      }
+    }
+    
+    // add the list of packages to install
+    foreach ($plan->add_list() as $pkg) {
+      $check[] = $pkg;
+    }
+    
+    // check everything
+    foreach ($check as $pkg) {
+      $depends = $pkg->property('dependencies', array());
+      foreach ($depends as $name=>$version) {
+        $version = ($version == '' || is_null($version)) ? '*' : $version;
+        if ((!$this->satisfies_requirement($name, $version, $plan)) &&
+            (!$plan->satisfies_requirement($name, $version)))
+          $missing[] = array($name, $version);
+      }
+    }
+    
+    return $missing;
+   }
+
 }
 
 ?>

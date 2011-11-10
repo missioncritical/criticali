@@ -1,7 +1,36 @@
 <?php
-// Copyright (c) 2009-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// Copyright (c) 2009-2011, Jeffrey Hunter and Mission Critical Labs, Inc.
 // See the LICENSE file distributed with this work for restrictions.
 /** @package criticali */
+
+/* Note: This class must eventually be refactored to be more efficient.
+   It is adequate for the time being, but will suffer performance and
+   memory problems as the number of available packages (particularly for
+   repositories) grows. The issue stems from how depedencies are
+   resolved. Dependencies form a graph and constructing a plan of which
+   packages to install (or upgrade) is really a matter of constructing a
+   path through that graph (i.e. this is a problem that has been solved
+   many times before). Currently a solution is found by determing all
+   possible paths through the graph. That is not particularly scalable.
+   As the number of nodes and edges in the graph increase (packages and
+   their dependencies, respectively), the resources to evaluate all those
+   paths will increase accordingly. This can be solved by viewing the
+   problem as identical to a shortest path/least cost routing problem. A
+   well-known algorithm exists for solving that problem. The idea behind
+   it is simply that as you begin to traverse paths, you only need to
+   continue along paths whose length/cost is the least in your set. You
+   can do this by maintaining an ordered list of paths you are
+   traversing. Once the path you are currently traversing exceeds the
+   length/cost of the shortest/cheapest path in your list, you add the
+   current path to the list and traverse the shorter/cheaper path
+   instead. Once you have a complete path, you only need to evaluate that
+   path against other paths in your list with the same cost/length. There
+   is plenty of existing documentation out there that explains the idea
+   in greater detail, but it's all applicable to this problem with cost
+   being equivalent to a preference for paths that begin with the newest
+   available package version. Hopefully this note is of some help when
+   refactoring in the future. In the meantime, onwards and upwards.
+*/
 
 /**
  * A Planner is used to construct a CriticalI_ChangeManager_Plan for

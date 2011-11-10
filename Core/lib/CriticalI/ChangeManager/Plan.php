@@ -156,8 +156,14 @@ class CriticalI_ChangeManager_Plan {
       $packageVersion->version_string());
     
     // only add once
-    if ($idx == -1)
+    if ($idx == -1) {
+      // if it was being removed, it isn't anymore
+      $idx = $this->index_of_version($this->remove, $packageVersion->package()->name(),
+        $packageVersion->version_string());
+      if ($idx !== -1) array_splice($this->remove, $idx, 1);
+
       $this->add[] = $packageVersion;
+    }
   }
   
   /**
@@ -168,8 +174,14 @@ class CriticalI_ChangeManager_Plan {
       $packageVersion->version_string());
     
     // only add to list once
-    if ($idx == -1)
+    if ($idx == -1) {
+      // if it was being added, it isn't anymore
+      $idx = $this->index_of_version($this->add, $packageVersion->package()->name(),
+        $packageVersion->version_string());
+      if ($idx !== -1) array_splice($this->add, $idx, 1);
+
       $this->remove[] = $packageVersion;
+    }
   }
   
   /**

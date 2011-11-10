@@ -150,6 +150,82 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
       array(), array('A'=>'1.0.0')));
   }
   
+  public function testUpgradePlan() {
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDE'),
+      $this->buildPackageList('aProject'), false);
+
+    // single package
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('A'),
+      array('A'=>'2.0.0'), array('A'=>'1.0.0')));
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('A', '2.0'),
+      array('A'=>'2.0.0'), array('A'=>'1.0.0')));
+
+    // no higher version available
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDE'),
+      $this->buildPackageList('a2Project'), false);
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('A'),
+      array(), array()));
+
+    // not installed
+    try {
+      $planner->upgrade_plan('B');
+      $this->fail("Upgraded non-existent package B");
+    } catch (CriticalI_ChangeManager_NotInstalledError $e) {
+      // expected
+    }
+
+    // upgrade dependency
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDE'),
+      $this->buildPackageList('abProject'), false);
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('B'),
+      array('A'=>'2.0.0', 'B'=>'1.2.0'), array('A'=>'1.0.0', 'B'=>'1.0.0')));
+    $this->assertTrue($this->planMatches($planner->upgrade_plan(array('A', 'B')),
+      array('A'=>'2.0.0', 'B'=>'1.2.0'), array('A'=>'1.0.0', 'B'=>'1.0.0')));
+
+    // unable because of dependency
+    try {
+      $planner->upgrade_plan('A');
+      $this->fail("Upgraded package with dependencies");
+    } catch (CriticalI_ChangeManager_HasDependentError $e) {
+      // expected
+    }
+
+    // upgrade multiple dependencies
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDEFGH'),
+      $this->buildPackageList('abcdhProject'), false);
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('H'),
+      array('A'=>'2.0.0', 'B'=>'1.2.0', 'C'=>'1.2.0', 'D'=>'1.2.0', 'H'=>'1.2.0'),
+      array('A'=>'1.0.0', 'B'=>'1.0.0', 'C'=>'1.0.0', 'D'=>'1.0.0', 'H'=>'1.0.0')));
+
+    // missing dependent package
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDEFGH'),
+      $this->buildPackageList('aeProject'), false);
+    try {
+      $planner->upgrade_plan('E');
+      $this->fail("Upgrade installed non-existent package");
+    } catch (CriticalI_ChangeManager_ResolutionError $e) {
+      // expected
+    }
+      
+    // dependencies not met
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDEFGH'),
+      $this->buildPackageList('agProject'), false);
+    try {
+      $planner->upgrade_plan('G');
+      $this->fail("Upgrade installed conflicting packages");
+    } catch (CriticalI_ChangeManager_ResolutionError $e) {
+      // expected
+    } catch (CriticalI_ChangeManager_HasDependentError $e) {
+      // also acceptable
+    }
+
+    // ignore dependencies
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDE'),
+      $this->buildPackageList('abProject'), false);
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('A', '*', false),
+      array('A'=>'2.0.0'), array('A'=>'1.0.0')));
+  }
+  
   /**
    * Return data for testing
    */
@@ -261,11 +337,22 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
   
   protected $aProject = array('A'=>array('1.0.0'=>array()));
   
+  protected $a2Project = array('A'=>array('2.0.0'=>array()));
+
   protected $abProject = array('A'=>array('1.0.0'=>array()),
     'B'=>array('1.0.0'=>array('A'=>'1.0')));
 
   protected $aeProject = array('A'=>array('1.0.0'=>array()),
     'E'=>array('1.0.0'=>array('A'=>'1.0')));
+
+  protected $abcdhProject = array('A'=>array('1.0.0'=>array()),
+    'B'=>array('1.0.0'=>array('A'=>'1.0')),
+    'C'=>array('1.0.0'=>array('B'=>'1.0')),
+    'D'=>array('1.0.0'=>array('C'=>'1.0')),
+    'H'=>array('1.0.0'=>array('A'=>'1.0', 'D'=>'1.0')));
+
+  protected $agProject = array('A'=>array('1.0.0'=>array()),
+    'G'=>array('1.0.0'=>array('A'=>'1.0')));
 
   protected $repositoryAB = array('A'=>array('1.0.0'=>array()),
     'B'=>array('1.0.0'=>array('A'=>'1.0')));
@@ -294,6 +381,17 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
     'E'=>array('1.0.0'=>array('A'=>'1.0', 'F'=>'1.0')),
     'F'=>array('1.0.0'=>array('A'=>'1.0', 'G'=>'1.0')),
     'G'=>array('1.0.0'=>array('E'=>'1.0')));
+
+  protected $repositoryABCDEFGH = array('A'=>array('1.0.0'=>array(), '2.0.0'=>array()),
+    'B'=>array('1.0.0'=>array('A'=>'1.0'), '1.2.0'=>array('A'=>'2.0')),
+    'C'=>array('1.0.0'=>array('B'=>'1.0'), '1.2.0'=>array('A'=>'2.0', 'B'=>'1.2'),
+        '1.3.0'=>array('A'=>'2.0', 'B'=>'1.2')),
+    'D'=>array('1.0.0'=>array('C'=>'1.0'), '1.2.0'=>array('C'=>'1.2.0!')),
+    'E'=>array('1.0.0'=>array('A'=>'1.0'), '1.2.0'=>array('A'=>'1.0', 'I'=>'1.0')),
+    'F'=>array('1.0.0'=>array('A'=>'1.0'), '1.2.0'=>array('A'=>'1.0')),
+    'G'=>array('1.0.0'=>array('A'=>'1.0'), '1.2.0'=>array('A'=>'2.0', 'F'=>'*')),
+    'H'=>array('1.0.0'=>array('A'=>'1.0.0', 'D'=>'1.0.0'),
+        '1.2.0'=>array('A'=>'2.0', 'C'=>'1.2', 'D'=>'1.2')));
 }
 
 ?>

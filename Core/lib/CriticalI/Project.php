@@ -13,8 +13,8 @@ class CriticalI_Project {
   protected $directory;
   protected $type;
   protected $properties;
-  protected $addStack;
   protected $statusListener;
+  protected $packageList;
   
   /**
    * Constructor
@@ -35,8 +35,7 @@ class CriticalI_Project {
     
     $filename = $this->private_directory() . '/vendor/.packages';
     $this->properties = CriticalI_ConfigFile::read($filename);
-    
-    $this->addStack = array();
+    $this->packageList = null;
   }
   
   /**
@@ -130,88 +129,165 @@ class CriticalI_Project {
   }
   
   /**
+   * Return the list of installed packages as a
+   * CriticalI_Project_PackageList (which contains CriticalI_Package
+   * objects instead of just a hash of strings).
+   *
+   * @return CriticalI_Project_PackageList
+   */
+  public function package_list() {
+    if (!$this->packageList)
+      $this->packageList = new CriticalI_Project_PackageList($this);
+    
+    return $this->packageList;
+  }
+  
+  /**
    * Test to see if a package is already installed
    *
    * @param mixed $pkg  A package name, CriticalI_Package, or CriticalI_Package_Version
    * @param string $ver An optional version specification
    */
   public function is_installed($pkg, $ver = null) {
-    $pkgs = $this->packages();
+    $list = $this->package_list();
     
-    if ($pkg instanceof Vuluture_Package_Version) {
-      if (!isset($pkgs[$pkg->package()->name()]))
+    if ($pkg instanceof CriticalI_Package_Version) {
+      if (!isset($list[$pkg->package()->name()]))
         return false;
-      $verNum = $pkgs[$pkg->package()->name()];
-      return ($pkg->compare_version_number(CriticalI_Package_Version::canonify_version($verNum)) == 0);
-      
-    } elseif ($pkg instanceof CriticalI_Package) {
-      if (!isset($pkgs[$pkg->name()]))
-        return false;
-      if (empty($ver))
-        return true;
-      // dummy version object
-      $verParts = CriticalI_Package_Version::canonify_version($pkgs[$pkg->name()]);
-      $verObj = new CriticalI_Package_Version(null, $verParts[0], $verParts[1], $verParts[2], '.');
-      $spec = CriticalI_Package_Version::canonify_version_specification($ver);
-      return ($verObj->compare_version_specification($spec) == 0);
-      
-    } else {
-      if (!isset($pkgs[$pkg]))
-        return false;
-      if (empty($ver))
-        return true;
-      // dummy version object
-      $verParts = CriticalI_Package_Version::canonify_version($pkgs[$pkg]);
-      $verObj = new CriticalI_Package_Version(null, $verParts[0], $verParts[1], $verParts[2], '.');
-      $spec = CriticalI_Package_Version::canonify_version_specification($ver);
-      return ($verObj->compare_version_specification($spec) == 0);
+      $found = $list[$pkg->package()->name()]->satisfy_dependency($pkg->version_string() . '!');
 
+    } else {
+      $name = ($pkg instanceof CriticalI_Package ? $pkg->name() : $pkg);
+    
+      if (!isset($list[$name]))
+        return false;
+      if (!$ver)
+        return true;
+    
+      $found = $list[$name]->satisfy_dependency($ver);
+    }
+    
+    return ($found ? true : false);
+  }
+  
+  /**
+   * Perform the set of operations prescribed by a
+   * CriticalI_ChangeManager_Plan
+   *
+   * @param CriticalI_ChangeManager_Plan $plan The plan to perform
+   */
+  public function perform($plan) {
+    // remove any requested packages
+    foreach ($plan->remove_list() as $pkg) {
+      $this->remove($pkg->package()->name());
+    }
+    
+    // add any requested packages
+    foreach ($plan->add_list() as $pkg) {
+      $this->add($pkg);
     }
   }
 
   /**
-   * Add a new package to the project.
+   * Add a package to the project.
    *
-   * By default this evaluates dependencies and adds any additional
-   * packages required by the new package first.
+   * This is a low-level method. It does not perform any error checking
+   * or dependency resolution. Create a CriticalI_ChangeManager_Plan and
+   * pass it to the perform method for higher level functionality.
    *
    * @param CriticalI_Package_Version $pkg  The package to add
-   * @param boolean $evalDepends Whether or not to evaluate dependencies
    */
-  public function add($pkg, $evalDepends = true) {
-    // can't install a package that already exists
-    if ($this->is_installed($pkg->package()->name()))
-      throw new CriticalI_Project_AlreadyInstalledError($pkg->package()->name());
+  public function add($pkg) {
     
     $install = new CriticalI_Project_InstallOperation($this, $pkg);
-    
-    // handle dependencies first
-    if ($evalDepends) {
-      $packages = CriticalI_Package_List::get();
-      $this->addStack[] = $pkg;
-      
-      try {
-        $this->add_dependencies($pkg, $install);
-      } catch (Exception $e) {
-        array_pop($this->addStack);
-        throw $e;
-      }
-      
-      array_pop($this->addStack);
-    }
     
     if ($this->statusListener)
       $this->statusListener->info($this, $pkg, "Installing ".$pkg->package()->name());
     
     // install the files
+    $this->install_files($install, $pkg);
+    
+    // set any property defaults
+    $this->install_property_defaults($install, $pkg);
+
+    // register any init files
+    $this->install_init_files($pkg);
+    
+    // allow the package to do any custom work
+    $this->run_installers_for($install, $pkg);
+    
+    // set the new properties for the package
+    // entries in the depends on list
+    $this->install_dependency_list($pkg);
+    
+    // and the package itself
+    $this->install_package_in_list($install, $pkg);
+    
+    // register any uninstallers
+    $this->install_uninstallers($pkg);
+
+    // write the properties
+    $this->write_properties();
+  }
+  
+  /**
+   * Remove a package from the project.
+   *
+   * This is a low-level method. It does not perform any error checking
+   * or dependency resolution. Create a CriticalI_ChangeManager_Plan and
+   * pass it to the perform method for higher level functionality.
+   *
+   * @param string $packageName The name of the package to remove
+   */
+  public function remove($packageName) {
+    $packages = $this->package_list();
+
+    // the package has to be installed in order to remove it
+    if (!isset($packages[$packageName]))
+      throw new CriticalI_Project_NotInstalledError($packageName);
+    
+    $pkg = $packages[$packageName]->newest();
+    
+    $manifest = unserialize( $pkg->property('manifest', serialize(array())) );
+    
+    if ($this->statusListener)
+      $this->statusListener->info($this, $pkg, "Removing ".$pkg->package()->name());
+
+    // run any uninstallers
+    $this->run_uninstallers_for($pkg);
+    
+    // remove the files
+    $this->uninstall_files($manifest);
+    
+    // remove this from the dependency lists
+    $this->uninstall_dependency_list($packageName);
+    
+    // clean up remaining package properties
+    $this->uninstall_package_in_list($packageName);
+      
+    // clean up init scripts
+    $this->uninstall_init_script_listings($manifest);
+    
+    // write the updated properties
+    $this->write_properties();
+  }
+  
+  /**
+   * Install the files for a package
+   *
+   * @param CriticalI_Project_InstallOperation $install  The install object
+   * @param CriticalI_Package $pkg The package to install files for
+   */
+  protected function install_files($install, $pkg) {
     $pkgDir = $GLOBALS['CRITICALI_ROOT'] . '/' . $pkg->installation_directory();
+    $dest = ($this->type == self::INSIDE_PUBLIC) ? 'private/vendor' : 'vendor';
+
     $bases = $pkg->property('library.install.from', CriticalI_Defaults::LIBRARY_INSTALL_FROM);
+
     foreach (explode(',', $bases) as $base) {
       $dir = $pkgDir . '/' . trim($base);
       $matches = CriticalI_Globber::match($dir,
         $pkg->property('library.install.glob', CriticalI_Defaults::LIBRARY_INSTALL_GLOB));
-      
-      $dest = ($this->type == self::INSIDE_PUBLIC) ? 'private/vendor' : 'vendor';
       
       try {
         foreach ($matches as $file) {
@@ -222,35 +298,57 @@ class CriticalI_Project {
         $install->abort();
         throw $e;
       }
-      
     }
-    
-    // set any property defaults
+
+  }
+  
+  /**
+   * Set any property defaults for a package
+   *
+   * @param CriticalI_Project_InstallOperation $install  The install object
+   * @param CriticalI_Package $pkg The package to install defaults for
+   */
+  protected function install_property_defaults($install, $pkg) {
     $defaults = $pkg->property('config.defaults');
     if ($defaults) {
       foreach ($defaults as $prop=>$default) {
         $install->set_default_config_value($prop, $default);
       }
     }
+  }
 
-    // register any init files
+  /**
+   * Add any specified classes to the init_files property for a package
+   *
+   * @param CriticalI_Package $pkg The package to add classes for
+   */
+  protected function install_init_files($pkg) {
+    $pkgDir = $GLOBALS['CRITICALI_ROOT'] . '/' . $pkg->installation_directory();
+
     $initFiles = CriticalI_Globber::match($pkgDir,
       $pkg->property('init.hooks', CriticalI_Defaults::INIT_HOOKS));
     $vendor = $this->private_directory() . '/vendor';
+
     foreach ($initFiles as $fullPath) {
       $initClass = CriticalI_ClassUtils::class_name($fullPath, $pkgDir);
       $file = CriticalI_ClassUtils::file_name($initClass);
-      if (file_exists("$vendor/$file")) {
-        if (isset($this->properties['init_files']) && (strlen($this->properties['init_files']) > 0))
-          $this->properties['init_files'] .= ",$file";
-        else
-          $this->properties['init_files'] = $file;
-      }
+      if (file_exists("$vendor/$file"))
+        $this->add_init_file($file);
     }
-    
-    // allow the package to do any custom work
+  }
+
+  /**
+   * Run any specified installers for a package
+   *
+   * @param CriticalI_Project_InstallOperation $install  The install object
+   * @param CriticalI_Package $pkg The package to run installers for
+   */
+  protected function run_installers_for($install, $pkg) {
+    $pkgDir = $GLOBALS['CRITICALI_ROOT'] . '/' . $pkg->installation_directory();
+
     $matches = CriticalI_Globber::match($pkgDir,
       $pkg->property('project.install.hooks', CriticalI_Defaults::PROJECT_INSTALL_HOOKS));
+
     foreach ($matches as $hookFile) {
       try {
         $hookClass = CriticalI_ClassUtils::class_name($hookFile, $pkgDir);
@@ -268,219 +366,79 @@ class CriticalI_Project {
           $e->getMessage(), E_USER_WARNING);
       }
     }
-    
-    // set the new properties for the package
-    // entries in the depends on list
-    if (strlen($install->dependency_string()) > 0) {
+  }
+
+  /**
+   * Add dependencies for a newly installed package to this project's
+   * properties
+   *
+   * @param CriticalI_Package $pkg The package to store dependencies for
+   */
+  protected function install_dependency_list($pkg) {
+    $depends = $pkg->property('dependencies', array());
+    if ($depends) {
+      $items = array();
+      foreach ($depends as $n=>$v) { $items[] = "$n=$v"; }
+      
       if (!isset($this->properties['depends_on'])) $this->properties['depends_on'] = array();
-      $this->properties['depends_on'][$pkg->package()->name()] = $install->dependency_string();
-    
-      // entries in the dependents list
-      $this->add_as_dependent($pkg->package()->name(), $install->dependency_string());
+      $this->properties['depends_on'][$pkg->package()->name()] = implode(',', $items);
     }
-    
-    // and the package itself
-    if (!isset($this->properties['packages'])) $this->properties['packages'] = array();
+  }
+
+  /**
+   * Add the given package to our list of installed packages
+   *
+   * @param CriticalI_Project_InstallOperation $install  The install object
+   * @param CriticalI_Package $pkg The package to add
+   */
+  protected function install_package_in_list($install, $pkg) {
+    // package list
+    if (!isset($this->properties['packages']))
+      $this->properties['packages'] = array();
     $this->properties['packages'][$pkg->package()->name()] = $pkg->version_string();
     
-    if (!isset($this->properties['manifests'])) $this->properties['manifests'] = array();
+    // add the manifest
+    if (!isset($this->properties['manifests']))
+      $this->properties['manifests'] = array();
     $this->properties['manifests'][$pkg->package()->name()] = serialize($install->file_list());
-    
-    // register any uninstallers
+
+    // rebuild the package list
+    $this->packageList = null;
+  }
+  
+  /**
+   * Add any specified classes to the uninstallers property for a package
+   *
+   * @param CriticalI_Package $pkg The package to add classes for
+   */
+  protected function install_uninstallers($pkg) {
+    $pkgDir = $GLOBALS['CRITICALI_ROOT'] . '/' . $pkg->installation_directory();
+
     $uninstallers = array();
+
     $matches = CriticalI_Globber::match($pkgDir,
       $pkg->property('project.uninstall.hooks', CriticalI_Defaults::PROJECT_UNINSTALL_HOOKS));
+
     foreach ($matches as $hookFile) {
       $hookClass = CriticalI_ClassUtils::class_name($hookFile, $pkgDir);
       if (!empty($hookClass)) $uninstallers[] = $hookClass;
     }
+
     if ($uninstallers) {
-      if (!isset($this->properties['uninstallers'])) $this->properties['uninstallers'] = array();
+      if (!isset($this->properties['uninstallers']))
+        $this->properties['uninstallers'] = array();
+
       $this->properties['uninstallers'][$pkg->package()->name()] = implode(',', $uninstallers);
     }
-
-    // write the properties
-    $this->write_properties();
-  }
-  
-  /**
-   * Adds dependencies for a package
-   *
-   * @param CriticalI_Package_Version $pkg  The package to add
-   * @param CriticalI_Project_InstallOperation $install The install operation for the package being added
-   */
-  protected function add_dependencies($pkg, $install) {
-    $depends = $pkg->property('dependencies', array());
-    foreach ($depends as $name=>$version) {
-      $install->add_dependency_item($name, $version);
-    
-      if ($this->is_installed($name, $version))
-        continue;
-      $projectPackages = $this->packages();
-      if (isset($projectPackages[$pkg->package()->name()]))
-        throw new CriticalI_Project_ConflictingDependencyError($name, $version, $projectPackages[$pkg]);
-        
-      // infinite recursion is bad, so see if we're already installing this
-      $found = false;
-      $spec = CriticalI_Package_Version::canonify_version_specification($version);
-      foreach ($this->addStack as $queued) {
-        if (($queued->package()->name() == $name) &&
-            ($queued->compare_version_specification($spec) == 0)) {
-          $found = true;
-          break;
-        }
-      }
-      if ($found)
-        continue;
-    
-      // get the package
-      $packages = CriticalI_Package_List::get();
-      if (!isset($packages[$name]))
-        throw new CriticalI_Project_MissingDependencyError($name, $version);
-      $otherPkg = $packages[$name];
-      $otherVer = $otherPkg->satisfy_dependency($version);
-      if (!$otherVer)
-        throw new CriticalI_Project_MissingDependencyError($name, $version);
-      
-      // install it
-      $this->add($otherVer, true);
-    }
-  }
-  
-  /**
-   * Add a package name as a dependent of one or more other packages
-   *
-   * @param string $dependentName  The name of the dependent
-   * @param string $dependsOnList  A list of packages it's a dependent for (as returned by dependency_string() from the install object)
-   */
-  protected function add_as_dependent($dependentName, $dependsOnList) {
-    if (!isset($this->properties['dependents'])) $this->properties['dependents'] = array();
-    foreach (explode(',', $dependsOnList) as $info) {
-      list ($name, $ver) = explode('=', $info, 2);
-      if (!isset($this->properties['dependents'][$name]))
-        $items = array();
-      else
-        $items = explode(',', $this->properties['dependents'][$name]);
-      if (!in_array($dependentName, $items))
-        $items[] = $dependentName;
-      $this->properties['dependents'][$name] = implode(',', $items);
-    }
   }
 
-  /**
-   * Remove a package name as a dependent of one or more other packages
-   *
-   * @param string $dependentName  The name of the dependent
-   * @param string $dependsOnList  A list of packages it's a dependent for (as returned by dependency_string() from the install object)
-   */
-  protected function remove_as_dependent($dependentName, $dependsOnList) {
-    if (!isset($this->properties['dependents'])) return;
-    foreach (explode(',', $dependsOnList) as $info) {
-      list ($name, $ver) = explode('=', $info, 2);
-      if (!isset($this->properties['dependents'][$name]))
-        continue;
-      $items = explode(',', $this->properties['dependents'][$name]);
-      $finalItems = array();
-      foreach ($items as $aDependent) { if ($aDependent != $dependentName) $finalItems[] = $aDependent; }
-      if ($finalItems)
-        $this->properties['dependents'][$name] = implode(',', $finalItems);
-      else
-        unset($this->properties['dependents'][$name]);
-    }
-  }
-
-  /**
-   * Remove a package from the project.
-   *
-   * By default this evaluates dependencies and will fail (throws a
-   * CriticalI_Project_ExistingDependencyError) if any other installed
-   * package depends on the one to remove.
-   *
-   * @param string $pkgName The name of the page to remove
-   * @param boolean $evalDepends Whether or not to evaluate dependencies
-   */
-  public function remove($pkg, $evalDepends = true) {
-    // the package has to be installed in order to remove it
-    if (!$this->is_installed($pkg))
-      throw new CriticalI_Project_NotInstalledError($pkg);
-    
-    // check any dependencies
-    if ($evalDepends) {
-      $dependents = $this->get_dependents($pkg);
-      if ($dependents)
-        throw new CriticalI_Project_ExistingDependencyError($pkg, implode(', ', $dependents));
-    }
-    
-    $manifest = (isset($this->properties['manifests']) &&
-                 isset($this->properties['manifests'][$pkg])) ?
-                unserialize($this->properties['manifests'][$pkg]) : array();
-    
-    // run any uninstallers
-    $this->run_uninstallers_for($pkg);
-    
-    // remove the files
-    $this->remove_files($manifest);
-    
-    // remove this from the dependency lists
-    if (isset($this->properties['depends_on']) &&
-        isset($this->properties['depends_on'][$pkg])) {
-      $this->remove_as_dependent($pkg, $this->properties['depends_on'][$pkg]);
-      unset($this->properties['depends_on'][$pkg]);
-    }
-    
-    // clean up remaining package properties
-    if (isset($this->properties['uninstallers']) &&
-        isset($this->properties['uninstallers'][$pkg]))
-      unset($this->properties['uninstallers'][$pkg]);
-
-    if (isset($this->properties['manifests']) &&
-        isset($this->properties['manifests'][$pkg]))
-      unset($this->properties['manifests'][$pkg]);
-
-    if (isset($this->properties['packages']) &&
-        isset($this->properties['packages'][$pkg]))
-      unset($this->properties['packages'][$pkg]);
-      
-    // clean up init scripts
-    if (isset($this->properties['init_files'])) {
-      $inits = explode(',', $this->properties['init_files']);
-      foreach ($manifest as $file) {
-        if (($pos = $this->init_list_search($file, $inits)) !== false)
-          array_splice($inits, $pos, 1);
-      }
-      $this->properties['init_files'] = implode(',', $inits);
-    }
-    
-    // write the updated properties
-    $this->write_properties();
-  }
-  
-  /**
-   * Return a list of package names that depend on the named package.
-   * Returns an empty array if there are no dependents.
-   *
-   * @param string $name  The package to return the dependents for
-   * @return array
-   */
-  public function get_dependents($pkg) {
-    if (!isset($this->properties['dependents']))
-      return array();
-    if (!isset($this->properties['dependents'][$pkg]))
-      return array();
-    return explode(',', $this->properties['dependents'][$pkg]);
-  }
-  
   /**
    * Run any registered uninstallers for a package
    *
-   * @param string $name  The package to run uninstallers for
+   * @param CriticalI_Project_PackageVersion $pkg  The package to run uninstallers for
    */
-  protected function run_uninstallers_for($name) {
-    if ( (!isset($this->properties['uninstallers'])) ||
-         (!isset($this->properties['uninstallers'][$name])) )
-      return;
-    
-    $classes = explode(',', $this->properties['uninstallers'][$name]);
+  protected function run_uninstallers_for($pkg) {
+    $classes = $pkg->property('uninstallers', array());
     
     foreach ($classes as $className) {
       $path = $this->private_directory() . '/vendor/' . implode('/', explode('_', $className)) . '.php';
@@ -496,7 +454,7 @@ class CriticalI_Project {
         if (!($uninstaller instanceof CriticalI_Project_UninstallHook))
           throw new Exception("$className is not an instance of CriticalI_Project_UninstallHook.");
         
-        $uninstaller->uninstall($this, $name);
+        $uninstaller->uninstall($this, $pkg->package()->name());
         
       } catch (Exception $e) {
         trigger_error("Skipping uninstaller $className due to error: ".$e->getMessage(), E_USER_WARNING);
@@ -512,7 +470,7 @@ class CriticalI_Project {
    *
    * @param array $manifest List of files to remove
    */
-  protected function remove_files($manifest) {
+  protected function uninstall_files($manifest) {
     $projectPrefix = $this->directory() . '/';
     
     // remove added files
@@ -564,37 +522,100 @@ class CriticalI_Project {
   }
   
   /**
-   * Search an array of init files for a matching manifest entry
+   * Remove dependencies for a package from this project's properties
    *
-   * @param string $needle   The manifest entry to look for
-   * @param array  $haystack The list of init files to search
-   *
-   * @return mixed  The corresponding key for the file in the array or false if not found
+   * @param string $packageName The package to remove dependencies for
    */
-  protected function init_list_search($needle, $haystack) {
-    $prefix = $this->type() == self::INSIDE_PUBLIC ? 'private/vendor' : 'vendor';
-    foreach ($haystack as $key=>$item) {
-      if ("$prefix/$item" == $needle)
-        return $key;
+  protected function uninstall_dependency_list($packageName) {
+    if (isset($this->properties['depends_on']) &&
+        isset($this->properties['depends_on'][$packageName])) {
+      unset($this->properties['depends_on'][$packageName]);
     }
-    return false;
   }
 
   /**
-   * Upgrade a package in the project.
+   * Remove the given package from our list of installed packages
    *
-   * By default this evaluates dependencies and will add or upgrade any
-   * needed dependencies of the package, but will fail (throws a
-   * CriticalI_Project_ExistingDependencyError) if any other installed
-   * package depends on the one to upgrade and cannot be upgraded to work
-   * with the new version.
-   *
-   * @param string $oldPkgName The name of the page to uprade
-   * @param CriticalI_Package_Version $newPkg The version to upgrade to
-   * @param boolean $evalDepends Whether or not to evaluate dependencies
+   * @param string $packageName The package to remove
    */
-  public function upgrade($oldPkgName, $newPkg, $evalDepends = true) {
+  protected function uninstall_package_in_list($packageName) {
+    // clean the uninstallers property
+    if (isset($this->properties['uninstallers']) &&
+        isset($this->properties['uninstallers'][$packageName]))
+      unset($this->properties['uninstallers'][$packageName]);
+
+    // clean the manifests property
+    if (isset($this->properties['manifests']) &&
+        isset($this->properties['manifests'][$packageName]))
+      unset($this->properties['manifests'][$packageName]);
+
+    // clean the packages property
+    if (isset($this->properties['packages']) &&
+        isset($this->properties['packages'][$packageName]))
+      unset($this->properties['packages'][$packageName]);
+    
+    // rebuild the package list
+    $this->packageList = null;
   }
+
+  /**
+   * Remove any listings in the init_files property for the removed files
+   * listed in $manifest
+   *
+   * @param array $manifest The manifest of recently removed files
+   */
+  protected function uninstall_init_script_listings($manifest) {
+    $init_files = $this->property('init_files', false);
+    $expanded = $init_files ? explode(',', $init_files) : array();
+
+    $map = array();
+    foreach ($expanded as $file) { $map[$file] = 1; }
+    
+    $regex = ($this->type == self::INSIDE_PUBLIC) ? "private[\\/\\\\]vendor" : 'vendor';
+    
+    foreach ($manifest as $file) {
+      if (preg_match("/\\A{$regex}[\\/\\\\]+(.+)\\z/", $file, $matches)) {
+        $shortFile = $matches[1];
+        if (isset($map[$shortFile]))
+          $this->remove_init_file($shortFile);
+      }
+    }
+  }
+  
+  /**
+   * Add a file to the list in the init_files property. This method also
+   * prevents files from being added to the list more than once.
+   *
+   * @param string $file The file to add
+   */
+  protected function add_init_file($file) {
+    $init_files = $this->property('init_files', false);
+    
+    $expanded = $init_files ? explode(',', $init_files) : array();
+    
+    if (array_search($file, $expanded) === false)
+      $expanded[] = $file;
+    
+    $this->properties['init_files'] = implode(',', $expanded);
+  }
+  
+  /**
+   * Remove a file from the list in the init_files property.
+   *
+   * @param string $file The file to add
+   */
+  protected function remove_init_file($file) {
+    $init_files = $this->property('init_files', false);
+    
+    $expanded = $init_files ? explode(',', $init_files) : array();
+    
+    while (($where = array_search($file, $expanded)) !== false) {
+      array_splice($expanded, $where, 1);
+    }
+    
+    $this->properties['init_files'] = implode(',', $expanded);
+  }
+
 }
 
 ?>

@@ -93,6 +93,60 @@ abstract class CriticalI_Command {
    * will have been populated when this method is called.
    */
   abstract protected function run_command();
+  
+  /**
+   * Prompt the user and return the user's response
+   *
+   * @param string $prompt  The prompt to display for the user
+   * @param string $default (optional) The default value to use if the enters no response
+   * @return string
+   */
+  public function prompt($prompt, $default = false) {
+    $result = false;
+    
+    while (!$result) {
+      if ($default)
+        print("$prompt [$default]: ");
+      else
+        print("$prompt: ");
+      
+      $result = trim(fgets(STDIN));
+      
+      if (!$result) $result = $default;
+    }
+    
+    return $result;
+  }
+
+  /**
+   * Prompt the user with a yes/no question and return the user's
+   * response as a boolean
+   *
+   * @param string $prompt  The prompt to display for the user
+   * @param boolean $default (optional) The default value to use if the enters no response
+   * @return boolean
+   */
+  public function prompt_confirm($prompt, $default = null) {
+    $result = null;
+    
+    while (is_null($result)) {
+      if (is_null($default))
+        $textDefault = false;
+      else
+        $textDefault = $default ? "yes" : "no";
+      
+      $try = $this->prompt($prompt, $textDefault);
+      
+      if (preg_match("/y(?:es)?/i", $try))
+        $result = true;
+      elseif (preg_match("/no?/i", $try))
+        $result = false;
+      else
+        print("Please enter \"yes\" or \"no\".\n");
+    }
+    
+    return $result;
+  }
 }
 
 ?>

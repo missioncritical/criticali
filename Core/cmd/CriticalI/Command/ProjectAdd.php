@@ -43,17 +43,20 @@ class CriticalI_Command_ProjectAdd extends CriticalI_Command {
     parent::__construct('project-add', 'Add a package to a project', <<<DESC
   criticali project-add [options] package1 [...packageN]
   
-Adds one or more packages to a project.  Only packages
-which exist in the repository may be added.  Automatically
-adds any additional packages required by the ones being
-added.  This can be forcibly disabled through the use of
-the --ignore-dependencies option. 
+Adds one or more packages to a project.  Only packages which exist in the
+repository may be added.  Automatically adds any additional packages
+required by the ones being added.  This can be forcibly disabled through
+the use of the --ignore-dependencies option. 
 DESC
 , array(
   new CriticalI_OptionSpec('project', CriticalI_OptionSpec::REQUIRED, 'directory', 'Specify the project directory.  Defaults to the current working directory.'),
   new CriticalI_OptionSpec('version', CriticalI_OptionSpec::REQUIRED, 'number', 'Specify the version number of the package to install.  Defaults to the most current version in the repository.'),
   new CriticalI_OptionSpec('ignore-dependencies', CriticalI_OptionSpec::NONE, null, 'Skips dependency handling and installs the package whether its dependencies are satisfied or not.  This may result in a non-functional package if dependencies are missing from the project.'),
-  new CriticalI_OptionSpec('verbose', CriticalI_OptionSpec::NONE, null, 'Displays lots of information as the installation progresses.')));
+  new CriticalI_OptionSpec('verbose', CriticalI_OptionSpec::NONE, null, 'Displays lots of information as the installation progresses.'),
+  new CriticalI_OptionSpec('quiet', CriticalI_OptionSpec::NONE, null, 'Limits output to error messages and any required prompts for information.'),
+  new CriticalI_OptionSpec('no', CriticalI_OptionSpec::NONE, null, 'Assumes no as the answer to any prompts for information.'),
+  new CriticalI_OptionSpec('yes', CriticalI_OptionSpec::NONE, null, 'Assumes yes as the answer to any prompts for information.'),
+   ));
   }
   
   /**
@@ -72,28 +75,46 @@ DESC
     $status = new CriticalI_Command_ProjectAdd_Listener();
     if ($this->options['verbose'])
       $status->showDebug = true;
-    $prj->set_status_listener($status);
+    if (! $this->options['quiet'])
+      $prj->set_status_listener($status);
     
-    // find the packages
-    $pkgs = array();
-    $allPkgs = CriticalI_Package_List::get();
-    foreach ($this->args as $arg) {
-      if (!isset($allPkgs[$arg]))
-        throw new CriticalI_UnknownPackageError($arg);
-      if (isset($this->options['version'])) {
-        if (!isset($allPkgs[$arg][$this->options['version']]))
-          throw new CriticalI_UnknownPackageVersionError($arg, $this->options['version']);
-        $pkgs[] = $allPkgs[$arg][$this->options['version']];
-      } else {
-        $pkgs[] = $allPkgs[$arg]->newest();
-      }
-    }
+    // plan what is to be installed
+    $planner = new CriticalI_Project_ChangePlanner($prj);
     
-    // add them
-    foreach ($pkgs as $pkg) {
-      $prj->add($pkg, (isset($this->options['ignore-depedencies']) ? false : true));
-    }
+    $plan = $planner->install_plan(
+                  $this->args,
+                  isset($this->options['version']) ? $this->options['version'] : null,
+                  isset($this->options['ignore-dependencies']) ? false : true
+            );
+    
+    if ( (!$this->options['quiet']) || ((!$this->options['yes']) && (!$this->options['no'])) )
+      $this->display_plan($plan);
+    
+    $proceed = false;
+    
+    if ($this->options['yes'] || $this->options['no'])
+      $proceed = $this->options['no'] ? false : true;
+    else
+      $proceed = $this->prompt_confirm("Install these packages?", true);
 
+    if ($proceed)
+      $prj->perform($plan);
+  }
+  
+  /**
+   * Display the play for confirmation
+   */
+  protected function display_plan($plan) {
+    $table = new CriticalI_Command_TableFormatter(array('border-cell'=>'  '));
+    $table->set_header(array('Package', 'Version'));
+    
+    foreach ($plan->add_list() as $item) {
+      $table->add_row(array($item->package()->name(), $item->version_string()));
+    }
+    
+    print "\nThe following packages will be installed:\n\n";
+    print $table->to_string();
+    print "\n";
   }
 
 }

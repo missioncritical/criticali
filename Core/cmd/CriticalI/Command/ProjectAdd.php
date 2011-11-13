@@ -102,7 +102,7 @@ DESC
   }
   
   /**
-   * Display the play for confirmation
+   * Display the plan for confirmation
    */
   protected function display_plan($plan) {
     $table = new CriticalI_Command_TableFormatter(array('border-cell'=>'  '));

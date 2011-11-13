@@ -124,11 +124,11 @@ DESC
    * Display complete information about dependency errors
    */
   protected function show_dependency_errors($prj, $packages) {
-    $s = count($this->args) == 1 ? 's' : '';
+    $s = count($this->args) == 1 ? '' : 's';
     
     fwrite(STDERR, "\n" .
-      wordwrap("The package$s cannot be removed because other packages " .
-      "in the project are dependent on them. Conflicting dependencies are " .
+      wordwrap("The package$s cannot be removed because of the requirements " .
+      "of other packages in the project. Conflicting dependencies are " .
       "shown below:") . "\n\n");
     
     $what = $this->calculate_dependency_conflicts($prj, $packages);

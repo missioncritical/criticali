@@ -2,7 +2,7 @@
 // Copyright (c) 2009-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
 // See the LICENSE file distributed with this work for restrictions.
 
-define('CRITICALI_VERSION', '0.1');
+define('CRITICALI_VERSION', '0.1.9999');
 
 $GLOBALS['CRITICALI_ROOT'] = dirname(__FILE__) . '/..';
 $GLOBALS['INCLUDE_PATH'] = ini_get('include_path');

@@ -11,11 +11,11 @@ class CriticalI_Command_ReposList extends CriticalI_Command {
    */
   public function __construct() {
     parent::__construct('list', 'List the packages in the repository', <<<DESC
-  criticali [options] [search]
+  criticali list [options] [search]
   
-Lists the packages currently installed in the repository.
-If a search term is provided, only packages whose names
-contain the search string are displayed.
+Lists the packages currently installed in the repository. If a search term
+is provided, only packages whose names contain the search string are
+displayed.
 DESC
 , array(
   new CriticalI_OptionSpec('details', CriticalI_OptionSpec::NONE, null, 'Output details, including full description, with each package.'),
@@ -66,11 +66,43 @@ DESC
    * Show a simple listing
    */
   protected function show_listing($pkgs) {
-    foreach ($pkgs as $pkg) {
-      if (isset($this->options['version']))
-        print $this->format_version($pkg[$this->options['version']]) . "\n";
-      else
-        print $this->format_package($pkg) . "\n";
+    // sort the list
+    if (!is_array($pkgs)) {
+      $pkgs2 = array();
+      foreach ($pkgs as $pkg) { $pkgs2[] = $pkg; }
+      $pkgs = $pkgs2;
+    }
+    
+    usort($pkgs, create_function('$a,$b', 'return strcmp($a->name(), $b->name());'));
+    
+    // detail format is handled differently
+    if (isset($this->options['details'])) {
+      foreach ($pkgs as $pkg) {
+        if (isset($this->options['version']))
+          print $this->format_detail_version($pkg[$this->options['version']]) . "\n";
+        else
+          print $this->format_detail_package($pkg) . "\n";
+      }
+      
+    // everything else is a table
+    } else {
+      $table = new CriticalI_Command_TableFormatter(array('border-cell'=>'  '));
+      
+      $header = array('Package');
+      if (!isset($this->options['no-versions']))
+        $header[] = 'Version(s)';
+      if (isset($this->options['verbose']))
+        $header[] = 'Summary';
+      $table->set_header($header);
+
+      foreach ($pkgs as $pkg) {
+        if (isset($this->options['version']))
+          $table->add_row($this->format_version($pkg[$this->options['version']]));
+        else
+          $table->add_row($this->format_package($pkg));
+      }
+      
+      print $table->to_string();
     }
   }
   
@@ -78,44 +110,63 @@ DESC
    * Format the display of a package in the listing
    */
   protected function format_package($pkg) {
+    $row = array($pkg->name());
+    
+    if (!isset($this->options['no-versions']))
+      $row[] = $pkg->versions_string();
+    if (isset($this->options['verbose']))
+      $row[] = $pkg->newest()->property('package.summary', '');
+
+    return $row;
+  }
+  
+  /**
+   * Format the detailed display of a package in the listing
+   */
+  protected function format_detail_package($pkg) {
     $str = $pkg->name();
     
-    if (isset($this->options['details'])) {
-      $str .= "\n";
-      if (!isset($this->options['no-versions']))
-        $str .= "  Version(s): ".wordwrap($pkg->versions_string(), 75, "\n              ")."\n";
-      $str .= "  Summary:    ".wordwrap($pkg->newest()->property('package.summary'), 75, "\n              ")."\n";
-      $str .= "\n";
-      $str .= "  ".wordwrap($pkg->newest()->property('package.description'), 75, "\n  ")."\n";
-    } else {
-      if (!isset($this->options['no-versions']))
-        $str .= ' ('.$pkg->versions_string().')';
-      if (isset($this->options['verbose']))
-        $str .= ' - ' . $pkg->newest()->property('package.summary', '');
-    }
+    $str .= "\n";
+    if (!isset($this->options['no-versions']))
+      $str .= "  Version(s): ".wordwrap($pkg->versions_string(), 75, "\n              ")."\n";
+
+    $str .= "  Summary:    ".wordwrap($pkg->newest()->property('package.summary'),
+      75, "\n              ")."\n";
+    $str .= "\n";
+
+    $str .= "  ".wordwrap($pkg->newest()->property('package.description'), 75, "\n  ")."\n";
 
     return $str;
   }
-  
+
   /**
    * Format the display of a version in the listing
    */
   protected function format_version($ver) {
+    $row = array($ver->package()->name());
+    
+    if (!isset($this->options['no-versions']))
+      $row[] = $ver->version_string();
+    if (isset($this->options['verbose']))
+      $row[] = $ver->property('package.summary', '');
+
+    return $row;
+  }
+
+  /**
+   * Format the detailed display of a version in the listing
+   */
+  protected function format_detail_version($ver) {
     $str = $ver->package()->name();
     
-    if (isset($this->options['details'])) {
-      $str .= "\n";
-      if (!isset($this->options['no-versions']))
-        $str .= "  Version(s): ".wordwrap($ver->version_string(), 75, "\n              ")."\n";
-      $str .= "  Summary:    ".wordwrap($ver->property('package.summary'), 75, "\n              ")."\n";
-      $str .= "\n";
-      $str .= "  ".wordwrap($ver->property('package.description'), 75, "\n  ")."\n";
-    } else {
-      if (!isset($this->options['no-versions']))
-        $str .= ' ('.$ver->version_string().')';
-      if (isset($this->options['verbose']))
-        $str .= ' - ' . $ver->property('package.summary', '');
-    }
+    $str .= "\n";
+    if (!isset($this->options['no-versions']))
+      $str .= "  Version(s): ".wordwrap($ver->version_string(), 75, "\n              ")."\n";
+
+    $str .= "  Summary:    ".wordwrap($ver->property('package.summary'), 75, "\n              ")."\n";
+    $str .= "\n";
+
+    $str .= "  ".wordwrap($ver->property('package.description'), 75, "\n  ")."\n";
 
     return $str;
   }

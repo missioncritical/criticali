@@ -14,9 +14,9 @@ class CriticalI_Command_Help extends CriticalI_Command {
   criticali help [command]
   criticali help commands
   
-The first form displays help for the provided command, or
-the system usage statement if no command is given.  The
-second form displays a list of available commands.
+The first form displays help for the provided command, or the system usage
+statement if no command is given.  The second form displays a list of
+available commands.
 DESC
 );
   }
@@ -34,9 +34,19 @@ DESC
 
     } elseif ($this->args[0] == 'commands') {
       print "Available commands are:\n\n";
+      
+      $rows = array();
       foreach ($allCommands as $cmd) {
-        print "  ".str_pad($cmd->name(), 15)." ".$cmd->summary()."\n";
+        $rows[] = array($cmd->name(), $cmd->summary());
       }
+
+      usort($rows, create_function('$a,$b', 'return strcmp($a[0], $b[0]);'));
+      
+      $table = new CriticalI_Command_TableFormatter(array('border-left'=>'  '));
+      foreach ($rows as $row) { $table->add_row($row); }
+      
+      print $table->to_string();
+      
       print "\nFor help on a particular command type 'criticali help command_name'.\n";
 
     } else {

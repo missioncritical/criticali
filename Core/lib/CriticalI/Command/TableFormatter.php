@@ -135,8 +135,10 @@ class CriticalI_Command_TableFormatter {
       foreach($cells as $colIdx=>$cell) {
         if (count($cell) > $i)
           $output .= $cell[$i];
-        else
-          $output .= $columns[$colIdx]->format('');
+        else {
+          $blanks = $columns[$colIdx]->format('');
+          $output .= $blanks[0];
+        }
       }
       
       $output .= "\n";

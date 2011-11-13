@@ -13,9 +13,8 @@ class CriticalI_Command_ProjectList extends CriticalI_Command {
     parent::__construct('project-list', 'List packages in a project', <<<DESC
   criticali project-list [project_root]
   
-List the packages installed in a project.  If no project
-root directory is given, assumes the current working
-directory.
+List the packages installed in a project.  If no project root directory is
+given, assumes the current working directory.
 DESC
 );
   }
@@ -34,9 +33,14 @@ DESC
     $pkgs = $prj->packages();
     ksort($pkgs);
     
+    $table = new CriticalI_Command_TableFormatter(array('border-cell'=>'  '));
+    $table->set_header(array('Package', 'Installed Version'));
+    
     foreach ($pkgs as $pkg=>$ver) {
-      print "$pkg ($ver)\n";
+      $table->add_row(array($pkg, $ver));
     }
+
+    print $table->to_string();
   }
 
 }

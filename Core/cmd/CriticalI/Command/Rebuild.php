@@ -13,11 +13,10 @@ class CriticalI_Command_Rebuild extends CriticalI_Command {
     parent::__construct('rebuild', 'Rebuild the repository package listing', <<<DESC
   criticali rebuild
   
-Rebuilds the package listing in the repository from the
-packages that can be discovered there.  If the package
-listing file is missing or has been damaged try
-'criticali --skip-packages rebuild' to get around any
-errors related to the file.
+Rebuilds the package listing in the repository from the packages that can
+be discovered there.  If the package listing file is missing or has been
+damaged try 'criticali --skip-packages rebuild' to get around any errors
+related to the file.
 DESC
 );
   }

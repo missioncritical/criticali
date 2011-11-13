@@ -13,8 +13,7 @@ class CriticalI_Command_Test extends CriticalI_Command {
     parent::__construct('test', 'Run unit tests for the named packages in the repository', <<<DESC
   criticali test package1 [...packageN]
   
-Run the unit tests for the given packages in the
-repository.
+Run the unit tests for the given packages in the repository.
 DESC
 , array(new CriticalI_OptionSpec('version', CriticalI_OptionSpec::REQUIRED, 'number', 'Run tests for the specified version (by default, only the most recent version is run)'),
         new CriticalI_OptionSpec('filter', CriticalI_OptionSpec::REQUIRED, 'pattern', 'Only run tests matching the provided regular expression.')));

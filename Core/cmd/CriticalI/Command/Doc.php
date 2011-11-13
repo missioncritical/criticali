@@ -14,8 +14,7 @@ class CriticalI_Command_Doc extends CriticalI_Command {
   criticali doc [options] package1 [...packageN]
   criticali doc [options] --all-packages
   
-Generate documentation for the given packages in the
-repository.
+Generate documentation for the given packages in the repository.
 DESC
 , array(new CriticalI_OptionSpec('version', CriticalI_OptionSpec::REQUIRED, 'number', 'Generate documentation for the specified version (by default, only the most recent version is documented)'),
         new CriticalI_OptionSpec('output', CriticalI_OptionSpec::REQUIRED, 'directory', 'Output documentation to the named directory.  Default is "docs".'),

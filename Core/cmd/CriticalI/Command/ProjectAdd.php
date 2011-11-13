@@ -108,7 +108,11 @@ DESC
     $table = new CriticalI_Command_TableFormatter(array('border-cell'=>'  '));
     $table->set_header(array('Package', 'Version'));
     
-    foreach ($plan->add_list() as $item) {
+    $list = $plan->add_list();
+    usort($list,
+      create_function('$a,$b', 'return strcmp($a->package()->name(), $b->package()->name());'));
+    
+    foreach ($list as $item) {
       $table->add_row(array($item->package()->name(), $item->version_string()));
     }
     

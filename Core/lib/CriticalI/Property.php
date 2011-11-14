@@ -79,6 +79,33 @@ class CriticalI_Property {
   }
 
   /**
+   * Remove (delete) a property. The change is immediately saved to disk.
+   *
+   * @param string $name The name of the property to remove
+   * @return string The previous value of the property (if any)
+   */
+  public static function remove($name) {
+    $props = self::listing();
+
+    $lastValues = $props->delete_properties(array($name));
+    
+    return $lastValues[$name];
+  }
+  
+  /**
+   * Remove (delete) a set of properties. The changes are immediately
+   * saved to disk.
+   *
+   * @param array $names The list of property names to remove
+   * @return array The previous values of the properties as an associative array
+   */
+  public static function remove_multiple($names) {
+    $props = self::listing();
+
+    return $props->delete_properties($names);
+  }
+
+  /**
    * Constructor.
    *
    * This class may not be directly instantiated.
@@ -123,9 +150,9 @@ class CriticalI_Property {
    */
   protected function validateKeys($properties) {
     foreach ($properties as $key=>$value) {
-      if (strpbrk($key, '?{}|&~![()^"') !== false)
+      if (strpbrk($key, '?{}|&~![()^"*') !== false)
         throw new CriticalI_UsageError("Invalid property name \"$key\". " .
-          "The characters ?{}|&~![()^\" may not be used in a property name.");
+          "The characters ?{}|&~![()^\"* may not be used in a property name.");
     }
   }
   
@@ -155,6 +182,43 @@ class CriticalI_Property {
     CriticalI_ConfigFile::write("$GLOBALS[CRITICALI_ROOT]/.properties", $data);
   }
   
+  /**
+   * Remove a collection of properties from the repository
+   *
+   * @param array $properties A list of property names to remove
+   * @return array The previous values of the properties as an associative array
+   */
+  protected function delete_properties($properties) {
+    $values = array();
+    
+    // start with the current set of properties in case anything has changed
+    CriticalI_RepositoryLock::write_lock();
+    if (file_exists("$GLOBALS[CRITICALI_ROOT]/.properties")) {
+      $data = CriticalI_ConfigFile::read("$GLOBALS[CRITICALI_ROOT]/.properties");
+      $this->properties = isset($data['user']) ? $data['user'] : array();
+    } else {
+      $data = array();
+      $this->properties = array();
+    }
+    
+    // make our updates
+    foreach ($properties as $name) {
+      if (isset($this->properties[$name])) {
+        $values[$name] = $this->properties[$name];
+        unset($this->properties[$name]);
+      } else {
+        $values[$name] = null;
+      }
+    }
+    
+    $data['user'] = $this->properties;
+    
+    // write the result
+    CriticalI_ConfigFile::write("$GLOBALS[CRITICALI_ROOT]/.properties", $data);
+    
+    return $values;
+  }
+
 }
 
 ?>

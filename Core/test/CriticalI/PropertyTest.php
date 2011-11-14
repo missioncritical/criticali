@@ -144,6 +144,89 @@ class CriticalI_PropertyTest extends CriticalI_TestCase {
       "h=\"Hotel\"\n", file_get_contents($this->newRoot.'/.properties'));
   }
   
+  public function testRemove() {
+    $this->populateProperties();
+    
+    $this->assertTrue(CriticalI_Property::exists('e'));
+    $this->assertEquals('Echo', CriticalI_Property::remove('e'));
+    $this->assertFalse(CriticalI_Property::exists('e'));
+    $this->assertEquals("; This is an automatically generated file.\n".
+      "; EDIT AT YOUR OWN RISK!\n".
+      "version=1\n".
+      "[user]\n".
+      "a=\"Alpha\"\n".
+      "b=\"Bravo\"\n".
+      "c=\"Charlie\"\n".
+      "d=\"Delta\"\n", file_get_contents($this->newRoot.'/.properties'));
+
+    $this->assertFalse(CriticalI_Property::exists('f'));
+    $this->assertEquals(null, CriticalI_Property::remove('f'));
+    $this->assertFalse(CriticalI_Property::exists('f'));
+    $this->assertEquals("; This is an automatically generated file.\n".
+      "; EDIT AT YOUR OWN RISK!\n".
+      "version=1\n".
+      "[user]\n".
+      "a=\"Alpha\"\n".
+      "b=\"Bravo\"\n".
+      "c=\"Charlie\"\n".
+      "d=\"Delta\"\n", file_get_contents($this->newRoot.'/.properties'));
+
+    file_put_contents($this->newRoot . '/.properties',
+      "version=1\n".
+      "[user]\n".
+      "a=\"Alpha\"\n".
+      "b=\"Bravo\"\n".
+      "c=\"Charlie\"\n".
+      "d=\"Delta\"\n".
+      "e=\"Echo\"\n");
+
+    $this->assertTrue(CriticalI_Property::exists('b'));
+    $this->assertEquals('Bravo', CriticalI_Property::remove('b'));
+    $this->assertFalse(CriticalI_Property::exists('b'));
+    $this->assertEquals("; This is an automatically generated file.\n".
+      "; EDIT AT YOUR OWN RISK!\n".
+      "version=1\n".
+      "[user]\n".
+      "a=\"Alpha\"\n".
+      "c=\"Charlie\"\n".
+      "d=\"Delta\"\n".
+      "e=\"Echo\"\n", file_get_contents($this->newRoot.'/.properties'));
+  }
+
+  public function testRemoveMultiple() {
+    $this->populateProperties();
+    
+    $this->assertFalse(CriticalI_Property::exists('f'));
+    $this->assertFalse(CriticalI_Property::exists('g'));
+    $this->assertEquals(array('f'=>null, 'g'=>null),
+      CriticalI_Property::remove_multiple(array('f', 'g')));
+    $this->assertFalse(CriticalI_Property::exists('f'));
+    $this->assertFalse(CriticalI_Property::exists('g'));
+    $this->assertEquals("; This is an automatically generated file.\n".
+      "; EDIT AT YOUR OWN RISK!\n".
+      "version=1\n".
+      "[user]\n".
+      "a=\"Alpha\"\n".
+      "b=\"Bravo\"\n".
+      "c=\"Charlie\"\n".
+      "d=\"Delta\"\n".
+      "e=\"Echo\"\n", file_get_contents($this->newRoot.'/.properties'));
+
+    $this->assertTrue(CriticalI_Property::exists('b'));
+    $this->assertTrue(CriticalI_Property::exists('c'));
+    $this->assertEquals(array('b'=>'Bravo', 'c'=>'Charlie'),
+      CriticalI_Property::remove_multiple(array('b', 'c')));
+    $this->assertFalse(CriticalI_Property::exists('b'));
+    $this->assertFalse(CriticalI_Property::exists('c'));
+    $this->assertEquals("; This is an automatically generated file.\n".
+      "; EDIT AT YOUR OWN RISK!\n".
+      "version=1\n".
+      "[user]\n".
+      "a=\"Alpha\"\n".
+      "d=\"Delta\"\n".
+      "e=\"Echo\"\n", file_get_contents($this->newRoot.'/.properties'));
+  }
+
   protected function populateProperties() {
     file_put_contents($this->newRoot . '/.properties', <<<PROPS
 version=1

@@ -29,13 +29,28 @@ DESC
       exit(1);
     }
     
-    $type = isset($this->options['outside-public']) ?
-      CriticalI_Project::OUTSIDE_PUBLIC :
-      CriticalI_Project::INSIDE_PUBLIC;
+    if (isset($this->options['outside-public']))
+      $type = CriticalI_Project::OUTSIDE_PUBLIC;
+    elseif (isset($this->options['inside-public']))
+      $type = CriticalI_Project::INSIDE_PUBLIC;
+    else
+      $type = $this->get_default_project_type();
     
     CriticalI_Project_Manager::init($this->args[0], $type);
   }
-
+  
+  /**
+   * Return the default project type
+   */
+  protected function get_default_project_type() {
+    $str = CriticalI_Property::get('project.default_type', 'inside-public');
+    
+    if (strtolower(trim($str)) == 'outside-public')
+      return CriticalI_Project::OUTSIDE_PUBLIC;
+    else
+      return CriticalI_Project::INSIDE_PUBLIC;
+  }
+  
 }
 
 ?>

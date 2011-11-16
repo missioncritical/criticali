@@ -1,3 +1,4 @@
 0.1.9999 2011-11-12
  * Development version in preparation for 0.2
  * Significant improvements in package management
+ * Ability to store properties in the repository

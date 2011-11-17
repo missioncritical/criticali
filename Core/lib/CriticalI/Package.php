@@ -36,6 +36,15 @@ class CriticalI_Package implements IteratorAggregate, ArrayAccess {
   }
   
   /**
+   * Return a cleaned version of this packages name with spaces and
+   * special characters removed.
+   * @return string
+   */
+  public function clean_name() {
+    return preg_replace('/[^A-Za-z0-9._-]+/', '_', $this->name);
+  }
+  
+  /**
    * Populates the list of versions from a string containing a comma-
    * separated list of installed version numbers.
    * @param string $str  The versions string

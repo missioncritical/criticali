@@ -213,7 +213,7 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     $wrappedPackage->unwrap($destination);
     
     // update the stored packages file
-    self::add_version_to_packages_file(new CriticalI_Package_Directory($destination, "$name-$version"),
+    self::add_version_to_packages_file(new CriticalI_Package_Directory("$name-$version", $destination),
       "$name-$version");
     
     // invalidate the list

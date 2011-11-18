@@ -9,6 +9,8 @@
  */
 class CriticalI_Remote_Repository  {
   
+  protected static $defaultRemotes = null;
+  
   protected $url;
   protected $index;
   
@@ -76,6 +78,26 @@ class CriticalI_Remote_Repository  {
     }
     
     throw new Exception("Package $packageName $packageVersion is not available from ".$this->url);
+  }
+  
+  /**
+   * Return the default list of remote repositories
+   */
+  public static function default_remotes() {
+    if (!self::$defaultRemotes) {
+      self::$defaultRemotes = array();
+      
+      $rawRemotes = CriticalI_Property::get('remotes', CriticalI_Defaults::REMOTES);
+      if (trim($rawRemotes)) {
+      
+        foreach(explode("\n", $rawRemotes) as $remote) {
+          self::$defaultRemotes[] = new CriticalI_Remote_Repository(trim($remote));
+        }
+      }
+      
+    }
+    
+    return self::$defaultRemotes;
   }
   
 }

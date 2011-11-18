@@ -73,7 +73,7 @@ class CriticalI_Remote_PackageVersion extends CriticalI_Package_Version {
    * @param boolean $reload If true, force the package to be freshly downloaded (not cached)
    * @return CriticalI_Package_Wrapper
    */
-  public function wrapper($reload) {
+  public function wrapper($reload = false) {
     if ($reload || is_null($this->wrapper)) {
       $where = CriticalI_Util::tempfile('package');
     

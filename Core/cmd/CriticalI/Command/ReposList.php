@@ -71,15 +71,9 @@ DESC
   protected function pick_list() {
     if (isset($this->options['remote'])) {
       
-      $remotes = array();
-      
-      $rawRemotes = CriticalI_Property::get('remotes', CriticalI_Defaults::REMOTES);
-      if (!trim($rawRemotes))
+      $remotes = CriticalI_Remote_Repository::default_remotes();
+      if (!$remotes)
         throw new Exception("No remote repositories are configured");
-      
-      foreach(explode("\n", $rawRemotes) as $remote) {
-        $remotes[] = new CriticalI_Remote_Repository(trim($remote));
-      }
       
       return new CriticalI_Remote_PackageList($remotes);
       

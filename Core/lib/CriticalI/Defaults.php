@@ -20,6 +20,8 @@ class CriticalI_Defaults {
 
   const INIT_HOOKS = 'lib/*/Hook/Init.php';
   
+  const REMOTES = "http://criticali-packages1.missioncriticallabs.com\nhttp://criticali-packages2.missioncriticallabs.com";
+  
   /**
    * Constructor -- instantiation is not allowed
    */

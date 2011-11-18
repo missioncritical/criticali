@@ -20,6 +20,7 @@ DESC
 , array(
   new CriticalI_OptionSpec('details', CriticalI_OptionSpec::NONE, null, 'Output details, including full description, with each package.'),
   new CriticalI_OptionSpec('no-versions', CriticalI_OptionSpec::NONE, null, 'Do not include version numbers in output.'),
+  new CriticalI_OptionSpec('remote', CriticalI_OptionSpec::NONE, null, 'List (or search) remote repositories'),
   new CriticalI_OptionSpec('verbose', CriticalI_OptionSpec::NONE, null, 'Include summary in listing.'),
   new CriticalI_OptionSpec('version', CriticalI_OptionSpec::REQUIRED, 'version', 'The version number to list.')));
   }
@@ -40,14 +41,16 @@ DESC
   protected function find_matching_packages() {
     $matches = array();
     
+    $list = $this->pick_list();
+    
     // evaluate any name criteria
     if (count($this->args) > 0) {
-      foreach (CriticalI_Package_List::get() as $pkg) {
+      foreach ($list as $pkg) {
         if (strpos(strtolower($pkg->name()), strtolower($this->args[0])) !== false)
           $matches[] = $pkg;
       }
     } else {
-      $matches = CriticalI_Package_List::get();
+      $matches = $list;
     }
     
     // evaluate any version criteria
@@ -60,6 +63,29 @@ DESC
     }
     
     return $matches;
+  }
+  
+  /**
+   * Pick the correct listing to use
+   */
+  protected function pick_list() {
+    if (isset($this->options['remote'])) {
+      
+      $remotes = array();
+      
+      $rawRemotes = CriticalI_Property::get('remotes', CriticalI_Defaults::REMOTES);
+      if (!trim($rawRemotes))
+        throw new Exception("No remote repositories are configured");
+      
+      foreach(explode("\n", $rawRemotes) as $remote) {
+        $remotes[] = new CriticalI_Remote_Repository(trim($remote));
+      }
+      
+      return new CriticalI_Remote_PackageList($remotes);
+      
+    } else {
+      return CriticalI_Package_List::get();
+    }
   }
   
   /**

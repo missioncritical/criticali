@@ -136,6 +136,258 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
       self::add_package_to_autoloader($depPkg, $depVer);
     }
   }
+  
+  /**
+   * Perform the set of operations prescribed by a
+   * CriticalI_ChangeManager_Plan
+   *
+   * @param CriticalI_ChangeManager_Plan $plan The plan to perform
+   */
+  public static function perform($plan) {
+    $sysRemove = false;
+    $sysAdd = false;
+    
+    // remove any requested packages
+    foreach ($plan->remove_list() as $pkg) {
+      // test for system upgrade
+      if ($pkg->package()->name() == 'criticali')
+        $sysRemove = $pkg;
+      else
+        self::remove($pkg);
+    }
+    
+    // add any requested packages
+    foreach ($plan->add_list() as $pkg) {
+      // test for system upgrade
+      if ($pkg->package()->name() == 'criticali')
+        $sysAdd = $pkg;
+      else
+        self::add($pkg->wrapper());
+    }
+    
+    // last step is any needed system upgrade
+    if ($sysRemove && $sysAdd)
+      self::system_upgrade($sysAdd, $sysRemove);
+    elseif ($sysRemove || $sysAdd)
+      fwrite(STDERR, "Ignored package criticali. The system package may " .
+        "not be directly added or removed.\n");
+  }
+
+  /**
+   * Add (install) a new wrapped package to the repository
+   *
+   * This is a low level method that does not perform any dependency
+   * checking. For higher level functionality and validation, construct a
+   * CriticalI_ChangeManager_Plan and pass it to the perform() method.
+   *
+   * @param CriticalI_Package_Wrapper $wrappedPackage The package to install
+   */
+  public static function add($wrappedPackage) {
+    CriticalI_RepositoryLock::write_lock();
+
+    // get the package name
+    $name = $wrappedPackage->package_name();
+
+    // and version
+    $version = $wrappedPackage->package_version();
+
+    // determine the destination directory
+    $destination = $GLOBALS['CRITICALI_ROOT'] . '/' . $name . '-' . $version;
+    if (file_exists($destination))
+      throw new Exception("Directory $destination already exists.");
+    
+    // cannot add another core system
+    if ($name == 'criticali')
+      throw new Exception("Addition of another criticali system package not allowed");
+
+    // the exact same version cannot be installed twice
+    $installed = self::get();
+    if (isset($installed[$name]) && isset($installed[$name][$version]))
+      throw new Exception("Package $name version $version is already installed.");
+    
+    // create the directory
+    if (!mkdir($destination, 0777))
+      throw new Exception("Failed to create directory $destination");
+    
+    // unload it
+    $wrappedPackage->unwrap($destination);
+    
+    // update the stored packages file
+    self::add_version_to_packages_file(new CriticalI_Package_Directory($destination, "$name-$version"),
+      "$name-$version");
+    
+    // invalidate the list
+    self::$list = false;
+  }
+  
+  /**
+   * Remove (uninstall) a package version from the repository
+   *
+   * This is a low level method that does not perform any dependency
+   * checking. For higher level functionality and validation, construct a
+   * CriticalI_ChangeManager_Plan and pass it to the perform() method.
+   *
+   * @param CriticalI_Package_Version $packageVersion The package to remove
+   */
+  public static function remove($packageVersion) {
+    CriticalI_RepositoryLock::write_lock();
+
+    // get the package name
+    $name = $packageVersion->package()->name();
+
+    // and version
+    $version = $packageVersion->version_string();
+
+    // determine the directory where it is installed
+    $directory = $GLOBALS['CRITICALI_ROOT'] . '/' .$packageVersion->installation_directory();
+    if (!is_dir($directory))
+      throw new Exception("Directory $directory does not exist.");
+    
+    // cannot remove the core system
+    if ($name == 'criticali' || $packageVersion->installation_directory() == 'Core')
+      throw new Exception("Removal of criticali system package not allowed");
+    
+    // remove the directory
+    self::delete_all_and_remove_directory($directory);
+    
+    // update the stored packages file
+    self::remove_version_from_packages_file($name, $version);
+    
+    // invalidate the list
+    self::$list = false;
+  }
+
+  /**
+   * Upgrade the criticali system to a new wrapped package
+   *
+   * This is a low level method that does not perform any dependency
+   * checking. For higher level functionality and validation, construct a
+   * CriticalI_ChangeManager_Plan and pass it to the perform() method.
+   *
+   * @param CriticalI_Package_Wrapper $to The system package to install
+   * @param CriticalI_Package_Version $from The system package to remove
+   */
+  public static function system_upgrade($to, $from) {
+    CriticalI_RepositoryLock::write_lock();
+
+    // some sanity checking
+    if ($to->name() != 'criticali')
+      throw new Exception("Can only upgrade the system to a version of criticali");
+
+    if ($from->installation_directory() != 'Core')
+      throw new Exception("The criticali system to upgrade must be installed in a directory named 'Core'");
+
+    // get the version we're going to
+    $version = $to->package_version();
+
+    // begin as a normal install to a temporary directory
+    
+    // determine the temporary directory
+    $destination = $GLOBALS['CRITICALI_ROOT'] . '/criticali-' . $version;
+    if (file_exists($destination))
+      throw new Exception("Directory $destination already exists.");
+    
+    // create the directory
+    if (!mkdir($destination, 0777))
+      throw new Exception("Failed to create directory $destination");
+    
+    // unload it
+    $to->unwrap($destination);
+    
+    // now, swap the directories
+    $oldDir = $GLOBALS['CRITICALI_ROOT'] . '/criticali-' . $from->version_string() .'.bak';
+    if (!rename($GLOBALS['CRITICALI_ROOT'] . '/Core', $oldDir))
+      throw new Exception("Could not move currently installed system to $oldDir");
+    if (!rename($destination, $GLOBALS['CRITICALI_ROOT'] . '/Core'))
+      throw new Exception("Could not move new system to Core");
+    
+    // clean up the old files
+    self::delete_all_and_remove_directory($oldDir);
+    
+    // update the stored packages file
+    self::update_system_in_packages_file($from->version_string(), $version);
+    
+    // invalidate the list
+    self::$list = false;
+  }
+ 
+  /**
+   * Update the installation list file with a single added package directory
+   * @param CriticalI_Package_Directory $pkg The newly added directory
+   * @param string $basedir The bare directory name (no path) where it was installed
+   */
+  protected static function add_version_to_packages_file($pkg, $basedir) {
+    global $CRITICALI_ROOT;
+    CriticalI_RepositoryLock::write_lock();
+    
+    $data = CriticalI_ConfigFile::read("$CRITICALI_ROOT/.packages");
+    
+    $name = $pkg->name();
+    $version = $pkg->version();
+    
+    if (isset($data['packages'][$name]))
+        $data['packages'][$name] = self::add_version_to_list($data['packages'][$name], $version);
+    else
+      $data['packages'][$name] = $version;
+
+    $data['directories']["$name-$version"] = $basedir;
+
+    if ($pkg->has_commands()) {
+      if (isset($data['commands'][$name]))
+        $data['commands'][$name] = self::add_version_to_list($data['commands'][$name], $version);
+      else
+        $data['commands'][$name] = $version;
+    }
+    
+    CriticalI_ConfigFile::write("$CRITICALI_ROOT/.packages", $data);
+  }
+
+  /**
+   * Update the installation list file by removing a single deleted package directory
+   * @param string $name The package name
+   * @param string $version The version name
+   */
+  protected static function remove_version_from_packages_file($name, $version) {
+    global $CRITICALI_ROOT;
+    CriticalI_RepositoryLock::write_lock();
+    
+    $data = CriticalI_ConfigFile::read("$CRITICALI_ROOT/.packages");
+    
+    if (isset($data['packages'][$name]))
+        $data['packages'][$name] = self::remove_version_from_list($data['packages'][$name], $version);
+
+    unset($data['directories']["$name-$version"]);
+    
+    if (isset($data['commands'][$name]))
+      $data['commands'][$name] = self::remove_version_from_list($data['commands'][$name], $version);
+    
+    CriticalI_ConfigFile::write("$CRITICALI_ROOT/.packages", $data);
+  }
+
+  /**
+   * Update the criticali system version listed in the package directory
+   * @param string $oldVersion The old version
+   * @param string $newVersion The new version
+   */
+  protected static function update_system_in_packages_file($oldVersion, $newVersion) {
+    global $CRITICALI_ROOT;
+    CriticalI_RepositoryLock::write_lock();
+    
+    $data = CriticalI_ConfigFile::read("$CRITICALI_ROOT/.packages");
+    
+    $data['packages']['criticali'] = $newVersion;
+    
+    if (isset($data['packages'][$name]))
+        $data['packages'][$name] = self::add_version_to_list($data['packages'][$name], $version);
+    else
+      $data['packages'][$name] = $version;
+
+    if (isset($data['directories'][$oldVersion]))
+      unset($data['directories'][$oldVersion]);
+    $data['directories']["criticali-$newVersion"] = 'Core';
+
+    CriticalI_ConfigFile::write("$CRITICALI_ROOT/.packages", $data);
+  }
 
   /**
    * Add a version to a version list string and maintain sort order
@@ -148,6 +400,51 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     $items[] = $value;
     usort($items, array('CriticalI_Package_Version', 'compare_version_strings'));
     return implode(',', $items);
+  }
+  
+  /**
+   * Remove a version from a version list string and maintain sort order
+   *
+   * @param string $list  The comma-separated list of versions
+   * @param string $value The value to remove
+   */
+  protected static function remove_from_version_list($list, $value) {
+    $items = explode(',', $list);
+    $items[] = $value;
+    
+    while(($idx = array_search($value, $items)) !== false) {
+      array_splice($items, $idx, 1);
+    }
+    
+    // sort order unchanged
+    return implode(',', $items);
+  }
+
+  /**
+   * Equivalent to performing "rm -rf" on a directory
+   * @param string $directory The directory to remove
+   */
+  protected static function delete_all_and_remove_directory($directory) {
+    $dh = opendir($directory);
+    if ($dh === false)
+      throw new Exception("Could not access directory $directory");
+    
+    while (($fname = readdir($dh)) !== false) {
+      if (($fname == '.') || ($fname == '..'))
+        continue;
+      
+      if (is_dir("$directory/$fname"))
+        self::delete_all_and_remove_directory("$directory/$fname");
+      else {
+        if (!unlink("$directory/$fname"))
+          throw new Exception("Could not remove file $directory/$fname");
+      }
+    }
+    
+    closedir($dh);
+    
+    if (!rmdir($directory))
+      throw new Exception("Could not remove directory $directory");
   }
 
   /**

@@ -283,7 +283,8 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     // begin as a normal install to a temporary directory
     
     // determine the temporary directory
-    $destination = $GLOBALS['CRITICALI_ROOT'] . '/criticali-' . $version;
+    $ROOT = self::clean_root_directory();
+    $destination = $ROOT . '/criticali-' . $version;
     if (file_exists($destination))
       throw new Exception("Directory $destination already exists.");
     
@@ -295,10 +296,10 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     $to->wrapper()->unwrap($destination);
     
     // now, swap the directories
-    $oldDir = $GLOBALS['CRITICALI_ROOT'] . '/criticali-' . $from->version_string() .'.bak';
-    if (!rename($GLOBALS['CRITICALI_ROOT'] . '/Core', $oldDir))
+    $oldDir = $ROOT . '/criticali-' . $from->version_string() .'.bak';
+    if (!rename($ROOT . '/Core', $oldDir))
       throw new Exception("Could not move currently installed system to $oldDir");
-    if (!rename($destination, $GLOBALS['CRITICALI_ROOT'] . '/Core'))
+    if (!rename($destination, $ROOT . '/Core'))
       throw new Exception("Could not move new system to Core");
     
     // clean up the old files
@@ -451,6 +452,15 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     
     if (!rmdir($directory))
       throw new Exception("Could not remove directory $directory");
+  }
+  
+  /**
+   * Return a cleaned version of the global variable $CRITICALI_ROOT for
+   * use in installations
+   */
+  protected static function clean_root_directory() {
+    return preg_replace("/[\\\\\\/]+[^\\\\\\/]+[\\\\\\/]+..[\\\\\\/]*\\z/", '',
+      $GLOBALS['CRITICALI_ROOT']);
   }
 
   /**

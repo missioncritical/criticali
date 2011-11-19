@@ -292,7 +292,7 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
       throw new Exception("Failed to create directory $destination");
     
     // unload it
-    $to->unwrap($destination);
+    $to->wrapper()->unwrap($destination);
     
     // now, swap the directories
     $oldDir = $GLOBALS['CRITICALI_ROOT'] . '/criticali-' . $from->version_string() .'.bak';

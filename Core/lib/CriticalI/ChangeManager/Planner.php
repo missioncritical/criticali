@@ -287,7 +287,7 @@ class CriticalI_ChangeManager_Planner {
 
     if ($this->allowMultipleVersions) {
       for ($i = $this->installedList[$package]->count() - 1; $i >= 0; $i--) {
-        if ($this->installedList[$package][$i]->compare_version_specification($spec) < 0) {
+        if ($this->installedList[$package][$i]->compare_version_specification($spec) <= 0) {
           $remove[] = $this->installedList[$package][$i];
           $this->mark_upgradable($this->installedList[$package][$i]);
           break;

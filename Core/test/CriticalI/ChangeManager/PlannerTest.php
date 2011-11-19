@@ -226,6 +226,82 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
       array('A'=>'2.0.0'), array('A'=>'1.0.0')));
   }
   
+  public function testUpgradePlanRepository() {
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDE'),
+      $this->buildPackageList('aProject'), true);
+
+    // single package
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('A'),
+      array('A'=>'2.0.0'), array('A'=>'1.0.0')));
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('A', '2.0'),
+      array('A'=>'2.0.0'), array('A'=>'1.0.0')));
+
+    // no higher version available
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDE'),
+      $this->buildPackageList('a2Project'), true);
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('A'),
+      array(), array()));
+
+    // not installed
+    try {
+      $planner->upgrade_plan('B');
+      $this->fail("Upgraded non-existent package B");
+    } catch (CriticalI_ChangeManager_NotInstalledError $e) {
+      // expected
+    }
+
+    // upgrade dependency
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDE'),
+      $this->buildPackageList('abProject'), true);
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('B'),
+      array('A'=>'2.0.0', 'B'=>'1.2.0'), array('A'=>'1.0.0', 'B'=>'1.0.0')));
+    $this->assertTrue($this->planMatches($planner->upgrade_plan(array('A', 'B')),
+      array('A'=>'2.0.0', 'B'=>'1.2.0'), array('A'=>'1.0.0', 'B'=>'1.0.0')));
+
+    // unable because of dependency
+    try {
+      $planner->upgrade_plan('A');
+      $this->fail("Upgraded package with dependencies");
+    } catch (CriticalI_ChangeManager_HasDependentError $e) {
+      // expected
+    }
+
+    // upgrade multiple dependencies
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDEFGH'),
+      $this->buildPackageList('abcdhProject'), true);
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('H'),
+      array('A'=>'2.0.0', 'B'=>'1.2.0', 'C'=>'1.2.0', 'D'=>'1.2.0', 'H'=>'1.2.0'),
+      array('A'=>'1.0.0', 'B'=>'1.0.0', 'C'=>'1.0.0', 'D'=>'1.0.0', 'H'=>'1.0.0')));
+
+    // missing dependent package
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDEFGH'),
+      $this->buildPackageList('aeProject'), true);
+    try {
+      $planner->upgrade_plan('E');
+      $this->fail("Upgrade installed non-existent package");
+    } catch (CriticalI_ChangeManager_ResolutionError $e) {
+      // expected
+    }
+      
+    // dependencies not met
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDEFGH'),
+      $this->buildPackageList('agProject'), true);
+    try {
+      $planner->upgrade_plan('G');
+      $this->fail("Upgrade installed conflicting packages");
+    } catch (CriticalI_ChangeManager_ResolutionError $e) {
+      // expected
+    } catch (CriticalI_ChangeManager_HasDependentError $e) {
+      // also acceptable
+    }
+
+    // ignore dependencies
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDE'),
+      $this->buildPackageList('abProject'), true);
+    $this->assertTrue($this->planMatches($planner->upgrade_plan('A', '*', false),
+      array('A'=>'2.0.0'), array('A'=>'1.0.0')));
+  }
+
   /**
    * Return data for testing
    */

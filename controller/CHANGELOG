@@ -10,3 +10,6 @@
  * Fixed the return value of fire_event when a vetoable event returns
    false.
  * Added except and only options to before_filter and after_filter.
+0.2.5 2011-11-19
+ * Allow dashes in URLs to be mapped to underscores in controller names
+   and actions.

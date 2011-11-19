@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// Copyright (c) 2008-2011, Jeffrey Hunter and Mission Critical Labs, Inc.
 // See the LICENSE file distributed with this work for restrictions.
 /** @package controller */
 
@@ -36,13 +36,13 @@ class Controller_Routing {
     
     if ((count($parts) > 1) && (count($parts) < 5)) {
       // controller
-      $controller = $parts[1];
+      $controller = $this->normalize_component($parts[1]);
       // controller/action
       if (count($parts) > 2)
-        $parameters['action'] = $parts[2];
+        $parameters['action'] = $this->normalize_component($parts[2]);
       // controller/action/id
       if (count($parts) > 3)
-        $parameters['id'] = $parts[3];
+        $parameters['id'] = $this->normalize_component($parts[3]);
       
       // determine the controller class name
       $class = Support_Inflector::camelize($controller) . 'Controller';
@@ -142,6 +142,18 @@ class Controller_Routing {
     
     return implode('/', $cleaned);
   }
+  
+  /**
+   * Convert dashes to underscores in a portion of a URL
+   *
+   * @param string $component  The URL portion to normalize
+   *
+   * @return string
+   */
+  protected function normalize_component($component) {
+    return str_replace('-', '_', $component);
+  }
+  
 }
 
 ?>

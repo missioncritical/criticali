@@ -353,13 +353,19 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     
     $data = CriticalI_ConfigFile::read("$CRITICALI_ROOT/.packages");
     
-    if (isset($data['packages'][$name]))
-        $data['packages'][$name] = self::remove_version_from_list($data['packages'][$name], $version);
+    if (isset($data['packages'][$name])) {
+      $data['packages'][$name] = self::remove_from_version_list($data['packages'][$name], $version);
+      if (!$data['packages'][$name])
+        unset($data['packages'][$name]);
+    }
 
     unset($data['directories']["$name-$version"]);
     
-    if (isset($data['commands'][$name]))
-      $data['commands'][$name] = self::remove_version_from_list($data['commands'][$name], $version);
+    if (isset($data['commands'][$name])) {
+      $data['commands'][$name] = self::remove_from_version_list($data['commands'][$name], $version);
+      if (!$data['commands'][$name])
+        unset($data['commands'][$name]);
+    }
     
     CriticalI_ConfigFile::write("$CRITICALI_ROOT/.packages", $data);
   }

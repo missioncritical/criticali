@@ -47,6 +47,9 @@ DESC
     if ( (!$this->options['quiet']) || ((!$this->options['yes']) && (!$this->options['no'])) )
       $this->display_plan($plan);
     
+    if ($this->is_empty_plan($plan))
+      return;
+    
     $proceed = false;
     
     if ($this->options['yes'] || $this->options['no'])
@@ -56,6 +59,23 @@ DESC
 
     if ($proceed)
       CriticalI_Package_List::perform($plan);
+  }
+  
+  /**
+   * Returns true if the plan is empty, displaying information as appropriate
+   */
+  protected function is_empty_plan($plan) {
+    if (count($plan->add_list()) != 0)
+      return false;
+    
+    if (!isset($this->options['quiet'])) {
+      if (count($this->args == 1))
+        fwrite(STDERR, "No newer version of the package is available.\n");
+      else
+        fwrite(STDERR, "No newer versions of the packages are available.\n");
+      }
+    
+    return true;
   }
   
   /**

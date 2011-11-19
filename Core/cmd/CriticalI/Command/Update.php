@@ -80,7 +80,7 @@ DESC
       $proceed = $this->prompt_confirm("Proceed with the changes?", true);
 
     if ($proceed)
-      $prj->perform($plan);
+      Criticali_Package_List::perform($plan);
   }
   
   /**

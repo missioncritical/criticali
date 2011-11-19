@@ -271,14 +271,14 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     CriticalI_RepositoryLock::write_lock();
 
     // some sanity checking
-    if ($to->name() != 'criticali')
+    if ($to->package()->name() != 'criticali')
       throw new Exception("Can only upgrade the system to a version of criticali");
 
     if ($from->installation_directory() != 'Core')
       throw new Exception("The criticali system to upgrade must be installed in a directory named 'Core'");
 
     // get the version we're going to
-    $version = $to->package_version();
+    $version = $to->version_string();
 
     // begin as a normal install to a temporary directory
     

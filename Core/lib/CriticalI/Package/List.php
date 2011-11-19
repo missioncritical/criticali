@@ -384,13 +384,8 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     
     $data['packages']['criticali'] = $newVersion;
     
-    if (isset($data['packages'][$name]))
-        $data['packages'][$name] = self::add_version_to_list($data['packages'][$name], $version);
-    else
-      $data['packages'][$name] = $version;
-
-    if (isset($data['directories'][$oldVersion]))
-      unset($data['directories'][$oldVersion]);
+    if (isset($data['directories']['criticali-'.$oldVersion]))
+      unset($data['directories']['criticali-'.$oldVersion]);
     $data['directories']["criticali-$newVersion"] = 'Core';
 
     CriticalI_ConfigFile::write("$CRITICALI_ROOT/.packages", $data);

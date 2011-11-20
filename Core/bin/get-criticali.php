@@ -565,6 +565,9 @@ function repository_init($php_binary, $criticali_root) {
   $full_command = escapeshellarg($php_binary) . ' ' .
     escapeshellarg($command) . ' --skip-packages rebuild';
   
+  if (WINDOZE && version_compare(PHP_VERSION, '5.3.0', '<'))
+    $full_command = "\" $full_command \"";
+  
   system($full_command, $exited);
   
   if ($exited !== 0)

@@ -18,6 +18,9 @@ class CriticalI_Defaults {
   const PROJECT_INSTALL_HOOKS = 'lib/*/Hook/ProjectInstall.php';
   const PROJECT_UNINSTALL_HOOKS = 'lib/*/Hook/ProjectUninstall.php';
 
+  const REPOSITORY_INSTALL_HOOKS = 'lib/*/Hook/Install.php';
+  const REPOSITORY_UNINSTALL_HOOKS = 'lib/*/Hook/Uninstall.php';
+
   const INIT_HOOKS = 'lib/*/Hook/Init.php';
   
   const REMOTES = "http://criticali-packages1.missioncriticallabs.com\nhttp://criticali-packages2.missioncriticallabs.com";

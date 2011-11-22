@@ -218,6 +218,10 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     
     // invalidate the list
     self::$list = false;
+    
+    // run any installers
+    $installed = self::get();
+    self::run_installers_for($installed[$name][$version]);
   }
   
   /**
@@ -246,6 +250,9 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     // cannot remove the core system
     if ($name == 'criticali' || $packageVersion->installation_directory() == 'Core')
       throw new Exception("Removal of criticali system package not allowed");
+      
+    // run any uninstallers first
+    self::run_uninstallers_for($packageVersion);
     
     // remove the directory
     self::delete_all_and_remove_directory($directory);
@@ -280,7 +287,10 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     // get the version we're going to
     $version = $to->version_string();
 
-    // begin as a normal install to a temporary directory
+    // run any uninstallers first
+    self::run_uninstallers_for($from);
+
+    // then continue as a normal install to a temporary directory
     
     // determine the temporary directory
     $ROOT = self::clean_root_directory();
@@ -310,6 +320,10 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     
     // invalidate the list
     self::$list = false;
+    
+    // run any installers
+    $installed = self::get();
+    self::run_installers_for($installed['criticali'][$version]);
   }
  
   /**
@@ -456,6 +470,68 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
   protected static function clean_root_directory() {
     return preg_replace("/[\\\\\\/]+[^\\\\\\/]+[\\\\\\/]+..[\\\\\\/]*\\z/", '',
       $GLOBALS['CRITICALI_ROOT']);
+  }
+
+  /**
+   * Run any specified installers for a package
+   *
+   * @param CriticalI_Package_Version $pkg The package to run installers for
+   */
+  protected static function run_installers_for($pkg) {
+    $pkgDir = $GLOBALS['CRITICALI_ROOT'] . '/' . $pkg->installation_directory();
+
+    $matches = CriticalI_Globber::match($pkgDir,
+      $pkg->property('repository.install.hooks', CriticalI_Defaults::REPOSITORY_INSTALL_HOOKS));
+
+    foreach ($matches as $hookFile) {
+      try {
+        $hookClass = CriticalI_ClassUtils::class_name($hookFile, $pkgDir);
+        include_once($hookFile);
+        if (!class_exists($hookClass, false))
+          throw new Exception("File \"$hookFile\" did not declare class \"$hookClass\".");
+          
+        $hookInst = new $hookClass();
+        if (!($hookInst instanceof CriticalI_InstallHook))
+          throw new Exception("$hookClass does not implement CriticalI_InstallHook.");
+        
+        $hookInst->install($pkg);
+      } catch (Exception $e) {
+        trigger_error("Skipping installation hook \"$hookFile\" due to error: " .
+          $e->getMessage(), E_USER_WARNING);
+      }
+    }
+  }
+
+  /**
+   * Run any specified uninstallers for a package
+   *
+   * @param CriticalI_Project_PackageVersion $pkg  The package to run uninstallers for
+   */
+  protected function run_uninstallers_for($pkg) {
+    $pkgDir = $GLOBALS['CRITICALI_ROOT'] . '/' . $pkg->installation_directory();
+
+    $matches = CriticalI_Globber::match($pkgDir,
+      $pkg->property('repository.uninstall.hooks', CriticalI_Defaults::REPOSITORY_UNINSTALL_HOOKS));
+    
+    foreach ($matches as $hookFile) {
+      try {
+        $hookClass = CriticalI_ClassUtils::class_name($hookFile, $pkgDir);
+        include_once($hookFile);
+        if (!class_exists($className, false))
+          throw new Exception("File \"$hookFile\" did not declare class $hookClass.");
+        
+        $uninstaller = new $hookClass();
+        if (!($uninstaller instanceof CriticalI_UninstallHook))
+          throw new Exception("$hookClass is not an instance of CriticalI_UninstallHook.");
+        
+        $uninstaller->uninstall($pkg);
+        
+      } catch (Exception $e) {
+        trigger_error("Skipping uninstaller \"$hookFile\" due to error: ".$e->getMessage(),
+          E_USER_WARNING);
+      }
+      
+    }
   }
 
   /**

@@ -29,17 +29,17 @@ assert_minimum_criteria_met();
 determine_os();
 pick_defaults();
 
-print "\nCriticalI[nfrastructure]\n\n";
+print "\nCritical I[nfrastructure]\n\n";
 
-print wordwrap("Welcome to the criticali installer. The installer will ".
-  "attempt to obtain and install the latest version of criticali on your ".
+print wordwrap("Welcome to the Critical I installer. The installer will ".
+  "attempt to obtain and install the latest version of Critical I on your ".
   "machine. First we need to gather a little bit of information about ".
   "where to install it.\n\n");
 
 $ok = false;
 
 while (!$ok) {
-  print wordwrap("Criticali primarily consists of a repository where it ".
+  print wordwrap("Critical I primarily consists of a repository where it ".
     "stores packages that can be used in your development projects. The ".
     "repository should be an empty directory that does not contain any ".
     "other files. You can specifcy an existing directory or a location ".
@@ -49,13 +49,13 @@ while (!$ok) {
     $criticali_root);
 
   if (WINDOZE) {
-    print wordwrap("\nCriticali comes with a command line utility (called ".
+    print wordwrap("\nCritical I comes with a command line utility (called ".
       "\"criticali\"). On Windows systems this must be installed in a ".
       "location you choose in order to run. Ideally, that would be a ".
       "directorty listed in your PATH for easy use.\n\n");
 
   } else {
-    print wordwrap("\nCriticali comes with a command line utility (called ".
+    print wordwrap("\nCritical I comes with a command line utility (called ".
       "\"criticali\"). A copy of it resides in the repository. It can also ".
       "be installed wherever you normally keep such scripts. Ideally, that ".
       "would be someplace inside your PATH (for easy use). Alternatively, ".
@@ -72,13 +72,13 @@ while (!$ok) {
 
   print wordwrap("\nOne last piece of information: we need to confirm that ".
     "we're using the right location for the version of PHP you'll be running ".
-    "criticali with. The default value is a best guess for where it's ".
+    "Critical I with. The default value is a best guess for where it's ".
     "located. Depending on your system, you may need to adjust this.\n\n");
 
   $php_binary = prompt("Where is the php command (command line version) located?",
     $php_binary);
   
-  print "\nHere's how we'll install criticali:\n\n";
+  print "\nHere's how we'll install Critical I:\n\n";
   print "Repository location:   $criticali_root\n";
   print "Install command line:  " . ($install_script ? 'yes' : 'no') . "\n";
   if ($install_script)
@@ -133,23 +133,23 @@ function assert_minimum_criteria_met() {
     
   // PHP 5 is required, 5.2 recommended
   if (version_compare(PHP_VERSION, '5.0.0', '<'))
-    $errors[] = "criticali requires PHP version 5.0 or above";
+    $errors[] = "Critical I requires PHP version 5.0 or above";
   elseif (version_compare(PHP_VERSION, '5.2.0', '<'))
-    print("warning: PHP 5.2.0 or above is recommended for criticali\n\n");
+    print("warning: PHP 5.2.0 or above is recommended for Critical I\n\n");
   
   // ZipArchive must be available
   if (!class_exists('ZipArchive'))
-    $errors[] = "criticali requires PHP to be built with zip support " .
+    $errors[] = "Critical I requires PHP to be built with zip support " .
       "(the class ZipArchive must be provided)";
   
   // http stream must be supported
   if (function_exists('stream_get_wrappers')) {
     if (array_search('http', stream_get_wrappers()) === false)
-      $errors[] = "criticali requires support for the http stream wrapper to be enabled";
+      $errors[] = "Critical I requires support for the http stream wrapper to be enabled";
   }
   
   if ($errors) {
-    die("criticali could not be installed due to the following errors:\n\n" .
+    die("Critical I could not be installed due to the following errors:\n\n" .
       implode("\n", $errors) . "\n");
   }
 }
@@ -346,7 +346,7 @@ function can_be_writable_directory($path) {
  * @return array
  */
 function find_latest_version() {
-  print "Searching for latest version of criticali...";
+  print "Searching for latest version of Critical I...";
   
   $versions = array();
   
@@ -379,7 +379,7 @@ function find_latest_version() {
   
   // must have at least one
   if (!$versions)
-    throw new Exception("Could not find a criticali package available for download.");
+    throw new Exception("Could not find a Critical I package available for download.");
 
   // sort by version
   uksort($versions, 'version_compare');

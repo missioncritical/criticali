@@ -109,7 +109,10 @@ try {
   
   // initialize the repository
   repository_init($php_binary, $criticali_root);
-
+  
+  // run any installers
+  run_installers($criticali_root);
+  
 } catch (Exception $e) {
   
   die("Installation failed with the following error: " .
@@ -505,13 +508,6 @@ function unwrap_package($package, $criticali_root) {
     throw new Exception("Could not expand downloaded archive");
   
   $zip->close();
-  
-  // last step: on normal OSes, mark the script executable
-  if (!WINDOZE) {
-    $script = $destination . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'criticali';
-    if (!chmod($script, 0777 &~ umask()))
-      trigger_error("Could not make $script executable", E_USER_WARNING);
-  }
 
   print "done\n";
 }
@@ -574,6 +570,94 @@ function repository_init($php_binary, $criticali_root) {
     throw new Exception("$full_command returned $exited");
   
   print "done\n";
+}
+
+/**
+ * Run any installers for the package
+ */
+function run_installers($criticali_root) {
+  $GLOBALS['CRITICALI_ROOT'] = $criticali_root;
+  $ds = DIRECTORY_SEPARATOR;
+
+  // search for installers
+  $matches = glob($critcali_root . $ds . 'Core' . $ds .'lib' . $ds . '*' . $ds . 'Hook' .
+    $ds . 'Install.php', GLOB_NOSORT);
+
+  foreach ($matches as $hookFile) {
+    try {
+
+      $hookClass = file_to_class_name($hookFile, $criticali_root . $ds . 'Core');
+      include_once($hookFile);
+      if (!class_exists($hookClass, false))
+        throw new Exception("File \"$hookFile\" did not declare class \"$hookClass\".");
+        
+      $hookInst = new $hookClass();
+      if (!($hookInst instanceof CriticalI_InstallHook))
+        throw new Exception("$hookClass does not implement CriticalI_InstallHook.");
+      
+      $hookInst->install(null); // special use when bootstrapping
+
+    } catch (Exception $e) {
+      trigger_error("Skipping installation hook \"$hookFile\" due to error: " .
+        $e->getMessage(), E_USER_WARNING);
+    }
+  }
+}
+
+/**
+ * Convert a path into the class name that should be contained within the file
+ *
+ * @param string $filename  The filename to convert
+ * @param string $base      The optional base path to remove from the beginning
+ */
+function file_to_class_name($filename, $base = '') {
+  // normalize the paths
+  $filename = str_replace("\\", '/', $filename);
+  $base = empty($base) ? '' : str_replace("\\", '/', $base);
+  
+  // strip the base
+  if (substr($filename, 0, strlen($base)) == $base)
+    $filename = substr($filename, strlen($base));
+    
+  // no absolute paths or other prefixes for our purposes
+  $matches = array();
+  if (preg_match("/^[^:\\/]+:(.*)$/", $filename, $matches))
+    $filename = $matches[1];
+  if (preg_match("/^\\/\\/[^\\/]+(\\/.*)$/", $filename, $matches))
+    $filename = $matches[1];
+  if (substr($filename, 0, 1) == '/')
+    $filename = substr($filename, 1);
+  
+  // split it
+  $parts = explode('/', $filename);
+  
+  // folders without an initial capital are not part of the name
+  while ($parts && (!preg_match('/^[A-Z]/', $parts[0]))) {
+    array_shift($parts);
+  }
+  
+  // no extension for the last element
+  if ($parts) {
+    $last = array_pop($parts);
+    if (($pos = strrpos($last, '.')) !== false)
+      $last = substr($last, 0, $pos);
+    if (!empty($last)) $parts[] = $last;
+  }
+  
+  // assemble the class name
+  return ($parts ? implode('_', $parts) : '');
+}
+
+/**
+ * The interface that must be implemented by a repository install hook.
+ */
+interface CriticalI_InstallHook {
+  /**
+   * Invoked when the package is installed in the repository
+   *
+   * @param CriticalI_Package_Version $pkg  The package being installed
+   */
+  public function install($pkg);
 }
 
 ?>

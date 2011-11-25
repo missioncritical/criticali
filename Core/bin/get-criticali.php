@@ -580,7 +580,7 @@ function run_installers($criticali_root) {
   $ds = DIRECTORY_SEPARATOR;
 
   // search for installers
-  $matches = glob($critcali_root . $ds . 'Core' . $ds .'lib' . $ds . '*' . $ds . 'Hook' .
+  $matches = glob($criticali_root . $ds . 'Core' . $ds .'lib' . $ds . '*' . $ds . 'Hook' .
     $ds . 'Install.php', GLOB_NOSORT);
 
   foreach ($matches as $hookFile) {

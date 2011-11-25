@@ -6,7 +6,7 @@
 /**
  * Repository install hook for criticali.
  */
-class CriticalI_Hook_Install extends CriticalI_InstallHook {
+class CriticalI_Hook_Install implements CriticalI_InstallHook {
 
   /**
    * Invoked when the package is installed in the repository
@@ -22,6 +22,11 @@ class CriticalI_Hook_Install extends CriticalI_InstallHook {
     if (!$windoze) {
       // set the permissions on the shell script
       $script = $GLOBALS['CRITICALI_ROOT'] . '/Core/bin/criticali';
+      if (!chmod($script, 0777 &~ umask()))
+        trigger_error("Could not make $script executable", E_USER_WARNING);
+
+      // and the install script
+      $script = $GLOBALS['CRITICALI_ROOT'] . '/Core/bin/get-criticali.php';
       if (!chmod($script, 0777 &~ umask()))
         trigger_error("Could not make $script executable", E_USER_WARNING);
     }

@@ -14,33 +14,26 @@ notes.
 An Example
 ----------
 
-### Get The Code
+### Install It
 
-Because Critical I is still in development, the only way to work with it
-right now is to check out a copy of the source code.  So, first off, we
-need the code.	Fortunately, that's dead simple.  From my home directory:
+The best way to get Critical I is to use the installer. Download it from
+[http://criticali.missioncriticallabs.com/get-criticali](http://criticali.missioncriticallabs.com/get-criticali).
+Save the file as get-criticali.php and then run it with the command:
 
-    $ git clone git@github.com:missioncritical/criticali.git
+    $ php get-criticali.php
 
-### Initialize The Repository
+### Get The Packages You'll Need
 
-Next, I need to add the `Core/bin` directory to my path.  In my case that
-looks like:
+Once you install Critical I, you'll have an empty repository. The
+repository is for storing packages you want to add to projects. For this
+exercise, we'll need to download a few packages for a simple project. We
+can grab everything we need with the command:
 
-    $ export PATH=~/criticali/Core/bin:$PATH
+    $ criticali add --yes mvc
 
-If I plan to use Critical I for more than just this example, I'll probably
-want to add that to my `.profile` so it's already in my path every time I
-log in.
-
-With the main script in my path, I then need to initialize my working
-directory as a Critical I repository:
-
-    $ criticali --skip-packages rebuild
-
-Now that my environment is set up, I can get more information about any of
-the criticali commands by typing "criticali help *command*" at the command
-line.
+To get more information about any of the available criticali commands,
+type "criticali help *command*" at the command line or "criticali help
+commands" to see a list of commands.
 
 ### Create A Project
 

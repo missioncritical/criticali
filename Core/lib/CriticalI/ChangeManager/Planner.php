@@ -82,7 +82,7 @@ class CriticalI_ChangeManager_Planner {
     
     // add the requirements to our plan
     foreach ($packageName as $idx=>$name) {
-      $plan->push_requirement($name, $version[$idx]);
+      $plan->push_requirement($name, $this->make_install_specification($version[$idx]));
     }
     
     // build out the plan
@@ -183,6 +183,31 @@ class CriticalI_ChangeManager_Planner {
     if (count($version) != count($packageName))
       throw new CriticalI_UsageError(
         "Number of parameters provided for packageName and version do not match.");
+  }
+  
+  /**
+   * Return the version specification as one suitable for an install requirement
+   *
+   * @param string $version The version specification to use
+   *
+   * @return string
+   */
+  protected function make_install_specification($version) {
+    // the presecence of ! + or - prevents any changes
+    if (preg_match("/!-\\+/", $version)) return $version;
+    
+    $parts = explode('.', $version, 3);
+    
+    if (count($parts) == 1) {
+      // default behavior ok
+      return $version;
+    } elseif (count($parts) == 2) {
+      // require same minor version
+      return "$parts[0].$parts[1].0-$parts[0].$parts[1]." . PHP_INT_MAX;
+    } else {
+      // treat as exact
+      return $version . '!';
+    }
   }
   
   /**

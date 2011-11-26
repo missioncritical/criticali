@@ -115,6 +115,29 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
       array('F'=>'1.0.0'), array()));
   }
   
+
+  public function testInstallsNewst() {
+    // single version
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryAB2'),
+      $this->buildPackageList('emptyProject'), false);
+    $this->assertTrue($this->planMatches($planner->install_plan('B'),
+      array('A'=>'1.5.0', 'B'=>'1.0.0'), array()));
+    
+    // multiple versions
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryAB2'),
+      $this->buildPackageList('emptyProject'), true);
+    $this->assertTrue($this->planMatches($planner->install_plan('B'),
+      array('A'=>'1.5.0', 'B'=>'1.0.0'), array()));
+  }
+  
+
+  public function testInstallsExact() {
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryAB3'),
+      $this->buildPackageList('a15Project'), true);
+    $this->assertTrue($this->planMatches($planner->install_plan('A', '1.4'),
+      array('A'=>'1.4.0'), array()));
+  }
+
   public function testRemovePlan() {
     $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABC'),
       $this->buildPackageList('abProject'), false);
@@ -415,6 +438,8 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
   
   protected $a2Project = array('A'=>array('2.0.0'=>array()));
 
+  protected $a15Project = array('A'=>array('1.5.0'=>array()));
+
   protected $abProject = array('A'=>array('1.0.0'=>array()),
     'B'=>array('1.0.0'=>array('A'=>'1.0')));
 
@@ -433,6 +458,12 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
   protected $repositoryAB = array('A'=>array('1.0.0'=>array()),
     'B'=>array('1.0.0'=>array('A'=>'1.0')));
   
+  protected $repositoryAB2 = array('A'=>array('1.0.0'=>array(), '1.5.0'=>array()),
+    'B'=>array('1.0.0'=>array('A'=>'1.0')));
+  
+  protected $repositoryAB3 = array('A'=>array('1.0.0'=>array(), '1.4.0'=>array(), '1.5.0'=>array()),
+    'B'=>array('1.0.0'=>array('A'=>'1.0')));
+
   protected $repositoryABC = array('A'=>array('1.0.0'=>array()),
     'B'=>array('1.0.0'=>array('A'=>'1.0'), '1.2.0'=>array('A'=>'1.0')),
     'C'=>array('1.0.0'=>array('B'=>'1.2')));

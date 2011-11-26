@@ -30,6 +30,57 @@ class CriticalI_Remote_PackageListTestRemote {
   }
 }
 
+class CriticalI_Remote_PackageListTestRemote2 {
+  public function index() {
+    return array(
+      array(
+        'name'=>'alpha',
+        'version'=>'1.2.3',
+        'properties'=>array(
+          'dependencies'=>array(
+            'beta'=>'1.0',
+            'gamma'=>'1.0'
+          )
+        )
+      ),
+      
+      array(
+        'name'=>'beta',
+        'version'=>'1.1.0',
+        'properties'=>array()
+      ),
+      
+      array(
+        'name'=>'alpha',
+        'version'=>'1.0.0',
+        'properties'=>array(
+          'dependencies'=>array(
+            'beta'=>'1.0'
+          )
+        )
+      ),
+      
+      array(
+        'name'=>'gamma',
+        'version'=>'1.0.1',
+        'properties'=>array()
+      ),
+      
+      array(
+        'name'=>'alpha',
+        'version'=>'1.4.1',
+        'properties'=>array(
+          'dependencies'=>array(
+            'beta'=>'1.0',
+            'gamma'=>'1.0.1'
+          )
+        )
+      )
+      
+    );
+  }
+}
+
 class CriticalI_Remote_PackageListTest extends CriticalI_TestCase {
   
   public function testConstructor() {
@@ -44,6 +95,14 @@ class CriticalI_Remote_PackageListTest extends CriticalI_TestCase {
     $this->assertEquals($list['alpha']->newest()->version_string(), '1.2.3');
     $this->assertEquals($list['alpha']->newest()->property('dependencies'),
       array('beta'=>'1.0', 'gamma'=>'1.0'));
+  }
+  
+  public function testSortOrder() {
+    $remote = new CriticalI_Remote_PackageListTestRemote2();
+    $list = new CriticalI_Remote_PackageList(array($remote));
+    
+    $this->assertEquals($list['alpha']->newest()->version_string(), '1.4.1');
+    $this->assertEquals($list['alpha']->oldest()->version_string(), '1.0.0');
   }
   
   public function testGetIterator() {

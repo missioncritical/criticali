@@ -113,7 +113,7 @@ class CriticalI_ChangeManager_Planner {
     
     // add the requirements to our plan
     foreach ($packageName as $idx=>$name) {
-      $pkg = $this->installed_package_instance($name, $version[$idx]);
+      $pkg = $this->installed_package_instance($name, $this->make_install_specification($version[$idx]));
       $plan->remove_package($pkg);
     }
     

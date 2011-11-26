@@ -138,6 +138,7 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
       array('A'=>'1.4.0'), array()));
   }
 
+
   public function testRemovePlan() {
     $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABC'),
       $this->buildPackageList('abProject'), false);
@@ -173,6 +174,16 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
       array(), array('A'=>'1.0.0')));
   }
   
+  
+  public function testRemoveExact() {
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryAB3'),
+      $this->buildPackageList('repositoryAB3'), true);
+
+    $this->assertTrue($this->planMatches($planner->remove_plan('A', '1.4'),
+      array(), array('A'=>'1.4.0')));
+  }
+  
+
   public function testUpgradePlan() {
     $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryABCDE'),
       $this->buildPackageList('aProject'), false);

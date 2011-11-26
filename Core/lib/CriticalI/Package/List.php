@@ -12,6 +12,7 @@
  */
 class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
   protected static $list = null;
+  protected static $statusListener = null;
   
   protected $packages;
   protected $packageInfo;
@@ -38,6 +39,14 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     }
   }
   
+  /**
+   * Set the status listener
+   * @param CriticalI_Package_StatusListener $listener The status listener to add
+   */
+  public static function set_status_listener($listener) {
+    self::$statusListener = $listener;
+  }
+
   /**
    * Returns the shared list instance
    * @return CriticalI_Package_List
@@ -191,6 +200,8 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     // and version
     $version = $wrappedPackage->package_version();
 
+    self::info_status(null, "Installing $name $version");
+
     // determine the destination directory
     $destination = $GLOBALS['CRITICALI_ROOT'] . '/' . $name . '-' . $version;
     if (file_exists($destination))
@@ -242,6 +253,8 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     // and version
     $version = $packageVersion->version_string();
 
+    self::info_status($packageVersion, "Removing $name $version");
+
     // determine the directory where it is installed
     $directory = $GLOBALS['CRITICALI_ROOT'] . '/' .$packageVersion->installation_directory();
     if (!is_dir($directory))
@@ -271,7 +284,7 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
    * checking. For higher level functionality and validation, construct a
    * CriticalI_ChangeManager_Plan and pass it to the perform() method.
    *
-   * @param CriticalI_Package_Wrapper $to The system package to install
+   * @param CriticalI_Package_Version $to The system package to install
    * @param CriticalI_Package_Version $from The system package to remove
    */
   public static function system_upgrade($to, $from) {
@@ -286,6 +299,8 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
 
     // get the version we're going to
     $version = $to->version_string();
+
+    self::info_status($from, "Upgrading system to $version");
 
     // run any uninstallers first
     self::run_uninstallers_for($from);
@@ -604,6 +619,28 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
     }
     
     return $matches;
+  }
+  
+  /**
+   * Send an informational status message
+   *
+   * @param CriticalI_Package $package  The package the operation is occurring on (may be null)
+   * @param string            $message  The message
+   */
+  protected static function info_status($package, $message) {
+    if (self::$statusListener)
+      self::$statusListener->info($package, $message);
+  }
+
+  /**
+   * Send a debug-level status message
+   *
+   * @param CriticalI_Package $package  The package the operation is occurring on (may be null)
+   * @param string            $message  The message
+   */
+  protected static function debug_status($package, $message) {
+    if (self::$statusListener)
+      self::$statusListener->debug($package, $message);
   }
   
 }

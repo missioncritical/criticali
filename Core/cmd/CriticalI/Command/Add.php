@@ -3,6 +3,34 @@
 // See the LICENSE file distributed with this work for restrictions.
 
 /**
+ * Listener for installation status
+ */
+class CriticalI_Command_Add_Listener implements CriticalI_Package_StatusListener {
+  public $showDebug = false;
+  
+/**
+ * Normal informational message
+ *
+ * @param CriticalI_Package $package  The package the operation is occurring on (may be null)
+ * @param string          $message  The message
+ */
+  public function info($package, $message) {
+    fwrite(STDERR, $message . "\n");
+  }
+
+/**
+ * Debug-level message
+ *
+ * @param CriticalI_Package $package  The package the operation is occurring on (may be null)
+ * @param string          $message  The message
+ */
+  public function debug($package, $message) {
+    if ($this->showDebug)
+      fwrite(STDERR, $message . "\n");
+  }
+}
+
+/**
  * Add command
  */
 class CriticalI_Command_Add extends CriticalI_Command {
@@ -20,6 +48,7 @@ DESC
 , array(
   new CriticalI_OptionSpec('version', CriticalI_OptionSpec::REQUIRED, 'number', 'Specify the version number of the package to install.  Defaults to the most current version available.'),
   new CriticalI_OptionSpec('ignore-dependencies', CriticalI_OptionSpec::NONE, null, 'Skips dependency handling and installs the package whether its dependencies are satisfied or not.  This may result in a non-functional package if dependencies are missing from the project.'),
+  new CriticalI_OptionSpec('verbose', CriticalI_OptionSpec::NONE, null, 'Displays lots of information as the installation progresses.'),
   new CriticalI_OptionSpec('quiet', CriticalI_OptionSpec::NONE, null, 'Limits output to error messages and any required prompts for information.'),
   new CriticalI_OptionSpec('no', CriticalI_OptionSpec::NONE, null, 'Assumes no as the answer to any prompts for information.'),
   new CriticalI_OptionSpec('yes', CriticalI_OptionSpec::NONE, null, 'Assumes yes as the answer to any prompts for information.')
@@ -35,6 +64,12 @@ DESC
       exit(1);
     }
     
+    $status = new CriticalI_Command_Add_Listener();
+    if ($this->options['verbose'])
+      $status->showDebug = true;
+    if (! $this->options['quiet'])
+      CriticalI_Package_List::set_status_listener($status);
+
     // plan what is to be installed
     $planner = new CriticalI_ChangeManager_RepositoryPlanner();
     

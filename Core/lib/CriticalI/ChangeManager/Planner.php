@@ -225,7 +225,7 @@ class CriticalI_ChangeManager_Planner {
     $solutions = array();
     
     while (count($plans) > 0) {
-      $plan = array_pop($plans);
+      $plan = array_shift($plans);
       
       if ($plan->requirement_count() == 0) {
         $solutions[] = $plan;
@@ -236,7 +236,7 @@ class CriticalI_ChangeManager_Planner {
   
       if ($this->satisfies_requirement($package, $version, $plan) ||
           $plan->satisfies_requirement($package, $version)) {
-        $plans[] = $plan;
+        array_unshift($plans, $plan);
         continue;
       }
 

@@ -128,6 +128,13 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
       $this->buildPackageList('emptyProject'), true);
     $this->assertTrue($this->planMatches($planner->install_plan('B'),
       array('A'=>'1.5.0', 'B'=>'1.0.0'), array()));
+    
+    // controller issue
+    $planner = new CriticalI_ChangeManager_Planner($this->buildPackageList('repositoryMVC'),
+      $this->buildPackageList('emptyProject'), true);
+    $this->assertTrue($this->planMatches($planner->install_plan('mvc'),
+      array('activerecord'=>'0.2.9', 'controller'=>'0.2.5', 'log4php'=>'0.1.1',
+        'migration'=>'0.1.0', 'mvc'=>'0.2.0', 'smarty'=>'2.6.26', 'support'=>'0.2.5'), array()));
   }
   
 
@@ -510,6 +517,15 @@ class CriticalI_ChangeManager_PlannerTest extends CriticalI_TestCase {
     'G'=>array('1.0.0'=>array('A'=>'1.0'), '1.2.0'=>array('A'=>'2.0', 'F'=>'*')),
     'H'=>array('1.0.0'=>array('A'=>'1.0.0', 'D'=>'1.0.0'),
         '1.2.0'=>array('A'=>'2.0', 'C'=>'1.2', 'D'=>'1.2')));
+  
+  protected $repositoryMVC = array('activerecord'=>array('0.2.9'=>array('support'=>'0.2.2')),
+    'controller'=>array('0.2.4'=>array('support'=>'0.2.4'), '0.2.5'=>array('support'=>'0.2.5')),
+    'log4php'=>array('0.1.1'=>array('support'=>'0.2.0')),
+    'migration'=>array('0.1.0'=>array('activerecord'=>'0.2.3')),
+    'mvc'=>array('0.2.0'=>array('activerecord'=>'0.2', 'controller'=>'0.2', 'log4php'=>'0.1',
+      'migration'=>'0.1', 'smarty'=>'2.6', 'support'=>'0.2')),
+    'smarty'=>array('2.6.26'=>array('support'=>'0.2.0')),
+    'support'=>array('0.2.5'=>array()));
 }
 
 ?>

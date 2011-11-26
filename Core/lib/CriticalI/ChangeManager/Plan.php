@@ -185,6 +185,27 @@ class CriticalI_ChangeManager_Plan {
   }
   
   /**
+   * Returns a pretty representation of the plan
+   */
+  public function __toString() {
+    $pp = "Add: ";
+    $list = array();
+    foreach ($this->add as $pkg) { $list[] = $pkg->package()->name() . '-' . $pkg->version_string(); }
+    $pp .= implode(',', $list);
+    
+    $pp .= "; Remove: ";
+    $list = array();
+    foreach ($this->remove as $pkg) { $list[] = $pkg->package()->name() . '-' . $pkg->version_string(); }
+    $pp .= implode(',', $list);
+    
+    $pp .= "; Required: ";
+    foreach ($this->requirements as $req) { $list[] = $req->name . '-' . $req->version; }
+    $pp .= implode(',', $list);
+    
+    return $pp;
+  }
+  
+  /**
    * Search an array for a matching package version specification
    */
   protected function index_of_version_specification(&$list, $packageName, $packageVersion) {

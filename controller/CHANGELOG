@@ -13,3 +13,5 @@
 0.2.5 2011-11-19
  * Allow dashes in URLs to be mapped to underscores in controller names
    and actions.
+0.3.0 2011-11-26
+ * Add support for configured routes

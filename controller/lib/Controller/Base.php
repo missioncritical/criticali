@@ -123,8 +123,9 @@ abstract class Controller_Base {
   protected $flash = NULL;
   protected $rendered = false;
   protected $logger = NULL;
-  protected $routing = null;
-  protected $runtime_variables = array();
+  protected $_routing = null;
+  protected $_runtime_variables = array();
+  protected $_is_error = false;
 
   protected $hidden_actions = array('__construct'=>1,
                                     'action'=>1,
@@ -203,7 +204,7 @@ abstract class Controller_Base {
    * @param Controller_Routing $routing The routing instance to set
    */
   public function set_routing($routing) {
-    $this->routing = $routing;
+    $this->_routing = $routing;
   }
 
   /**
@@ -217,6 +218,15 @@ abstract class Controller_Base {
     if (substr($klass, -10) == 'Controller')
       $klass = substr($klass, 0, -10);
     return Support_Inflector::underscore(str_replace('_', '/', $klass));
+  }
+  
+  /**
+   * Set the error flag for the controller
+   *
+   * @param boolean $flag The flag value
+   */
+  public function set_error($flag) {
+    $this->_is_error = $flag;
   }
 
   /**
@@ -277,7 +287,7 @@ abstract class Controller_Base {
    * @return string
    */
   public function url_for($parameters, $method = 'get') {
-    if (!$this->routing)
+    if (!$this->_routing)
       throw new Exception("url_for requires a routing class to be in use");
     
     // normalize the controller
@@ -296,7 +306,7 @@ abstract class Controller_Base {
       $parameters['id'] = $parameters['id']->id();
     
     // find the route
-    return $this->routing->url_for($parameters, $method);
+    return $this->_routing->url_for($parameters, $method);
   }
 
   /** 
@@ -354,11 +364,8 @@ abstract class Controller_Base {
    * Return a 404 not found message back.
    */
   protected function not_found() {
-    header('HTTP/1.1 404 File Not Found');
-    print "<html><head><title>Not Found</title></head>"
-      . "<body><h1>The requested document could not be found.</h1>"
-      . "</body></html>\n";
-    $this->set_rendered(true);
+    $this->render_error(404, array('message'=>'File Not Found',
+      'description'=>'The requested document could not be found.'));
   }
   
   /**
@@ -442,6 +449,44 @@ abstract class Controller_Base {
     list($tpl, $layout) = $this->prepare_for_render($options);
     
     return $tpl->fetch($layout, $this->template_cache_id(), $this->template_compile_id());
+  }
+  
+  /**
+   * Render an error document
+   *
+   * Options are:
+   *  - <b>message:</b> The HTTP status message to return
+   *  - <b>description:</b> A more detailed description of the error (rarely used outside of logging)
+   *
+   * @param int $error_code The HTTP error code (e.g. 404)
+   * @param array $options  Any additional options
+   */
+  protected function render_error($error_code, $options = array()) {
+    $message = isset($options['message']) ? $options['message'] : 'Error';
+    $description = isset($options['description']) ? $options['description'] : '';
+    
+    $this->logger()->info("Error status $error_code $message" . ($description ? ": $description" : ''));
+
+    if ($this->_routing && (!$this->_is_error)) {
+      $parameters = $_REQUEST;
+      $controller = $this->_routing->error_route($error_code, $message,
+        $_SERVER['REQUEST_METHOD'], $parameters);
+      $controller->set_routing($this->_routing);
+      $controlelr->set_error(true);
+      $controller->handle_request();
+
+    } else {
+      header("HTTP/1.1 $error_code $message");
+      
+      $code = htmlescape($error_code);
+      $msg = htmlescape($message);
+      $desc = $description ? htmlspecialchars($description) : $msg;
+
+      print "<html><head><title>$msg</title></head>"
+        . "<body><h1>$code $desc</h1></body></html>\n";
+    }
+    
+    $this->set_rendered(true);
   }
   
   /**
@@ -529,7 +574,7 @@ abstract class Controller_Base {
     // all public properties are imported as variables
 
     // virtual ones
-    foreach ($this->runtime_variables as $name=>$value) {
+    foreach ($this->_runtime_variables as $name=>$value) {
       $tpl->assign($name, $value);
     }
     
@@ -761,7 +806,7 @@ abstract class Controller_Base {
    * @param mixed $value The value to set
    */
   public function __set($name, $value) {
-    $this->runtime_variables[$name] = $value;
+    $this->_runtime_variables[$name] = $value;
   }
   
   /**
@@ -773,7 +818,7 @@ abstract class Controller_Base {
    * @return mixed
    */
   public function __get($name) {
-    return isset($this->runtime_variables[$name]) ? $this->runtime_variables[$name] : null;
+    return isset($this->_runtime_variables[$name]) ? $this->_runtime_variables[$name] : null;
   }
 
   /**
@@ -785,7 +830,7 @@ abstract class Controller_Base {
    * @return boolean
    */
   public function __isset($name) {
-    return isset($this->runtime_variables[$name]);
+    return isset($this->_runtime_variables[$name]);
   }
 
   /**
@@ -795,7 +840,7 @@ abstract class Controller_Base {
    * @param string $name The name of the variable
    */
   public function __unset($name) {
-    unset($this->runtime_variables[$name]);
+    unset($this->_runtime_variables[$name]);
   }
 }
 

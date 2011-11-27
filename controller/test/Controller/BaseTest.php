@@ -44,6 +44,9 @@ class ExceptTestController extends EmptyTestController {
   }
 }
 
+class Controller_BaseTest_TestAController extends Controller_Base {
+}
+
 
 class Controller_BaseTest extends CriticalI_TestCase {
   
@@ -77,6 +80,14 @@ class Controller_BaseTest extends CriticalI_TestCase {
     $this->assertFalse($onlyFailure->before_filter_value());
     $this->assertTrue($exceptSuccess->before_filter_value());
     $this->assertFalse($exceptFailure->before_filter_value());
+  }
+  
+  public function testControllerName() {
+    $empty = new EmptyTestController();
+    $testA = new Controller_BaseTest_TestAController();
+    
+    $this->assertEquals('empty_test', $empty->controller_name());
+    $this->assertEquals('controller/base_test/test_a', $testA->controller_name());
   }
   
 }

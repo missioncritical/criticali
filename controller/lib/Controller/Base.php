@@ -123,7 +123,7 @@ abstract class Controller_Base {
     $klass = get_class($this);
     if (substr($klass, -10) == 'Controller')
       $klass = substr($klass, 0, -10);
-    return Support_Inflector::underscore($klass);
+    return Support_Inflector::underscore(str_replace('_', '/', $klass));
   }
 
   /**

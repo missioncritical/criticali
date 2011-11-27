@@ -11,7 +11,7 @@
  * context of routes.php, the variable $route contains an instance of
  * Controller_Routing_Builder, which can be used to generate routes.
  *
- * See the documentation for Controller_Routing_Builder for more
+ * See the documentation for {@link Controller_Routing_Builder} for more
  * information.
  */
 class Controller_Routing {

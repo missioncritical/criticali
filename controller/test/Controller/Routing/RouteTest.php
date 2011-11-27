@@ -142,6 +142,47 @@ class Controller_Routing_RouteTest extends CriticalI_TestCase {
     $this->assertEquals(array('controller'=>'test1322354290', 'action'=>'show', 'id'=>'1877'), $params);
   }
   
+  public function testUrlFor() {
+    $route = new Controller_Routing_Route(null, new Controller_Routing_ControllerSegment(
+      new Controller_Routing_DynamicSegment(':action')));
+    
+    $this->assertEquals('/alpha/list',
+      $route->url_for(array('controller'=>'alpha', 'action'=>'list'), 'get'));
+
+    $route = new Controller_Routing_Route(null, new Controller_Routing_DynamicSegment(':action'));
+    $this->assertFalse($route->url_for(array('controller'=>'alpha', 'action'=>'list'), 'get'));
+
+    $route = new Controller_Routing_Route(null, new Controller_Routing_ControllerSegment(
+      new Controller_Routing_DynamicSegment(':type')));
+    $this->assertEquals('/alpha/beta',
+      $route->url_for(array('controller'=>'alpha', 'type'=>'beta'), 'get'));
+    $this->assertFalse($route->url_for(array('controller'=>'alpha'), 'get'));
+
+    $route = new Controller_Routing_Route(null, new Controller_Routing_ControllerSegment(
+      new Controller_Routing_DynamicSegment(':action')), array('method'=>'get', 'format'=>'html'));
+    $this->assertEquals('/alpha/list?format=html',
+      $route->url_for(array('controller'=>'alpha', 'action'=>'list', 'format'=>'html'), 'get'));
+    $this->assertFalse($route->url_for(array('controller'=>'alpha', 'action'=>'list',
+      'format'=>'html'), 'post'));
+    $this->assertFalse($route->url_for(array('controller'=>'alpha', 'action'=>'list'), 'get'));
+
+    $route = new Controller_Routing_Route(null, new Controller_Routing_ControllerSegment(
+      new Controller_Routing_DynamicSegment(':action')), array(), array('format'=>'html'));
+    $this->assertEquals('/alpha/list',
+      $route->url_for(array('controller'=>'alpha', 'action'=>'list', 'format'=>'html'), 'get'));
+    
+    try {
+      $route->url_for(array('action'=>'index'), 'get');
+      $this->fail("Accepted a call to url_for with no controller specified");
+    } catch (Exception $e) {
+      // expected
+    }
+    
+    $route = new Controller_Routing_Route(null, new Controller_Routing_StaticSegment(''),
+      array(), array('controller'=>'home'));
+    $this->assertEquals('/', $route->url_for(array('controller'=>'home'), 'get'));
+  }
+  
 }
 
 ?>

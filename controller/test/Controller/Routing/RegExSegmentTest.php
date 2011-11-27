@@ -49,6 +49,13 @@ class Controller_Routing_RegExSegmentTest extends CriticalI_TestCase {
     $this->assertTrue($segment1->compare($segment2) < 0);
   }
   
+  public function testUrlFor() {
+    $segment = new Controller_Routing_RegExSegment("/alpha/");
+    $params = array();
+    
+    $this->assertFalse($segment->url_for($params));
+  }
+  
 }
 
 ?>

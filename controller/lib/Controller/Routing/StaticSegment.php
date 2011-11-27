@@ -71,6 +71,19 @@ class Controller_Routing_StaticSegment extends Controller_Routing_Segment {
       return strcmp(get_class($this), get_class($segment));
   }
   
+  /**
+   * Essentially the reverse of match(), this method assembles a URL
+   * segment from a set of parameters. If this segment cannot construct a
+   * URL chunk for the parameters, it returns false. Note that upon
+   * completion, $params contains only unconsumed parameters.
+   *
+   * @param array &$params The parameters to use for assembling the URL
+   * @return mixed
+   */
+  public function url_for(&$params) {
+    return $this->pattern;
+  }
+
 }
 
 ?>

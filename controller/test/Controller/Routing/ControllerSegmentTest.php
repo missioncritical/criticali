@@ -52,6 +52,18 @@ class Controller_Routing_ControllerSegmentTest extends CriticalI_TestCase {
     $this->assertTrue($segment1->compare($segment2) < 0);
   }
   
+  public function testUrlFor() {
+    $segment = new Controller_Routing_ControllerSegment();
+    
+    $params = array('action'=>'bravo');
+    $this->assertFalse($segment->url_for($params));
+    $this->assertEquals(array('action'=>'bravo'), $params);
+
+    $params = array('controller'=>'alpha', 'action'=>'bravo');
+    $this->assertEquals('alpha', $segment->url_for($params));
+    $this->assertEquals(array('action'=>'bravo'), $params);
+  }
+  
 }
 
 ?>

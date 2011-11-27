@@ -90,6 +90,33 @@ class Controller_Routing_DynamicSegment extends Controller_Routing_Segment {
   }
   
   /**
+   * Essentially the reverse of match(), this method assembles a URL
+   * segment from a set of parameters. If this segment cannot construct a
+   * URL chunk for the parameters, it returns false. Note that upon
+   * completion, $params contains only unconsumed parameters.
+   *
+   * @param array &$params The parameters to use for assembling the URL
+   * @return mixed
+   */
+  public function url_for(&$params) {
+    $newParams = $params;
+    
+    $url = $this->pattern;
+    
+    foreach ($this->vars as $var) {
+      if (!isset($newParams[$var]))
+        return false;
+      
+      $url = str_replace(":$var", $newParams[$var], $url);
+      unset($newParams[$var]);
+    }
+    
+    $params = $newParams;
+    
+    return $url;
+  }
+
+  /**
    * Build the regular expression for matching URLs
    */
   protected function build_regex($pattern) {

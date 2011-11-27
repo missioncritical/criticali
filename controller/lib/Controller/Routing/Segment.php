@@ -71,6 +71,17 @@ abstract class Controller_Routing_Segment {
   abstract public function compare($segment);
   
   /**
+   * Essentially the reverse of match(), this method assembles a URL
+   * segment from a set of parameters. If this segment cannot construct a
+   * URL chunk for the parameters, it returns false. Note that upon
+   * completion, $params contains only unconsumed parameters.
+   *
+   * @param array &$params The parameters to use for assembling the URL
+   * @return mixed
+   */
+  abstract public function url_for(&$params);
+  
+  /**
    * Breaks a URL into a next token and remaining segment
    *
    * @param string $url The URL to tokenize

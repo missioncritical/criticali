@@ -65,6 +65,33 @@ class Controller_Routing_ControllerSegment extends Controller_Routing_Segment {
       return strcmp(get_class($this), get_class($segment));
   }
   
+  /**
+   * Essentially the reverse of match(), this method assembles a URL
+   * segment from a set of parameters. If this segment cannot construct a
+   * URL chunk for the parameters, it returns false. Note that upon
+   * completion, $params contains only unconsumed parameters.
+   *
+   * @param array &$params The parameters to use for assembling the URL
+   * @return mixed
+   */
+  public function url_for(&$params) {
+    if (isset($params['controller'])) {
+      
+      $name = $params['controller'];
+      unset($params['controller']);
+      
+      // if name is a class name, reverse it
+      if (substr($name, -10) == 'Controller' && class_exists($name)) {
+        $name = substr($name, 0, -10);
+        $name = Support_Inflector::underscore(str_replace('_', '/', $name));
+      }
+      
+      return $name;
+    }
+    
+    return false;
+  }
+
 }
 
 ?>

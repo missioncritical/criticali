@@ -69,6 +69,18 @@ class Controller_Routing_RegExSegment extends Controller_Routing_Segment {
       return strcmp(get_class($this), get_class($segment));
   }
   
+  /**
+   * Essentially the reverse of match(), this method assembles a URL
+   * segment from a set of parameters. Note that a RegExSegment is
+   * never capable of constructing a URL and so will return false.
+   *
+   * @param array &$params The parameters to use for assembling the URL
+   * @return mixed
+   */
+  public function url_for(&$params) {
+    return false;
+  }
+
 }
 
 ?>

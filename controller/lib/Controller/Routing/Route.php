@@ -158,6 +158,65 @@ class Controller_Routing_Route {
   }
   
   /**
+   * Essentially the opposite of match(), this attempts to build a URL
+   * from a set of parameters. It returns the constructed URL on success,
+   * or false on failure.
+   *
+   * @param array $params The parameters to assemble a URL for
+   * @param string $method The request method (e.g. "GET")
+   * @return mixed
+   */
+  public function url_for($params, $method) {
+    if (!isset($params['controller']))
+      throw new Exception("url_for requires a controller parameter to be specified");
+    
+    if (!$this->passes_method_constraints($method))
+      return false;
+    if (!$this->passes_parameter_constraints($params))
+      return false;
+    
+    $chunks = array();
+    $segment = $this->segmentsHead;
+    
+    while ($segment) {
+      if (($chunk = $segment->url_for($params)) === false)
+        return false;
+      
+      $chunks[] = $chunk;
+      $segment = $segment->next();
+    }
+    
+    // handle unconsumed parameters
+    $outputParams = array();
+    
+    foreach ($params as $param=>$value) {
+      // defaults are discarded
+      if (isset($this->defaults[$param]) && $this->defaults[$param] == $value) {
+        // ignore
+      
+      // 'action'=>'index' is always assumed
+      } elseif ($param == 'action' && $value == 'index') {
+        // ignore
+      
+      } elseif ($param == 'action' || $param == 'controller') {
+        // not a match
+        return false;
+        
+      } else {
+        // pass through
+        $outputParams[] = rawurlencode($param) . '=' . rawurlencode($value);
+      }
+    }
+    
+    // this matches, just assemble the url
+    $url = '/' . implode('/', $chunks);
+    if ($outputParams)
+      $url .= '?' . implode('&', $outputParams);
+    
+    return $url;
+  }
+
+  /**
    * Tests if a request method matches any constraints set on this route
    *
    * @param string $method The request method to test

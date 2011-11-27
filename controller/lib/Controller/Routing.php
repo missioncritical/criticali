@@ -69,6 +69,31 @@ class Controller_Routing {
   }
   
   /**
+   * The opposite of controller_for, determines the URL for a given set
+   * of parameters. If no URL can be constructed from the parameters,
+   * this method throws an exception.
+   *
+   * @param array $parameters  The parameters to generate a URL from
+   * @param string $method     The request method to use
+   *
+   * @return string
+   */
+  public function url_for($parameters, $method = 'get') {
+    if (!isset($parameters['controller']))
+      throw new Exception("url_for requires a controller parameter to be specified");
+    
+    foreach ($this->routes as $route) {
+      $url = $route->url_for($parameters, $method);
+
+      if ($url !== false)
+        return $url;
+    }
+    
+    $pretty = array(); foreach ($parameters as $n=>$v) { $pretty[] = "$n=$v"; }
+    throw new Exception("No URL could be constructed for the parameters " . implode(", ", $pretty));
+  }
+
+  /**
    * Add a route
    *
    * @param CriticalI_Routing_Route $route The route to add

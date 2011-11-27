@@ -90,6 +90,28 @@ class Controller_Routing_DynamicSegmentTest extends CriticalI_TestCase {
     $this->assertTrue($segment1->compare($segment2) < 0);
   }
   
+  public function testUrlFor() {
+    $segment = new Controller_Routing_DynamicSegment(":id");
+    $params = array('action'=>'alpha');
+    
+    $this->assertFalse($segment->url_for($params));
+    $this->assertEquals(array('action'=>'alpha'), $params);
+
+    $params = array('action'=>'alpha', 'id'=>500);
+    $this->assertEquals('500', $segment->url_for($params));
+    $this->assertEquals(array('action'=>'alpha'), $params);
+
+    $segment = new Controller_Routing_DynamicSegment(":action.:id");
+    $params = array('action'=>'alpha', 'id'=>500);
+    $this->assertEquals('alpha.500', $segment->url_for($params));
+    $this->assertEquals(array(), $params);
+
+    $segment = new Controller_Routing_DynamicSegment(":action.:id");
+    $params = array('action'=>'alpha');
+    $this->assertFalse($segment->url_for($params));
+    $this->assertEquals(array('action'=>'alpha'), $params);
+  }
+  
 }
 
 ?>

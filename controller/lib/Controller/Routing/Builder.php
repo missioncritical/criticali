@@ -10,9 +10,9 @@
  * <b>Building Routes</b>
  *
  * There are three primary methods the builder exposes for adding routes:
- * <tt>match</tt>, <tt>regex</tt>, and <tt>root</tt>. Most routes can be
+ * <var>match</var>, <var>regex</var>, and <var>root</var>. Most routes can be
  * added using the match method. As a simple example, take the default
- * routes (assuming <tt>$route</tt> is an instance of
+ * routes (assuming <var>$route</var> is an instance of
  * Controller_Routing_Builder):
  * <code>
  *   $route->match("/:controller/:action/:id"); // matches URLs like "/user/edit/5"

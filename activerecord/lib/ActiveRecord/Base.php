@@ -1954,7 +1954,7 @@ abstract class ActiveRecord_Base {
    *
    * Options for the association are:
    *  - <b>class_name:</b>   Set the name of the associated class, the default is inferred from the association name ('user' is assumed to come from a class named 'User').
-   *  - <b>foreign_key:</b>  Set the foreign key name, the default is to append <tt>_id</tt> to the association name.
+   *  - <b>foreign_key:</b>  Set the foreign key name, the default is to append <var>_id</var> to the association name.
    *  - <b>validate_key:</b> Whether or not to add a validation for the foreign key field, the default is to add one (true).
    *
    * Note that assigning an object via the set_association method will
@@ -2020,7 +2020,7 @@ abstract class ActiveRecord_Base {
    *
    * Options for the association are:
    *  - <b>class_name:</b>   Set the name of the associated class, the default is inferred from the association name ('user' is assumed to come from a class named 'User').
-   *  - <b>foreign_key:</b>  Set the foreign key name, the default is to append <tt>_id</tt> to the association name.
+   *  - <b>foreign_key:</b>  Set the foreign key name, the default is to append <var>_id</var> to the association name.
    *  - <b>primary_key:</b> The name of the key field on this class, defaults to id() (whatever the table primary key is set to).
    *
    * Note that assigning an object via the set_association method will
@@ -2107,7 +2107,7 @@ abstract class ActiveRecord_Base {
    *
    * Options for the association are:
    *  - <b>class_name:</b>   Set the name of the associated class, the default is inferred from the association name ('users' is assumed to come from a class named 'User').
-   *  - <b>foreign_key:</b>  Set the foreign key name, the default is to append <tt>_id</tt> to the associated class name.
+   *  - <b>foreign_key:</b>  Set the foreign key name, the default is to append <var>_id</var> to the associated class name.
    *  - <b>primary_key:</b> The name of the key field on this class, defaults to id() (whatever the table primary key is set to).
    *  - <b>order:</b>       Ordering to return the associated objects in (similar to order option for find_all).
    *

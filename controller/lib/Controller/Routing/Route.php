@@ -24,7 +24,7 @@ class Controller_Routing_Route {
    * @param array $defaults Any default parameters for the route
    * @param string $name The route name, if any
    */
-  public function __construct($position = null, $segments = null, $contraints = array(),
+  public function __construct($position = null, $segments = null, $constraints = array(),
     $defaults = array(), $name = null) {
     
     $this->position = $position;
@@ -133,14 +133,14 @@ class Controller_Routing_Route {
    * @return boolean
    */
   public function match($url, $method, &$params) {
-    if (!$this->passes_method_contraints($method))
+    if (!$this->passes_method_constraints($method))
       return false;
     
-    $params = is_array($params) ? array_merge($this->defaults, $params) : $this->defaults;
+    $newParams = is_array($params) ? array_merge($this->defaults, $params) : $this->defaults;
     
     $segment = $this->segmentsHead;
     while ($segment) {
-      if (!$segment->match($url, $params, $remainder))
+      if (!$segment->match($url, $newParams, $remainder))
         return false;
       
       $url = $remainder;
@@ -150,9 +150,10 @@ class Controller_Routing_Route {
     if (strlen($url) > 0)
       return false;
     
-    if (!$this->passes_parameter_constraints($params))
+    if (!$this->passes_parameter_constraints($newParams))
       return false;
     
+    $params = $newParams;
     return true;
   }
   

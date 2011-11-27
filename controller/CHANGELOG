@@ -16,3 +16,5 @@
 0.3.0 2011-11-26
  * Add support for configured routes
  * Support for controllers in subfolders (i.e. pseudo namespaces)
+ * Do away with the need to declare variables you want to pass to
+   templates as public in the controller under some versions of PHP

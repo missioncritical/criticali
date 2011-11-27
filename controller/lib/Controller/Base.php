@@ -31,7 +31,89 @@ class Controller_Base_EventListener {
 }
 
 /**
- * Base class for controllers
+ * Controller_Base is an abstract base class for implementing controllers.
+ *
+ * Controllers are expected to provide one or more public methods which
+ * require no arguments to be passed. All such public methods are
+ * considered actions of the controller (unless the method name has been
+ * passed to hide_action()). Actions are automatically invoked to service
+ * a request depending on the request URL and the configured routing in
+ * the application.
+ *
+ * For example, with default routing in place, a request to the URL
+ * "/hello" would invoke the index method of this controller:
+ * <code>
+ *   class HelloController extends Controller_Base {
+ * 
+ *     public function index() {
+ *     }
+ *
+ *   }
+ * </code>
+ *
+ * Unless the action explicitly renders a response, the render_action()
+ * method is called automatically when the method returns. By default,
+ * this would expect a view template to exist at "views/hello/index.tpl".
+ * That might look something like:
+ * <pre>
+ *   <html>
+ *     <head><title>Hello!</title></head>
+ *     <body>
+ *       <p>Hello!</p>
+ *     </body>
+ *   </html>
+ * </pre>
+ *
+ * Variables may be passed to views through the use of instance
+ * variables. All public instances variables of your controller become
+ * variables of the same name in the view. So if we did this in our controller:
+ * <code>
+ *   class HelloController extends Controller_Base {
+ * 
+ *     public function index() {
+ *       $this->name = 'George';
+ *     }
+ *
+ *   }
+ * </code>
+ *
+ * The view file could then make use of the variable, like so:
+ * <pre>
+ *   <html>
+ *     <head><title>Hello!</title></head>
+ *     <body>
+ *       <p>Hello, <?php echo htmlspecialchars($name); ?>!</p>
+ *     </body>
+ *   </html>
+ * </pre>
+ *
+ * Note that undeclared instance variables will be treated as public
+ * variables. You can prevent instance variables from being available to
+ * the view by specifically declaring them either protected or private:
+ * <code>
+ *   class HelloController extends Controller_Base {
+ *
+ *     private $start_time;
+ * 
+ *     public function index() {
+ *       $this->start_time = date('Y-m-d H:i:s');
+ *       $this->name = 'George';
+ *     }
+ *
+ *   }
+ * </code>
+ *
+ * So that in the view this would not output any date or time information
+ * in the second paragraph:
+ * <pre>
+ *   <html>
+ *     <head><title>Hello!</title></head>
+ *     <body>
+ *       <p>Hello, <?php echo htmlspecialchars($name); ?>!</p>
+ *       <p>Request started at: <?php echo $start_time; ?></p>
+ *     </body>
+ *   </html>
+ * </pre>
  */
 abstract class Controller_Base {
 
@@ -42,6 +124,7 @@ abstract class Controller_Base {
   protected $rendered = false;
   protected $logger = NULL;
   protected $routing = null;
+  protected $runtime_variables = array();
 
   protected $hidden_actions = array('__construct'=>1,
                                     'action'=>1,
@@ -444,6 +527,13 @@ abstract class Controller_Base {
    */
   protected function assign_template_vars($tpl) {
     // all public properties are imported as variables
+
+    // virtual ones
+    foreach ($this->runtime_variables as $name=>$value) {
+      $tpl->assign($name, $value);
+    }
+    
+    // and real ones
     $ref = new ReflectionObject($this);
     foreach ($ref->getProperties() as $prop) {
       if ($prop->isPublic()) {
@@ -663,6 +753,50 @@ abstract class Controller_Base {
     }
   }
   
+  /**
+   * Invoked when an attempt is made to set an undeclared instance
+   * variable
+   *
+   * @param string $name The name of the variable
+   * @param mixed $value The value to set
+   */
+  public function __set($name, $value) {
+    $this->runtime_variables[$name] = $value;
+  }
+  
+  /**
+   * Invoked when an attempt is made to retrieve the value of an
+   * undeclared instance variable
+   *
+   * @param string $name The name of the variable
+   *
+   * @return mixed
+   */
+  public function __get($name) {
+    return isset($this->runtime_variables[$name]) ? $this->runtime_variables[$name] : null;
+  }
+
+  /**
+   * Invoked when an attempt is made to call isset or empty for an
+   * undeclared instance variable
+   *
+   * @param string $name The name of the variable
+   *
+   * @return boolean
+   */
+  public function __isset($name) {
+    return isset($this->runtime_variables[$name]);
+  }
+
+  /**
+   * Invoked when an attempt is made to unset an undeclared instance
+   * variable
+   *
+   * @param string $name The name of the variable
+   */
+  public function __unset($name) {
+    unset($this->runtime_variables[$name]);
+  }
 }
 
 ?>

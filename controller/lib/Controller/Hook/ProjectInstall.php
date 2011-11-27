@@ -29,6 +29,17 @@ class Controller_Hook_ProjectInstall implements CriticalI_Project_InstallHook {
     } else {
       $install->copy("${pkgDir}/dispatch/htaccess", "{$projectFolder}.htaccess");
     }
+    
+    // add the default routes.php if there is none
+    if (!file_exists($project->directory() . '/' . $projectFolder . 'config/routes.php')) {
+      // the config folder must exist
+      if (!file_exists($project->directory() . '/' . $projectFolder . 'config'))
+        $install->mkdir("{$projectFolder}config");
+      
+      // this is not done with $install->copy because it should never be uninstalled
+      copy("${pkgDir}/dispatch/routes.php",
+        $project->directory() . '/' . $projectFolder . 'config/routes.php');
+    }
   }
 }
 

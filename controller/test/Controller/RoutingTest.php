@@ -2,6 +2,7 @@
 
 class Controller_RoutingTester extends Controller_Routing {
   public function normalize_proxy($url) { return $this->normalize($url); }
+  protected function add_configured_routes() { /* no-op */ }
 }
 
 class Controller_RoutingTest extends CriticalI_TestCase {

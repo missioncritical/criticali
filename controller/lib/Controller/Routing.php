@@ -4,15 +4,28 @@
 /** @package controller */
 
 /**
- * Handles simple routing rules for dispatching requests to controllers
- * by URL.  For the initial iteration this is just a hard-coded set of rules.
+ * Handles simple routing rules for dispatching requests to controllers.
+ *
+ * This class looks for a file named routes.php in the config folder and
+ * will load it to generate the list of configured routes. Within the
+ * context of routes.php, the variable $route contains an instance of
+ * Controller_Routing_Builder, which can be used to generate routes.
+ *
+ * See the documentation for Controller_Routing_Builder for more
+ * information.
  */
 class Controller_Routing {
+  
+  protected $routes;
+  protected $logger;
   
   /**
    * Constructor
    */
   public function __construct() {
+    $this->routes = array();
+    
+    $this->add_configured_routes();
   }
   
   /**
@@ -20,80 +33,92 @@ class Controller_Routing {
    *
    * @param string $url         The URL to route
    * @param array &$parameters  Output array for any parameters specified in the URL
+   * @param string $method      The request method
    *
    * @return Controller_Base
    */
-  public function controller_for($url, &$parameters) {
+  public function controller_for($url, &$parameters, $method = 'get') {
     $url = $this->normalize($url);
-
-    $parts = explode('/', $url);
-    // treat everything as an absolute path for now
-    if ($parts[0] != '') array_unshift($parts, '');
+    $params = $parameters;
     
-    // empty path
-    if (count($parts) == 1)
-      return $this->default_controller();
-    
-    if ((count($parts) > 1) && (count($parts) < 5)) {
-      // controller
-      $controller = $this->normalize_component($parts[1]);
-      // controller/action
-      if (count($parts) > 2)
-        $parameters['action'] = $this->normalize_component($parts[2]);
-      // controller/action/id
-      if (count($parts) > 3)
-        $parameters['id'] = $this->normalize_component($parts[3]);
-      
-      // determine the controller class name
-      $class = Support_Inflector::camelize($controller) . 'Controller';
-      if (!class_exists($class))
-        return $this->not_found();
-      else
+    // walk the routes
+    foreach ($this->routes as $route) {
+      if ($route->match($url, $method, $params)) {
+        
+        // a controller must be specified
+        if (!isset($params['controller'])) {
+          $this->logger()->error("No controller specified for route #".$route->position());
+          continue;
+        }
+        
+        // and the class must exist
+        $class = $this->controller_class($params['controller']);
+        if (!class_exists($class)) {
+          $this->logger()->error("No such controller class \"$class\"");
+          continue;
+        }
+        
+        // ok, we're good to go
+        $parameters = $params;
         return new $class();
-    
-    } else {
-      return $this->unmatched_route();
+      }
     }
-  }
-  
-  /**
-   * Returns the controller for the default route
-   *
-   * @return Controller_Base
-   */
-  protected function default_controller() {
-    $class = Cfg::get('routes/default');
-    if (!class_exists($class))
-      return $this->not_found();
-    else
-      return new $class();
-  }
-
-  /**
-   * Performs the behavior for an unmatched route.  (Currently this is
-   * just the same as not found)
-   *
-   * @return Controller_Base
-   */
-  protected function unmatched_route() {
-    return $this->not_found();
-  }
-
-  
-  /**
-   * Returns the controller to be used when a route pattern is matched
-   * but no controller was found.
-   *
-   * @return Controller_Base
-   */
-  protected function not_found() {
-    header('HTTP/1.0 404 Not Found');
     
-    $class = Cfg::get('routes/404');
-    if (!class_exists($class))
-      exit();
-    else
-      return new $class();
+    // no match
+    return $this->error_route('404', 'Not Found', $method, $parameters);
+  }
+  
+  /**
+   * Add a route
+   *
+   * @param CriticalI_Routing_Route $route The route to add
+   */
+  public function add_route($route) {
+    $route->set_position(count($this->routes) + 1);
+    $this->routes[] = $route;
+  }
+  
+  /**
+   * Returns the controller to be used for a given error status code. If
+   * no controller can be found for the request, it forcibly exits.
+   *
+   * @param int    $code        The error code
+   * @param string $message     The error message associated with the code
+   * @param string $method      The request method
+   * @param array &$parameters  Output array for any parameters specified in the URL
+   *
+   * @return Controller_Base
+   */
+  public function error_route($code, $message, $method, &$parameters) {
+    header("HTTP/1.1 $code $message");
+    
+    $params = $parameters;
+    
+    // this is much like normal routing
+    foreach ($this->routes as $route) {
+      if ($route->match("/$code", $method, $params)) {
+        
+        // a controller must be specified
+        if (!isset($params['controller'])) {
+          $this->logger()->error("No controller specified for route #".$route->position());
+          continue;
+        }
+        
+        // and the class must exist
+        $class = $this->controller_class($params['controller']);
+        if (!class_exists($class)) {
+          $this->logger()->error("No such controller class \"$class\"");
+          continue;
+        }
+        
+        // ok, we're good to go
+        $parameters = $params;
+        return new $class();
+      }
+    }
+
+    // however, no match forces us to exit
+    exit();
   }
   
   /**
@@ -144,14 +169,84 @@ class Controller_Routing {
   }
   
   /**
-   * Convert dashes to underscores in a portion of a URL
+   * Loads configured routing information.
+   */
+  protected function add_configured_routes() {
+    global $ROOT_DIR;
+    
+    // we'll need a builder
+    $builder = new Controller_Routing_Builder($this);
+    
+    // start with any legacy routes
+    $this->add_legacy_configured_routes($builder);
+    
+    // load the routes file if we have one
+    if (file_exists("$ROOT_DIR/config/routes.php")) {
+      $route = $builder;
+      include_once("routes.php");
+    } else {
+      $this->add_legacy_default_routes($builder);
+    }
+  }
+  
+  /**
+   * Convert a class name to a controller parameter value
    *
-   * @param string $component  The URL portion to normalize
+   * @param string $class  The class name to convert
    *
    * @return string
    */
-  protected function normalize_component($component) {
-    return str_replace('-', '_', $component);
+  protected function controller_name($class) {
+    if (substr($class, -10) == 'Controller')
+      $class = substr($class, 0, -10);
+    return Support_Inflector::underscore(str_replace('_', '/', $class));
+  }
+  
+  /**
+   * Convert a controller parameter value to a class name
+   *
+   * @param string $name  The controller name to convert
+   *
+   * @return string
+   */
+  protected function controller_class($name) {
+    return str_replace('/', '_', Support_Inflector::camelize($name)) . 'Controller';
+  }
+
+  /**
+   * Return this class's logger
+   *
+   * @return Logger
+   */
+  protected function logger() {
+    if (!$this->logger)
+      $this->logger = Support_Resources::logger('Routing');
+    return $this->logger;
+  }
+
+  /**
+   * Add any route information specified through legacy configuration
+   * properties
+   */
+  protected function add_legacy_configured_routes($builder) {
+    // routes/default => root
+    $class = Cfg::get('routes/default');
+    if ($class)
+      $builder->root(array('controller'=>$this->controller_name($class)));
+    
+    // routes/404 => /404
+    $class = Cfg::get('routes/404');
+    if ($class)
+      $builder->match('/404', array('controller'=>$this->controller_name($class)));
+  }
+  
+  /**
+   * Add the default routes that were previously assumed
+   */
+  protected function add_legacy_default_routes($builder) {
+    $builder->match('/:controller/:action/:id');
+    $builder->match('/:controller/:action');
+    $builder->match('/:controller');
   }
   
 }

@@ -11,6 +11,7 @@ $params = $_GET;
 if (isset($_POST)) $params = array_merge($params, $_POST);
 
 $controller = $routing->controller_for($_SERVER['REQUEST_URI'], $params, $_SERVER['REQUEST_METHOD']);
+$controller->set_routing($routing);
 
 foreach ($params as $param=>$value) {
   $_REQUEST[$param] = $value;

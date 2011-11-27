@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// Copyright (c) 2008-2011, Jeffrey Hunter and Mission Critical Labs, Inc.
 // See the LICENSE file distributed with this work for restrictions.
 /** @package controller */
 
@@ -41,6 +41,7 @@ abstract class Controller_Base {
   protected $flash = NULL;
   protected $rendered = false;
   protected $logger = NULL;
+  protected $routing = null;
 
   protected $hidden_actions = array('__construct'=>1,
                                     'action'=>1,
@@ -112,6 +113,15 @@ abstract class Controller_Base {
   public function set_rendered($rendered) {
     $this->rendered = $rendered;
   }
+  
+  /**
+   * Set the routing instance currently in use
+   *
+   * @param Controller_Routing $routing The routing instance to set
+   */
+  public function set_routing($routing) {
+    $this->routing = $routing;
+  }
 
   /**
    * Returns the name of the controller.  For ExampleController this
@@ -161,6 +171,49 @@ abstract class Controller_Base {
     }
 
     return (isset($this->flash[$key]) ? $this->flash[$key] : false);
+  }
+  
+  /**
+   * Return the URL for a given set of parameters.
+   * 
+   * For example:
+   * <code>
+   *   $this->url_for(array('controller'=>'session', 'action'=>'login'));
+   * </code>
+   *
+   * Will return "/session/login" if you have configured a route like:
+   * <code>
+   *   $route->match('/:controller/:action');
+   * </code>
+   *
+   * If a URL cannot be determined, an exception is thrown.
+   *
+   * @param array $parameters The parameters to build the URL for
+   * @param string $method The HTTP method to produce the route for (default is "GET")
+   *
+   * @return string
+   */
+  public function url_for($parameters, $method = 'get') {
+    if (!$this->routing)
+      throw new Exception("url_for requires a routing class to be in use");
+    
+    // normalize the controller
+    if (!isset($parameters['controller']))
+      $parameters['controller'] = $this->controller_name();
+    elseif (isset($parameters['controller']) && ($parameters['controller'] instanceof Controller_Base))
+      $parameters['controller'] = $parameters['controller']->controller_name();
+    
+    // normalize the action
+    if ((!isset($parameters['action'])) && $this->action() != 'index')
+      $parameters['action'] = $this->action();
+    
+    // normalize id
+    if (isset($parameters['id']) && is_object($parameters['id']) &&
+      method_exists($parameters['id'], 'id'))
+      $parameters['id'] = $parameters['id']->id();
+    
+    // find the route
+    return $this->routing->url_for($parameters, $method);
   }
 
   /** 
@@ -266,9 +319,15 @@ abstract class Controller_Base {
   /**
    * Output a redirect header to the browser
    *
-   * @param string $url  URL or fragment to redirect to
+   * The $url parameter may be specified as a string, or passed as an
+   * array. If an array it provided, it is passed to the url_for() method
+   * to produce a URL for the redirect.
+   *
+   * @param mixed $url  URL or fragment to redirect to
    */
   protected function redirect_to($url) {
+    if (is_array($url)) $url = $this->url_for($url);
+    
     $this->logger()->info("Redirect to $url");
     Support_Util::redirect($url, false);
     $this->set_rendered(true);

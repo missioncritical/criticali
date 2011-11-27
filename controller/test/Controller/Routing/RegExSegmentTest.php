@@ -23,6 +23,11 @@ class Controller_Routing_RegExSegmentTest extends CriticalI_TestCase {
     $this->assertEquals(array(), $params);
     $this->assertEquals("beta/alpha", $remainder);
 
+    $match = $segment->match("alpha%31", $params, $remainder);
+    $this->assertTrue($match);
+    $this->assertEquals(array(), $params);
+    $this->assertEquals(null, $remainder);
+
     $match = $segment->match("beta/alpha5/gamma", $params, $remainder);
     $this->assertTrue($match);
     $this->assertEquals(array(), $params);

@@ -43,7 +43,7 @@ class Controller_Routing_RegExSegment extends Controller_Routing_Segment {
   public function match($url, &$params, &$unmatched) {
     $unmatched = $url;
     
-    if (preg_match($this->pattern, $url)) {
+    if (preg_match($this->pattern, urldecode($url))) {
       $unmatched = null;
       return true;
     }

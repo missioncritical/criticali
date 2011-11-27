@@ -55,14 +55,14 @@ class Controller_Base_EventListener {
  * method is called automatically when the method returns. By default,
  * this would expect a view template to exist at "views/hello/index.tpl".
  * That might look something like:
- * <pre>
+ * <code>
  *   <html>
  *     <head><title>Hello!</title></head>
  *     <body>
  *       <p>Hello!</p>
  *     </body>
  *   </html>
- * </pre>
+ * </code>
  *
  * Variables may be passed to views through the use of instance
  * variables. All public instances variables of your controller become
@@ -78,14 +78,14 @@ class Controller_Base_EventListener {
  * </code>
  *
  * The view file could then make use of the variable, like so:
- * <pre>
+ * <code>
  *   <html>
  *     <head><title>Hello!</title></head>
  *     <body>
  *       <p>Hello, <?php echo htmlspecialchars($name); ?>!</p>
  *     </body>
  *   </html>
- * </pre>
+ * </code>
  *
  * Note that undeclared instance variables will be treated as public
  * variables. You can prevent instance variables from being available to
@@ -105,7 +105,7 @@ class Controller_Base_EventListener {
  *
  * So that in the view this would not output any date or time information
  * in the second paragraph:
- * <pre>
+ * <code>
  *   <html>
  *     <head><title>Hello!</title></head>
  *     <body>
@@ -113,7 +113,7 @@ class Controller_Base_EventListener {
  *       <p>Request started at: <?php echo $start_time; ?></p>
  *     </body>
  *   </html>
- * </pre>
+ * </code>
  */
 abstract class Controller_Base {
 

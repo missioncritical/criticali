@@ -28,7 +28,7 @@
  *   // the error controller:
  *
  *   $route->regex("/\\bi don't know\\b/i",
- *     array('controller'=>'error, 'action'=>'slime'));
+ *     array('controller'=>'error', 'action'=>'slime'));
  * </code>
  *
  * Lastly, root allows you to connect a route to the root URL (/):
@@ -71,7 +71,7 @@
  *   // PUT /articles would match the route
  *   // GET /articles would not
  *
- *   $route->match('/article/:id', array('controller=>'articles',
+ *   $route->match('/article/:id', array('controller'=>'articles',
  *     'action'=>'edit'), array('method'=>array('get', 'post')));
  *   // GET /article/497 would match the route
  *   // POST /article/497 would match the route

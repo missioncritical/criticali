@@ -22,3 +22,4 @@
  * Minor documentation improvements
 0.3.1 (not yet released)
  * Added protect_from_forgery() filter
+ * Added require_post() filter

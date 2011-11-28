@@ -689,6 +689,22 @@ abstract class Controller_Base {
   }
   
   /**
+   * If the current request method is not POST, outputs a 405 Method Not
+   * Allowed error and returns false, otherwise returns true. This is
+   * convenient for use in a conditional before filter to limit some
+   * actions to post only.
+   */
+  protected function require_post() {
+    if (strtoupper($_SERVER['REQUEST_METHOD']) != 'POST') {
+      header('Allow: POST');
+      $this->render_error(405, array('message'=>'Method Not Allowed'));
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * If the request is not a GET request and does not contain the
    * expected token, outputs a 403 Forbidden error and returns false,
    * otherwise returns true. This is intended to be uses as a before

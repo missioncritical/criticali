@@ -20,3 +20,5 @@
    templates as public in the controller under some versions of PHP
  * Add the render_error method
  * Minor documentation improvements
+0.3.1 (not yet released)
+ * Added protect_from_forgery() filter

@@ -133,7 +133,8 @@ abstract class Controller_Base {
                                     'flash'=>1,
                                     'handle_request'=>1,
                                     'layout'=>1,
-                                    'rendered'=>1);
+                                    'rendered'=>1,
+                                    'form_authenticity_token'=>1);
 
   /**
    * Constructor
@@ -307,6 +308,16 @@ abstract class Controller_Base {
     
     // find the route
     return $this->_routing->url_for($parameters, $method);
+  }
+  
+  /**
+   * Returns the current authenticity token to use in forms in
+   * conjunction with the protect_from_forgery() filter.
+   *
+   * @return string
+   */
+  public function form_authenticity_token() {
+    return Controller_ForgeryProtection::authenticity_token();
   }
 
   /** 
@@ -671,6 +682,25 @@ abstract class Controller_Base {
       $url = 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 
       $this->redirect_to($url);
+      return false;
+    }
+
+    return true;
+  }
+  
+  /**
+   * If the request is not a GET request and does not contain the
+   * expected token, outputs a 403 Forbidden error and returns false,
+   * otherwise returns true. This is intended to be uses as a before
+   * filter to help in the prevention of cross-site request forgery
+   * attacks.
+   *
+   * @return boolean
+   */
+  protected function protect_from_forgery() {
+    if (!Controller_ForgeryProtection::is_request_verified()) {
+      $this->render_error('403', array('message'=>'Forbidden',
+        'description'=>'Invalid authenticity token.'));
       return false;
     }
 

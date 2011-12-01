@@ -33,6 +33,74 @@ class Cache_StoreTest extends Criticali_TestCase {
     $this->assertEquals(null, $store->get('gamma'));
   }
   
+  public function testSet() {
+    $store = new Cache_Store();
+    
+    $this->assertEquals(null, $store->get('alpha'));
+    
+    $store->set('alpha', 'Alpha');
+    $this->assertEquals('Alpha', $store->get('alpha'));
+    
+    try {
+      $store->set('alpha', 'Alpha', array('engine'=>'bogus'));
+      $this->fail("Used unsupported cache engine \"bogus\"");
+    } catch (Cache_UnsupportedEngineError $e) {
+      // expected
+    }
+    
+    $store->set('beta', 'Bravo', 'memory_profile');
+    $this->assertEquals('Bravo', $store->get('beta'));
+
+    $store->set(array('multi', 'key'), 'Charlie');
+    $this->assertEquals('Charlie', $store->get(array('multi', 'key')));
+    $this->assertEquals(null, $store->get(array('multi', 'otherkey')));
+  }
+  
+  public function testExists() {
+    $store = new Cache_Store();
+    
+    $store->set('alpha', 'Alpha');
+    
+    $this->assertTrue($store->exists('alpha'));
+    $this->assertFalse($store->exists('beta'));
+    $this->assertTrue($store->exists('alpha'), array('engine'=>'memory'));
+    $this->assertTrue($store->exists('alpha'), 'memory_profile');
+
+    try {
+      $store->exists('alpha', array('engine'=>'bogus'));
+      $this->fail("Used unsupported cache engine \"bogus\"");
+    } catch (Cache_UnsupportedEngineError $e) {
+      // expected
+    }
+  }
+  
+  public function testExpire() {
+    $store = new Cache_Store();
+    
+    $store->set('alpha', 'Alpha');
+    $this->assertTrue($store->exists('alpha'));
+    $store->expire('alpha');
+    $this->assertFalse($store->exists('alpha'));
+
+    $store->set('alpha', 'Alpha');
+    $this->assertTrue($store->exists('alpha'));
+    $store->expire('alpha', array('engine'=>'memory'));
+    $this->assertFalse($store->exists('alpha'));
+
+    $store->set('alpha', 'Alpha');
+    $this->assertTrue($store->exists('alpha'));
+    $store->expire('alpha', 'memory_profile');
+    $this->assertFalse($store->exists('alpha'));
+
+    $store->set('alpha', 'Alpha');
+    try {
+      $store->expire('alpha', array('engine'=>'bogus'));
+      $this->fail("Used unsupported cache engine \"bogus\"");
+    } catch (Cache_UnsupportedEngineError $e) {
+      // expected
+    }
+  }
+  
   public function return_bravo() {
     return 'Bravo';
   }

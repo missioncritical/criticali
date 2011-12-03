@@ -21,9 +21,9 @@ abstract class Cache_ItemBase {
   protected $key;
   
   /** A read, or shared lock type */
-  const LOCK_READ = 1;   // LOCK_SH
+  const LOCK_READ = LOCK_SH;
   /** A write, or exclusive lock type */
-  const LOCK_WRITE = 2;  // LOCK_EX
+  const LOCK_WRITE = LOCK_EX;
 
   /**
    * Constructor
@@ -139,7 +139,7 @@ abstract class Cache_ItemBase {
    * @param mixed $value The data to marshall
    * @return string
    */
-  protected function umarshall($value) {
+  protected function unmarshall($value) {
     // look for our special prefix
     if (substr($value, 0, 19) == 'a:2:{i:0;s:3:"PHP";') {
 

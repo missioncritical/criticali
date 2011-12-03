@@ -192,7 +192,10 @@ class Cache_Store {
     $options = is_array($options) ? $options : array();
     
     // merge in the defaults
-    return array_merge(array('engine'=>'memory', 'ttl'=>0), $options);
+    return array_merge(array(
+      'engine'=>Cfg::get('cache/engine', 'memory'),
+      'ttl'=>Cfg::get('cache/ttl', 0)),
+      $options);
   }
   
   /**
@@ -202,7 +205,7 @@ class Cache_Store {
    * "Cache_Engine_" . Support_Inflector::camelize($name).
    */
   protected function engine($options) {
-    $engineName = isset($options['engine']) ? $options['engine'] : 'memory';
+    $engineName = isset($options['engine']) ? $options['engine'] : Cfg::get('cache/engine', 'memory');
     
     if (!isset($this->engines[$engineName])) {
       $class = 'Cache_Engine_' . Support_Inflector::camelize($engineName);

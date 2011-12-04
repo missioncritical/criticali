@@ -178,7 +178,7 @@ class ActiveRecord_AssociationTypeMismatch extends ActiveRecord_Error {
    * @param mixed $received The received object
    */
   public function __construct($expected, $received) {
-    parent::__construct("Type mismatch.  Cannot assign ".get_class($received)." in place of $expected.");
+    parent::__construct("Type mismatch.  Cannot assign ".(is_object($received) ? get_class($received) : strval($received))." in place of $expected.");
   }
 }
 

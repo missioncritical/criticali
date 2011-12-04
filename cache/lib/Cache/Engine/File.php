@@ -115,7 +115,7 @@ class Cache_Engine_File implements Cache_Engine {
   
   /**
    * Called statically to ensure this engine is supported before
-   * constructing it. The memory engine is always supported.
+   * constructing it. The file engine is always supported.
    *
    * @return boolean
    */
@@ -211,7 +211,7 @@ class Cache_Engine_File implements Cache_Engine {
 }
 
 /**
- * The key object for the memory cache engine.
+ * The key object for the file cache engine.
  */
 class Cache_Engine_File_Item extends Cache_ItemBase {
   protected $engine;

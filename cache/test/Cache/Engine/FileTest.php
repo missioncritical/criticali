@@ -266,6 +266,23 @@ class Cache_Engine_FileTest extends CriticalI_TestCase {
     $this->assertEquals(null, $engine->item_for_key('alpha', array())->read());
     $this->assertFalse(file_exists("$GLOBALS[ROOT_DIR]/var/cache/alpha"));
   }
+  
+  public function testTtl() {
+    $store = new Cache_Store();
+    
+    $this->assertEquals(null, $store->get('whiskey', 'short_file_profile'));
+
+    $store->set('whiskey', 'Tango Foxtrot', 'short_file_profile');
+    $this->assertEquals('Tango Foxtrot', $store->get('whiskey', 'short_file_profile'));
+    $this->assertTrue(file_exists("$GLOBALS[ROOT_DIR]/var/cache/whiskey"));
+    
+    // TTL = 5
+    print " (sleeping 6 seconds) ";
+    sleep(6);
+
+    $this->assertEquals(null, $store->get('whiskey', 'short_file_profile'));
+    $this->assertFalse(file_exists("$GLOBALS[ROOT_DIR]/var/cache/whiskey"));
+  }
 
   protected function list_files($dir) {
     $entries = array();

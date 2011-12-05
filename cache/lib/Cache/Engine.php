@@ -50,7 +50,7 @@ interface Cache_Engine {
    *
    * @param array $options Any cache options provided by the requestor
    */
-  public function clear($options);
+  public function clear($options = null);
   
 }
 

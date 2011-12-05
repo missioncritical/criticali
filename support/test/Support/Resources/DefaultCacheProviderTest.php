@@ -53,6 +53,25 @@ class Support_Resources_DefaultCacheProviderTest extends CriticalI_TestCase {
     $this->assertFalse($provider->get()->exists('alpha'));
   }
   
+  public function testStoreClear() {
+    $provider = new Support_Resources_DefaultCacheProvider();
+
+    $provider->get()->set('alpha', 'Alpha');
+    $provider->get()->set('beta', 'Bravo');
+    $this->assertFalse($provider->get()->exists('alpha'));
+    $this->assertFalse($provider->get()->exists('beta'));
+
+    $provider->get()->clear();
+    $this->assertFalse($provider->get()->exists('alpha'));
+    $this->assertFalse($provider->get()->exists('beta'));
+
+    $provider->get()->clear(array());
+    $this->assertFalse($provider->get()->exists('alpha'));
+
+    $provider->get()->clear('profile_name');
+    $this->assertFalse($provider->get()->exists('alpha'));
+  }
+
   public function return_bravo() {
     return 'Bravo';
   }

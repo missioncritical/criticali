@@ -40,8 +40,10 @@ class Cache_Engine_Memory implements Cache_Engine {
   
   /**
    * Clear all items from the cache
+   *
+   * @param array $options Any cache options provided by the requestor
    */
-  public function clear() {
+  public function clear($options = null) {
     $this->cache = array();
   }
   

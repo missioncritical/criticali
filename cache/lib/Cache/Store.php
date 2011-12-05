@@ -287,6 +287,27 @@ class Cache_Store {
   }
   
   /**
+   * Remove all items from the cache.
+   *
+   * This removes all items from a cache engine.
+   *
+   * Options are:
+   *  - <b>engine:</b> The cache engine to remove items from
+   *  - Any engine-specific options
+   *
+   * @param mixed $options An array of options or a cache profile name
+   */
+  public function clear($options = null) {
+    // clean the parameters
+    $options = $this->valid_options($options);
+    
+    $engine = $this->engine($options);
+
+    // clear it
+    $engine->clear($options);
+  }
+  
+  /**
    * Return the correct set of options to use for a provided options
    * argument
    *

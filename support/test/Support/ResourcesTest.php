@@ -28,6 +28,7 @@ class Support_ResourcesTest extends CriticalI_TestCase {
     $this->assertTrue(method_exists($cache, 'set'));
     $this->assertTrue(method_exists($cache, 'exists'));
     $this->assertTrue(method_exists($cache, 'expire'));
+    $this->assertTrue(method_exists($cache, 'clear'));
   }
   
   public function testRegisterCache() {

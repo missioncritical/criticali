@@ -101,6 +101,43 @@ class Cache_StoreTest extends Criticali_TestCase {
     }
   }
   
+  public function testClear() {
+    $store = new Cache_Store();
+    
+    $store->set('alpha', 'Alpha');
+    $store->set('beta',  'Bravo');
+    $this->assertTrue($store->exists('alpha'));
+    $this->assertTrue($store->exists('beta'));
+    $store->clear();
+    $this->assertFalse($store->exists('alpha'));
+    $this->assertFalse($store->exists('beta'));
+
+    $store->set('alpha', 'Alpha');
+    $store->set('beta',  'Bravo');
+    $this->assertTrue($store->exists('alpha'));
+    $this->assertTrue($store->exists('beta'));
+    $store->clear(array('engine'=>'memory'));
+    $this->assertFalse($store->exists('alpha'));
+    $this->assertFalse($store->exists('beta'));
+
+    $store->set('alpha', 'Alpha');
+    $store->set('beta',  'Bravo');
+    $this->assertTrue($store->exists('alpha'));
+    $this->assertTrue($store->exists('beta'));
+    $store->clear('memory_profile');
+    $this->assertFalse($store->exists('alpha'));
+    $this->assertFalse($store->exists('beta'));
+
+    $store->set('alpha', 'Alpha');
+    $store->set('beta',  'Bravo');
+    try {
+      $store->clear(array('engine'=>'bogus'));
+      $this->fail("Used unsupported cache engine \"bogus\"");
+    } catch (Cache_UnsupportedEngineError $e) {
+      // expected
+    }
+  }
+  
   public function return_bravo() {
     return 'Bravo';
   }

@@ -90,6 +90,17 @@ class Support_Resources_DefaultCacheStore {
    */
   public function expire($key, $options = null) {
   }
+  
+  /**
+   * Remove all data from the cache.
+   *
+   * Like expire, this does not have any actual effect. All parameters
+   * are ignored.
+   *
+   * @param mixed $options An array of options or a cache profile name
+   */
+  public function clear($options = null) {
+  }
 
 }
 

@@ -45,6 +45,13 @@ interface Cache_Engine {
    */
   public static function is_supported();
   
+  /**
+   * Clear all items from the cache
+   *
+   * @param array $options Any cache options provided by the requestor
+   */
+  public function clear($options);
+  
 }
 
 ?>

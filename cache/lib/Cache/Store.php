@@ -7,7 +7,117 @@
  * Cache_Store provides the public interface for working with the cache
  * system. Internally it uses one or more engines to service requests.
  *
- * *info here about expiration_check callbacks*
+ * It's possible to construct and use an instance of Cache_Store on its
+ * own, however, the preferred method for working with the cache is to
+ * call Support_Resources::cache() (see {@link Support_Resources}).
+ *
+ * There are currently three supported options that are not
+ * engine-specific. They are:
+ *  - <b>engine:</b> The cache engine to use
+ *  - <b>ttl:</b> Maximum time to live (in seconds)
+ *  - <b>expiration_check:</b> The expiration check callback
+ *
+ * The <var>engine</var> option specifies which of the available cache
+ * engines to use. Engine names are lower case. They correspond to a
+ * class name of Cache_Engine_<i>camel_case_engine_name</i>. For example,
+ * the "memory" engine is implemented by the class Cache_Engine_Memory.
+ * New engines may be added by creating new classes of the corresponding
+ * name. This package provides the following engines:
+ *  - apc
+ *  - file
+ *  - memcache
+ *  - memory
+ *
+ * Note that the apc and memcache engines require the APC and Memcache
+ * extensions, respectively. If the corresponding extension is not
+ * installed, you will not be able to use that engine. See the
+ * documentation of the corresponding engine class for more information
+ * on what additional options the engine accepts.
+ *
+ * The <var>expiration_check</var> option specifies a callback which, if
+ * provided, the get() method will use to check the validity of a cached
+ * data item before returning it. The callback is passed two parameters:
+ * a reference to the key value get() was called with, and a reference to
+ * the data value it is about to return. If the expiration check callback
+ * returns a boolean false value, the cached item is expired and will not
+ * be returned to get's caller.
+ *
+ * The expiration check and data callback accepted by get() can be
+ * combined to more easily handle certain caching scenarios. As a simple
+ * example, let's say you're writing a blog application. To show off the
+ * caching functionality, let's imagine you've done some kind of fancy
+ * threading that takes a while to assemble, so you want to cache the
+ * result and only regenerate when you have to. You could choose to
+ * implement something like this:
+ * <code>
+ *   class Post extends ActiveRecord_Base {
+ *     protected function init_class() {
+ *       $this->has_many('comments');
+ *     }
+ *
+ *     public function threaded_comments() {
+ *       $cache = Support_Resources::cache();
+ *
+ *       // use a cached value when possible
+ *       $data = $cache->get(array('post_comments'=>$this->id),
+ *         array('expiration_check'=>array($this, 'is_data_valid')),
+ *         array($this, 'rethread_comments'));
+ *
+ *       return $data['value'];
+ *     }
+ *
+ *     public function is_data_valid(&$key, &$data) {
+ *       if ($this->comments_updated_at > $data['updated_at'])
+ *         return false;
+ *
+ *       return true;
+ *     }
+ *
+ *     public function rethread_comments() {
+ *       $comments = $this->comments;
+ *
+ *       // do some complicated massaging of $comments...
+ *
+ *       return array('value=>$comments, 'updated_at'=>$this->comments_updated_at);
+ *     }
+ *   }
+ * </code>
+ *
+ * Admittedly, the example is a bit contrived. It does show usage of the
+ * two callback features, but in reality, if your own application is in
+ * charge of handling updates to comments on a post, it would be better
+ * to simply expire the cached item whenever new comments come in.
+ * However, the expiration_check callback can be very handy for when
+ * items may expire due to events outside of the control of your
+ * application. For example, when a configuration file is changed or if
+ * database entries may be created by other applications.
+ *
+ * <b>Configuration</b>
+ *
+ * Any of the supported options (with the exception of expiration_check)
+ * may also be specified in the config file as a way to control the
+ * defaults for cache storage. Cache configuration options are named the
+ * same as the options that may be passed to Cache_Store, but they must
+ * be inside the <var>cache</var> section. That is to say, the following
+ * configuration options are supported:
+ *  - cache/engine
+ *  - cache/ttl
+ *
+ * Engine-specific options may also be specified this way (e.g.
+ * cache/cache_dir for the file engine).
+ *
+ * Profiles may be created by placing the configuration options for that
+ * profile in cache/profiles/<i>profile_name</i>/<i>options...</i>. For
+ * example, you could create the following options:
+ *  - cache/profiles/example/engine = memcache
+ *  - cache/profiles/example/ttl = 3600
+ *  - cache/profiles/example/host = localhost
+ *
+ * You could then use that profile by passing just its name, as in:
+ * <code>
+ *   $cache = Support_Resources::cache();
+ *   $cache->set('somekey', 'somevalue', 'example');
+ * </code>
  */
 class Cache_Store {
   

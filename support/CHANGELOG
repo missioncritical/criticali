@@ -10,3 +10,5 @@
 0.2.5 2010-07-31
  * Added Support_ErrorLogger class and updated the init script to
    register it by default.
+0.2.6 (not yet released)
+ * Added cache as a new resource type

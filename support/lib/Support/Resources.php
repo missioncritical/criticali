@@ -45,6 +45,8 @@ class Support_Resources {
       new Support_Resources_DefaultTemplateProvider(), true);
     $this->register_provider('db connection', 'pdo', 'Support_Resources_DBProvider',
       new Support_Resources_DefaultDBProvider(), true);
+    $this->register_provider('cache', 'null', 'Support_Resources_CacheProvider',
+      new Support_Resources_DefaultCacheProvider(), true);
   }
 
   /**
@@ -92,6 +94,17 @@ class Support_Resources {
   static public function db_connection($writer = true, $unique = false, $provider = null) {
     $impl = self::instance();
     return $impl->get_resource('db connection', $provider, $writer, $unique);
+  }
+
+  /**
+   * Get a cache store
+   *
+   * @param string $provider The name of the registered provider to return the instance from (uses the default provider if not specified)
+   * @return object
+   */
+  static public function cache($provider = null) {
+    $impl = self::instance();
+    return $impl->get_resource('cache', $provider);
   }
 
   /**
@@ -146,6 +159,19 @@ class Support_Resources {
       $db, $asDefault);
   }
 
+  /**
+   * Register a cache provider
+   *
+   * @param Support_Resources_CacheProvider $cache  The provider instance
+   * @param string $providerName  The provider name to register as
+   * @param boolean $asDefault Whether to make this provider the new default or not (default is false)
+   */
+  static public function register_cache($cache, $providerName, $asDefault = false) {
+    $impl = self::instance();
+    $impl->register_provider('cache', $providerName, 'Support_Resources_CacheProvider',
+      $cache, $asDefault);
+  }
+
 
   /**
    * Set the default template engine provider
@@ -185,6 +211,16 @@ class Support_Resources {
   static public function set_default_db_connection($providerName) {
     $impl = self::instance();
     $impl->set_default_provider('db connection', $providerName);
+  }
+
+  /**
+   * Set the default cache provider
+   *
+   * @param string $name  The name of the provider to set as the default
+   */
+  static public function set_default_cache($providerName) {
+    $impl = self::instance();
+    $impl->set_default_provider('cache', $providerName);
   }
 
   /**

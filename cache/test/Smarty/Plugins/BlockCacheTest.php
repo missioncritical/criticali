@@ -21,22 +21,30 @@ class Smarty_Plugins_BlockCacheTest extends CriticalI_TestCase {
     $this->assertFalse($repeat);
 
     $repeat = true;
-    $this->assertEquals('content', smarty_block_cache(array('name'=>'test'), null, $smarty, $repeat));
+    ob_start();
+    $this->assertEquals(null, smarty_block_cache(array('name'=>'test'), null, $smarty, $repeat));
+    $this->assertEquals('content', ob_get_clean());
     $this->assertFalse($repeat);
 
     $repeat = true;
-    $this->assertEquals('content', smarty_block_cache(array('name'=>'test', 'global'=>true),
+    ob_start();
+    $this->assertEquals(null, smarty_block_cache(array('name'=>'test', 'global'=>true),
       null, $smarty, $repeat));
+    $this->assertEquals('content', ob_get_clean());
     $this->assertFalse($repeat);
 
     $repeat = true;
-    $this->assertEquals('content', smarty_block_cache(array('name'=>'test', 'engine'=>'memory'),
+    ob_start();
+    $this->assertEquals(null, smarty_block_cache(array('name'=>'test', 'engine'=>'memory'),
       null, $smarty, $repeat));
+    $this->assertEquals('content', ob_get_clean());
     $this->assertFalse($repeat);
 
     $repeat = true;
-    $this->assertEquals('content', smarty_block_cache(array('name'=>'test', 'profile'=>'memory_profile'),
+    ob_start();
+    $this->assertEquals(null, smarty_block_cache(array('name'=>'test', 'profile'=>'memory_profile'),
       null, $smarty, $repeat));
+    $this->assertEquals('content', ob_get_clean());
     $this->assertFalse($repeat);
   }
   

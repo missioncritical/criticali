@@ -39,7 +39,7 @@ function smarty_block_cache($options, $content, &$smarty, &$repeat) {
   $action = $controller ? $controller->action() : null;
 
   $cacheKey = array('controller'=>$controllerName, 'action'=>$action);
-  if ($key) $cacheKey['fragment'] = $key;
+  $cacheKey['fragment'] = $key;
 
   $cache = Support_Resources::cache();
 
@@ -48,7 +48,7 @@ function smarty_block_cache($options, $content, &$smarty, &$repeat) {
     $cachedContent = $cache->get($cacheKey, $cacheOptions);
     if (!is_null($cachedContent)) {
       $repeat = false;
-      return $cachedContent;
+      print $cachedContent;
     }
 
   // closing tag:

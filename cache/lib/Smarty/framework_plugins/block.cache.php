@@ -31,7 +31,15 @@ function smarty_block_cache($options, $content, &$smarty, &$repeat) {
   unset($options['name']);
   unset($options['global']);
   unset($options['profile']);
-  $cacheOptions = $profile === false ? $options : $profile;
+
+  if ($profile === false) {
+    if ((!$options) && Cfg::exists('cache/profiles/action'))
+      $cacheOptions = 'action';
+    else
+      $cacheOptions = $options;
+  } else {
+    $cacheOptions = $profile;
+  }
   
   // determine the cache key
   $controller = $global ? null : $smarty->get_template_vars('controller');

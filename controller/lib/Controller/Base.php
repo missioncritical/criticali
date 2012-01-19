@@ -126,6 +126,8 @@ abstract class Controller_Base {
   protected $_routing = null;
   protected $_runtime_variables = array();
   protected $_is_error = false;
+  protected $_cache_actions = array();
+  protected $_action_method = null;
 
   protected $hidden_actions = array('__construct'=>1,
                                     'action'=>1,
@@ -159,7 +161,7 @@ abstract class Controller_Base {
   public function set_action($action) {
     $this->action = $action;
   }
-
+  
   /**
    * Accessor for this controller's layout name
    *
@@ -336,18 +338,24 @@ abstract class Controller_Base {
 
         $this->set_action($action);
         $this->set_rendered(false);
+        $this->_action_method = $meth;
 
         try {
           if (!$this->fire_event('before_filter', true))
             return;
 
-          $meth->invoke($this);
+          // use the cache, if requested
+          if (isset($this->_cache_actions[$action])) {
+            $cache = Support_Resources::cache();
+            print $cache->get(array('controller'=>$this->controller_name(), 'action'=>$action),
+              $this->cache_options(), array($this, 'perform_action'));
+          } else {
+            $this->perform_action();
+          }
+          
         } catch ( Exception $e ) {
           $this->on_exception($e);
         }
-
-        if (!$this->rendered())
-          $this->render_action();
 
         $this->fire_event('after_filter');
         
@@ -362,6 +370,36 @@ abstract class Controller_Base {
     $this->logger()->error("Unknown action \"$action\" in controller ".get_class($this));
 
     $this->not_found();
+  }
+
+  /**
+   * Perform the current action. This method is intended only for use by
+   * handle_request().
+   */
+  public function perform_action() {
+    // TODO: verify ob usage
+    if (!$this->_action_method)
+      throw new Exception("Perform action method called incorrectly");
+    
+    $willCache = isset($this->_cache_actions[$this->action()]);
+    if ($willCache) ob_start();
+    
+    try {
+      $this->_action_method->invoke($this);
+
+      if (!$this->rendered())
+        $this->render_action();
+
+    } catch (Exception $e) {
+      if ($willCache)
+        print ob_get_clean();
+      throw $e;
+    }
+    
+    if ($willCache) {
+      $output = ob_get_clean();
+      return $output;
+    }
   }
 
 
@@ -379,6 +417,23 @@ abstract class Controller_Base {
       'description'=>'The requested document could not be found.'));
   }
   
+  /**
+   * Enable caching for one or more actions on this controller. Accepts
+   * one or more action names as parameters or an array of action names.
+   */
+  public function caches_action() {
+    $args = func_get_args();
+    foreach ($args as $arg) {
+      
+      if (is_array($arg)) {
+        foreach ($arg as $a) { $this->_cache_actions[$a] = 1; }
+      } else {
+        $this->_cache_actions[$arg] = 1;
+      }
+      
+    }
+  }
+
   /**
    * Accepts the names of one or more public methods which are
    * protected from invocation as an action.
@@ -724,6 +779,16 @@ abstract class Controller_Base {
   }
 
 
+  /**
+   * Return the cache options to use when caching an action
+   */
+  protected function cache_options() {
+    if (Cfg::exists('cache/profiles/action'))
+      return 'action';
+    else
+      return null;
+  }
+  
   /**
    * Add an event listener to this class.
    *

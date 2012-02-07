@@ -75,6 +75,9 @@ class Form_Builder_JQueryui extends Form_Builder_Default {
     if ($this->current_model && $this->current_model->errors->on($object->name()))
       $attributes['class'] .= ' ui-state-error-text';
     
+    if ($control->name() == 'checkbox')
+      $attributes['class'] .= ' control-checkbox';
+    
     return $attributes;
   }
 

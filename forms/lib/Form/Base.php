@@ -218,9 +218,12 @@ abstract class Form_Base extends Form_Object_Container {
     $try = array('ApplicationForm', 'Form_Default');
     foreach ($try as $klass) {
       if (class_exists($klass)) {
-        $ref = new RelfectionClass($klass);
-        if (!$ref->isAbstract())
-          return new $klass($name . 'Form');
+        $ref = new ReflectionClass($klass);
+        if (!$ref->isAbstract()) {
+          $form = new $klass($name . 'Form');
+          $form->include_model(Support_Inflector::underscore($name));
+          return $form;
+        }
       }
     }
     

@@ -85,7 +85,7 @@ function smarty_block_form_block($options, $content, &$smarty, &$repeat) {
     if ($obj instanceof Form_Object_Model) {
       $value = $obj->value();
       if (!$value->new_record())
-        $content = '<input type="hidden" name="id" value="'.htmlspecialchars($value->id).'/>' . $content;
+        $content = '<input type="hidden" name="id" value="'.htmlspecialchars($value->id).'" />' . $content;
     }
   }
   

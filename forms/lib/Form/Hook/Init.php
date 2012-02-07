@@ -3,9 +3,9 @@
 // See the LICENSE file distributed with this work for restrictions.
 /** @package forms */
 
-$INCLUDE_PATH .= $PATH_SEPARATOR . "$ROOT_DIR/forms";
-ini_set('include_path', $INCLUDE_PATH);
+$GLOBALS['INCLUDE_PATH'] .= $GLOBALS['PATH_SEPARATOR'] . "$GLOBALS[ROOT_DIR]/forms";
+ini_set('include_path', $GLOBALS['INCLUDE_PATH']);
 
-$CRITICALI_RUNTIME_SEARCH_DIRECTORIES[] = "$ROOT_DIR/forms";
+$GLOBALS['CRITICALI_RUNTIME_SEARCH_DIRECTORIES'][] = "$GLOBALS[ROOT_DIR]/forms";
 
 ?>

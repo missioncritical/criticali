@@ -12,3 +12,4 @@
    register it by default.
 0.2.6 (not yet released)
  * Added cache as a new resource type
+ * Added support for camelizing names like "foo/bar" to "Foo/Bar"

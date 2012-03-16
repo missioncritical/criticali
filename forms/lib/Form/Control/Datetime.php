@@ -188,7 +188,7 @@ class Form_Control_Datetime extends Form_Control {
     
     $meridianHTML = '';
     if ($meridian) {
-      $flag = $value ? intval(date('a', $ts)) : -1;
+      $flag = $value ? date('a', $ts) : -1;
       $selOptions = array();
       $selOptions[] = '<option value=""></option>';
       foreach (array('am', 'pm') as $flagValue) {

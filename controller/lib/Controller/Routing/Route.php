@@ -195,7 +195,7 @@ class Controller_Routing_Route {
         // ignore
       
       // 'action'=>'index' is always assumed
-      } elseif ($param == 'action' && $value == 'index') {
+      } elseif ($param == 'action' && $value == 'index' && (!isset($this->defaults[$param]))) {
         // ignore
       
       } elseif ($param == 'action' || $param == 'controller') {

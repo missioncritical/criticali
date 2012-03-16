@@ -56,7 +56,7 @@ class Form_DataType_Datetime extends Form_DataType {
         
         if ($meridian == 'am' && $hour == 12)
           $hour = 0;
-        elseif ($meridian == 'pm' && $hour > 12)
+        elseif ($meridian == 'pm' && $hour < 12)
           $hour += 12;
       }
       

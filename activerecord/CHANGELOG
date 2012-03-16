@@ -24,3 +24,5 @@
 0.2.10 (not yet released)
  * Fix for ActiveRecord_AssociationTypeMismatch on PHP 5.3 and above when
    used with non-object types
+ * Fix an issue with infinite recursion if a proxied method is called
+   from within the init_class method of an ActiveRecord object.

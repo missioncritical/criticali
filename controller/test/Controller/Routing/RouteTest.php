@@ -181,6 +181,12 @@ class Controller_Routing_RouteTest extends CriticalI_TestCase {
     $route = new Controller_Routing_Route(null, new Controller_Routing_StaticSegment(''),
       array(), array('controller'=>'home'));
     $this->assertEquals('/', $route->url_for(array('controller'=>'home'), 'get'));
+
+    $route = new Controller_Routing_Route(null, new Controller_Routing_ControllerSegment(
+      new Controller_Routing_StaticSegment('show')), array(), array('action'=>'display'));
+    $this->assertEquals('/alpha/show',
+      $route->url_for(array('controller'=>'alpha', 'action'=>'display'), 'get'));
+    $this->assertFalse($route->url_for(array('controller'=>'alpha', 'action'=>'index'), 'get'));
   }
   
 }

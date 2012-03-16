@@ -20,9 +20,10 @@ class ActiveRecord_ProxyMethod extends ActiveRecord_Proxy {
    * @param string $name  The name to masquerade as
    * @param callback $callback The callback to invoke
    */
-  public function __construct($name, $callback) {
+  public function __construct($name, $callback, $metaInf = null) {
     $this->name = $name;
     $this->callback = $callback;
+    $this->metaInf = $metaInf;
     
     if (is_array($this->callback)) {
       $className = is_object($this->callback[0]) ? get_class($this->callback[0]) : $this->callback[0];

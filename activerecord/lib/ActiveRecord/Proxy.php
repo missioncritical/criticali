@@ -107,7 +107,8 @@ class ActiveRecord_Proxy {
   public function add_method_proxy($name, $callback) {
     if (!$this->metaInf) $this->metaInf = ActiveRecord_InfoMgr::meta_info($this->record);
     if (is_null($this->metaInf->proxied_methods)) $this->metaInf->proxied_methods = array();
-    $this->metaInf->proxied_methods[$name] = new ActiveRecord_ProxyMethod($name, $callback);
+    $this->metaInf->proxied_methods[$name] = new ActiveRecord_ProxyMethod($name, $callback,
+      $this->metaInf);
   }
   
   /**

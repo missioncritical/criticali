@@ -26,7 +26,7 @@ class LoggerLayout {
     {
         $class = basename($class);
         include_once("log4php/layout/$class.php");
-        $object =& new $class();
+        $object = new $class();
         return $object;
     }
 

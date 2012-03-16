@@ -210,12 +210,19 @@ class Support_Inflector {
    * @return string The converted word
    */
   public static function camelize($word, $firstWordUpper = TRUE) {
-    $parts = preg_split('/[\s_]+/', $word);
     $final = array();
-    if (!$firstWordUpper)
-      $final[] = array_shift($parts);
-    foreach ($parts as $part)
-      $final[] = ucfirst($part);
+    $spaces = explode('/', $word);
+    
+    foreach ($spaces as $name) {
+      if ($final) $final[] = '/';
+      
+      $parts = preg_split('/[\s_]+/', $name);
+      if (!$firstWordUpper)
+        $final[] = array_shift($parts);
+      foreach ($parts as $part)
+        $final[] = ucfirst($part);
+    }
+    
     return implode('', $final);
   }
 

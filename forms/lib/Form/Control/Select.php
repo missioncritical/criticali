@@ -44,7 +44,7 @@ class Form_Control_Select extends Form_Control {
     $choices = $this->load_select_options($form, $options);
 
     $valueOp = $this->pick_option_operation('value', $options);
-    $LabelOp = $this->pick_option_operation('label', $options);
+    $labelOp = $this->pick_option_operation('label', $options);
     
     // clean up the options
     foreach (array('options', 'options_name', 'value_key', 'value_attr', 'value_method',
@@ -61,7 +61,7 @@ class Form_Control_Select extends Form_Control {
   
     foreach ($choices as $optKey=>$optValue) {
       $val = $this->get_option_value($valueOp, $optValue, $optKey);
-      $label = $this->get_option_value($lableOp, $optValue, $optValue);
+      $label = $this->get_option_value($labelOp, $optValue, $optValue);
     
       $opt = '<option value="'.htmlspecialchars($val).'"';
       if ($value == $val)
@@ -105,7 +105,7 @@ class Form_Control_Select extends Form_Control {
   protected function pick_option_operation($type, $options) {
     foreach (array('_key', '_attr', '_method') as $try) {
       if (isset($options[$type . $try])) {
-        $op = substr($try, strlen($type)+1);
+        $op = substr($try, 1);
         $what = $options[$type . $try];
         
         return array($op, $what);

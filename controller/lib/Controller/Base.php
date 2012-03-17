@@ -136,7 +136,9 @@ abstract class Controller_Base {
                                     'handle_request'=>1,
                                     'layout'=>1,
                                     'rendered'=>1,
-                                    'form_authenticity_token'=>1);
+                                    'form_authenticity_token'=>1,
+                                    'expire_action',
+                                    'expire_fragment');
 
   /**
    * Constructor
@@ -270,6 +272,57 @@ abstract class Controller_Base {
   }
   
   /**
+   * Expire a cached action. Defaults to the current action.
+   *
+   * For example:
+   * <code>
+   *   $this->expire_action(array('action'=>'index'));
+   * </code>
+   *
+   * Would expire any cached content for the index action.
+   */
+  public function expire_action($options = null) {
+    if (!is_array($options)) $options = array();
+    
+    $key = array_merge(array(
+        'controller'=>$this->controller_name(),
+        'action'=>$this->action()
+      ), $options);
+    
+    $cache = Support_Resources::cache();
+    $cache->expire($key, $this->cache_options());
+  }
+  
+  /**
+   * Expire a cached fragment. Defaults to the current action and a null
+   * fragment name.
+   *
+   * For example:
+   * <code>
+   *   $this->expire_fragment(array('action'=>'index', 'fragment'=>'total_entries'));
+   * </code>
+   *
+   * Would expire a block in the index view that looked like:
+   * <code>
+   *   {cache name="total_entries"}
+   *     Total entries: {$entries->count()}<br/>
+   *   {/cache}
+   * </code>
+   */
+  public function expire_fragment($options = null) {
+    if (!is_array($options)) $options = array();
+    
+    $key = array_merge(array(
+        'controller'=>$this->controller_name(),
+        'action'=>$this->action(),
+        'fragment'=>null
+      ), $options);
+    
+    $cache = Support_Resources::cache();
+    $cache->expire($key, $this->cache_options());
+  }
+
+  /**
    * Return the URL for a given set of parameters.
    * 
    * For example:
@@ -377,7 +430,6 @@ abstract class Controller_Base {
    * handle_request().
    */
   public function perform_action() {
-    // TODO: verify ob usage
     if (!$this->_action_method)
       throw new Exception("Perform action method called incorrectly");
     
@@ -786,7 +838,10 @@ abstract class Controller_Base {
     if (Cfg::exists('cache/profiles/action'))
       return 'action';
     else
-      return null;
+      return array(
+          'engine'=>'file',
+          'cache_dir'=>(Cfg::get('cache/cache_dir', "$GLOBALS[ROOT_DIR]/var/cache") . '/actions')
+        );
   }
   
   /**

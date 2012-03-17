@@ -36,7 +36,10 @@ function smarty_block_cache($options, $content, &$smarty, &$repeat) {
     if ((!$options) && Cfg::exists('cache/profiles/action'))
       $cacheOptions = 'action';
     else
-      $cacheOptions = $options;
+      $cacheOptions = array_merge(array(
+          'engine'=>'file',
+          'cache_dir'=>(Cfg::get('cache/cache_dir', "$GLOBALS[ROOT_DIR]/var/cache") . '/actions')
+        ), $options);
   } else {
     $cacheOptions = $profile;
   }

@@ -31,6 +31,19 @@ class Controller_Base_EventListener {
 }
 
 /**
+ * Class for cached action configuration
+ */
+class Controller_Base_CachedActionInfo {
+  public $action;
+  public $if_callback;
+  
+  public function __construct($action, $if_callback = null) {
+    $this->action = $action;
+    $this->if_callback = $if_callback;
+  }
+}
+
+/**
  * Controller_Base is an abstract base class for implementing controllers.
  *
  * Controllers are expected to provide one or more public methods which
@@ -127,6 +140,7 @@ abstract class Controller_Base {
   protected $_runtime_variables = array();
   protected $_is_error = false;
   protected $_cache_actions = array();
+  protected $_will_cache_action = false;
   protected $_action_method = null;
 
   protected $hidden_actions = array('__construct'=>1,
@@ -139,6 +153,11 @@ abstract class Controller_Base {
                                     'form_authenticity_token'=>1,
                                     'expire_action',
                                     'expire_fragment');
+
+  protected $_cache_headers = array('content-type'=>1,
+                                    'content-disposition'=>1,
+                                    'content-length'=>1,
+                                    'content-encoding');
 
   /**
    * Constructor
@@ -398,10 +417,14 @@ abstract class Controller_Base {
             return;
 
           // use the cache, if requested
-          if (isset($this->_cache_actions[$action])) {
+          if ($this->_will_cache_action = $this->will_cache($action)) {
             $cache = Support_Resources::cache();
-            print $cache->get(array('controller'=>$this->controller_name(), 'action'=>$action),
+            $data = $cache->get(array('controller'=>$this->controller_name(), 'action'=>$action),
               $this->cache_options(), array($this, 'perform_action'));
+            
+            foreach ($data['headers'] as $header) { header($header); }
+            print $data['content'];
+
           } else {
             $this->perform_action();
           }
@@ -433,8 +456,7 @@ abstract class Controller_Base {
     if (!$this->_action_method)
       throw new Exception("Perform action method called incorrectly");
     
-    $willCache = isset($this->_cache_actions[$this->action()]);
-    if ($willCache) ob_start();
+    if ($this->_will_cache_action) ob_start();
     
     try {
       $this->_action_method->invoke($this);
@@ -443,14 +465,14 @@ abstract class Controller_Base {
         $this->render_action();
 
     } catch (Exception $e) {
-      if ($willCache)
+      if ($this->_will_cache_action)
         print ob_get_clean();
       throw $e;
     }
     
-    if ($willCache) {
+    if ($this->_will_cache_action) {
       $output = ob_get_clean();
-      return $output;
+      return array('headers'=>$this->headers_for_cache(), 'content'=>$output);
     }
   }
 
@@ -472,18 +494,74 @@ abstract class Controller_Base {
   /**
    * Enable caching for one or more actions on this controller. Accepts
    * one or more action names as parameters or an array of action names.
+   *
+   * Actions may be conditionally cached by passing a list of options as
+   * the last argument to caches_action and specifying a callback with
+   * the 'if' option.
+   *
+   * For example:
+   * <code>
+   *   $this->caches_action('index', 'show', array('if'=>'not_logged_in'));
+   * </code>
+   *
+   * The above would then cause the controller to call the method
+   * not_logged_in to determine if the index and show actions would be
+   * cached.
    */
-  public function caches_action() {
+  protected function caches_action() {
     $args = func_get_args();
+    
+    $options = Support_Util::options_from_argument_list($args);
+    Support_Util::validate_options($options, array('if'=>1));
+    
     foreach ($args as $arg) {
       
       if (is_array($arg)) {
-        foreach ($arg as $a) { $this->_cache_actions[$a] = 1; }
+        foreach ($arg as $a) {
+          $this->_cache_actions[$a] = new Controller_Base_CachedActionInfo($a, @$options['if']);
+        }
       } else {
-        $this->_cache_actions[$arg] = 1;
+        $this->_cache_actions[$arg] = new Controller_Base_CachedActionInfo($arg, @$options['if']);
       }
       
     }
+  }
+  
+  /**
+   * Returns true if the given action name will be cached
+   *
+   * @param string $action The name of the action to test
+   * @return boolean
+   */
+  protected function will_cache($action) {
+    if (!isset($this->_cache_actions[$action]))
+      return false;
+    
+    $info = $this->_cache_actions[$action];
+    if ($info->if_callback)
+      return call_user_func(array($this, $info->if_callback));
+    
+    return true;
+  }
+
+  /**
+   * Returns the list of headers which have been output that should be
+   * cached (or an empty list if none).
+   *
+   * @return boolean
+   */
+  protected function headers_for_cache() {
+    $headers = array();
+    
+    foreach (headers_list() as $header) {
+      if (preg_match("/\\A([^:]+):/", $header, $matches)) {
+        $name = trim(strtolower($matches[1]));
+        if (isset($this->_cache_headers[$name]))
+          $headers[] = $header;
+      }
+    }
+    
+    return $headers;
   }
 
   /**

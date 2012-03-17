@@ -14,6 +14,32 @@ class Support_UtilTest extends CriticalI_TestCase {
       $this->assertEquals('d', $e->optionName());
     }
   }
+  
+  public function testOptionsFromArgumentList() {
+    $args = array();
+    $this->assertEquals(array(), Support_Util::options_from_argument_list($args));
+
+    $args = array(1, 2);
+    $this->assertEquals(array(), Support_Util::options_from_argument_list($args));
+    $this->assertEquals(array(1, 2), $args);
+
+    $args = array(1, 2, array('foo', 'bar'));
+    $this->assertEquals(array(), Support_Util::options_from_argument_list($args));
+    $this->assertEquals(array(1, 2, array('foo', 'bar')), $args);
+
+    $args = array(1, 2, array('foo'=>'bar'));
+    $this->assertEquals(array('foo'=>'bar'), Support_Util::options_from_argument_list($args));
+    $this->assertEquals(array(1, 2), $args);
+
+    $args = array(array('foo'=>'bar'));
+    $this->assertEquals(array('foo'=>'bar'), Support_Util::options_from_argument_list($args));
+    $this->assertEquals(array(), $args);
+
+    $args = array(1, 2, array('foo'=>'bar'), 3);
+    $this->assertEquals(array(), Support_Util::options_from_argument_list($args));
+    $this->assertEquals(array(1, 2, array('foo'=>'bar'), 3), $args);
+  }
+  
 }
 
 ?>

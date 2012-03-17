@@ -13,4 +13,5 @@
 0.2.6 (not yet released)
  * Added cache as a new resource type
  * Added support for camelizing names like "foo/bar" to "Foo/Bar"
- * Added ArrayHelper::is_associative method
+ * Added Support_ArrayHelper::is_associative method
+ * Added Support_Util::options_from_argument_list method

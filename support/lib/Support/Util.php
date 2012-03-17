@@ -76,6 +76,27 @@ class Support_Util {
     }
   }
   
+  /**
+   * Return the options, if any, provided in a list of arguments and
+   * remove the options from the arguments. This function assumes that
+   * the last argument in the list is an array of options if that
+   * argument is an associative array (see 
+   * Support_ArrayHelper::is_associative()). If no options are found,
+   * an empty array is returned.
+   *
+   * @param array &$arguments The argument list to test/modify
+   * @return array
+   */
+  public static function options_from_argument_list(&$arguments) {
+    $lastIdx = count($arguments) - 1;
+
+    if ($lastIdx >= 0 && is_array($arguments[$lastIdx]) &&
+        Support_ArrayHelper::is_associative($arguments[$lastIdx]))
+      return array_pop($arguments);
+    else
+      return array();
+  }
+  
 }
 
 ?>

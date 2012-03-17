@@ -21,6 +21,57 @@ class Support_ArrayHelper {
   }
 
   /**
+   * Test an array to see if it is associative. Note that this resets the
+   * array pointer.
+   *
+   * This test method has two modes. The default is quick mode, which
+   * examines only the first index if the array to see if it is numeric
+   * and begins at 0. The second mode examines all keys in the array
+   * until an out of sequence/non-numeric index is found or the end of
+   * the array is reached.
+   *
+   * Potentially quick mode could mistake an array like this for a
+   * non-associative array:
+   * <code>
+   *   array('Red', 'Orange', 'color'=>'Yellow', 'Green');
+   * </code>
+   *
+   * Turning off quick mode would correctly determine such an array is
+   * associative, but at the expense of additional processing for
+   * non-associative arrays.
+   *
+   * @param array   &$array The array to test
+   * @param boolean $quick  If true (default), quick mode is used for testing
+   *
+   * @return boolean
+   */
+  public static function is_associative(&$array, $quick = true) {
+    if (!is_array($array))
+      return false;
+    
+    $expected = 0;
+    reset($array);
+    $each = each($array);
+
+    if ($each === false)
+      return false;
+      
+    list($key, $value) = $each;
+    if ($key !== $expected)
+      return true;
+    elseif ($quick)
+      return false;
+
+    while (($key === $expected)) {
+      if (!(list($key, $value) = each($array)))
+        return false;
+      $expected += 1;
+    }
+    
+    return true;
+  }
+  
+  /**
    * Perform a basic two-way merge on pre-sorted input arrays.
    *
    * This function will reset the pointer for both arrays.

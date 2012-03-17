@@ -122,6 +122,7 @@
 class Cache_Store {
   
   protected $engines;
+  protected $logger;
   
   /**
    * Constructor
@@ -169,6 +170,7 @@ class Cache_Store {
     if ( (!is_null($data = $item->read())) &&
           $this->is_valid($item, $options, $origKey, $data, $locking, false) ) {
       if ($locking) $item->unlock();
+      $this->logger()->debug("cache hit for $key");
       return $data;
 
     // create it
@@ -180,11 +182,13 @@ class Cache_Store {
            $this->is_valid($item, $options, $origKey, $data, $locking, true) ) {
         // someone populated the key after all
         if ($locking) $item->unlock();
+        $this->logger()->debug("cache hit for $key");
         return $data;
       
       } else {
         // ok to create
         $data = call_user_func($callback);
+        $this->logger()->debug("cache write for $key");
         $item->write($data);
         if ($locking) $item->unlock();
         return $data;
@@ -223,6 +227,7 @@ class Cache_Store {
     if ($locking) $item->lock(Cache_ItemBase::LOCK_WRITE, true);
 
     // create it
+    $this->logger()->debug("cache write for $key");
     $item->write($data);
 
     if ($locking) $item->unlock();
@@ -281,6 +286,7 @@ class Cache_Store {
     if ($locking) $item->lock(Cache_ItemBase::LOCK_WRITE, true);
 
     // destroy it
+    $this->logger()->debug("cache expire $key");
     $item->remove();
 
     if ($locking) $item->unlock();
@@ -304,6 +310,7 @@ class Cache_Store {
     $engine = $this->engine($options);
 
     // clear it
+    $this->logger()->debug("clear cache");
     $engine->clear($options);
   }
   
@@ -423,6 +430,15 @@ class Cache_Store {
       if ($mtime == $mtime2 && $data == $data2)
         $item->remove();
     }
+  }
+  
+  /**
+   * Return a logger instance
+   */
+  protected function logger() {
+    if (!$this->logger)
+      $this->logger = Support_Resources::logger('Cache');
+    return $this->logger;
   }
   
 }

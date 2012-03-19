@@ -1,0 +1,4 @@
+0.1.1 (not yet released)
+ * Fix issue when reversing migrations where a previously reversed or not
+   yet performed migration is reversed simply because it is greater than
+   the target version.

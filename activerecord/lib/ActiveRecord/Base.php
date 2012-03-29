@@ -2744,6 +2744,21 @@ abstract class ActiveRecord_Base {
 
     return $this->errors()->is_empty();
   }
+  
+  /**
+   * Return a proxy object for this class.
+   *
+   * Proxies are used by external classes which dynamically extend the
+   * functionality of an ActiveRecord class.
+   *
+   * @return ActiveRecord_Proxy
+   */
+  public function proxy() {
+    $inf = $this->get_meta_info();
+    $proxy = new ActiveRecord_Proxy();
+    $proxy->initialize($this, $this->attributes, $this->cached_attributes, $inf);
+    return $proxy;
+  }
 
 
 
@@ -3274,7 +3289,7 @@ abstract class ActiveRecord_Base {
    * @return boolean
    */
   protected function has_cached_attribute($name) {
-    return is_null($this->cached_attributes) ? false : isset($this->cached_attributes[$name]);
+    return is_null($this->cached_attributes) ? false : array_key_exists($name, $this->cached_attributes);
   }
   
   /**
@@ -3311,6 +3326,17 @@ abstract class ActiveRecord_Base {
     if (is_null($this->cached_attributes))
       $this->cached_attributes = array();
     $this->cached_attributes[$name] = $value;
+  }
+  
+  /**
+   * delete_cached_attribute removes a temporary value previously set
+   * with write_cached_attribute
+   *
+   * @param string $name  The attribute name
+   */
+  protected function delete_cached_attribute($name) {
+    if ((!is_null($this->cached_attributes)) && array_key_exists($name, $this->cached_attributes))
+      unset($this->cached_attributes[$name]);
   }
 
   /**
@@ -3510,18 +3536,6 @@ abstract class ActiveRecord_Base {
       return ActiveRecord_Validation::ON_UPDATE;
 
     throw new Exception("Unrecognized value for on: $name");
-  }
-  
-  /**
-   * Return a proxy object for this class.
-   *
-   * @return ActiveRecord_Proxy
-   */
-  protected function proxy() {
-    $inf = $this->get_meta_info();
-    $proxy = new ActiveRecord_Proxy();
-    $proxy->initialize($this, $this->attributes, $this->cached_attributes, $inf);
-    return $proxy;
   }
 
 }

@@ -26,3 +26,6 @@
    used with non-object types
  * Fix an issue with infinite recursion if a proxied method is called
    from within the init_class method of an ActiveRecord object.
+ * Change proxy method to public scope
+ * Change has_cached_attribute method to recognize attributes with a
+   value of null as present.

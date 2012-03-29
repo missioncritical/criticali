@@ -533,6 +533,76 @@ class ActiveRecord_BaseTest extends CriticalI_DBTestCase {
     $this->assertEquals('2010-06-11 10:57:24', $jwong->last_login);
   }
 
+
+  /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   * TESTS FOR PROTECTED INSTANCE OPERATIONS
+   *++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+  public function testHasCachedAttribute() {
+    $user = new Base_UnprotectedUser();
+    $proxy = $user->proxy();
+    
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+    
+    $proxy->write_cached_attribute('fruit', 'banana');
+    $this->assertTrue($proxy->has_cached_attribute('fruit'));
+
+    $this->assertFalse($proxy->has_cached_attribute('color'));
+    $proxy->write_cached_attribute('color', null);
+    $this->assertTrue($proxy->has_cached_attribute('color'));
+  }
+
+  public function testReadCachedAttribute() {
+    $user = new Base_UnprotectedUser();
+    $proxy = $user->proxy();
+    
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+    
+    $proxy->write_cached_attribute('fruit', 'banana');
+    $this->assertEquals('banana', $proxy->read_cached_attribute('fruit'));
+
+    $proxy->write_cached_attribute('fruit', 'apple');
+    $this->assertEquals('apple', $proxy->read_cached_attribute('fruit'));
+  }
+
+  public function testWriteCachedAttribute() {
+    $user = new Base_UnprotectedUser();
+    $proxy = $user->proxy();
+    
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+    
+    $proxy->write_cached_attribute('fruit', 'banana');
+    $this->assertEquals('banana', $proxy->read_cached_attribute('fruit'));
+    $this->assertEquals('banana', $user->proxy()->read_cached_attribute('fruit'));
+
+    $proxy->write_cached_attribute('fruit', 'apple');
+    $this->assertEquals('apple', $proxy->read_cached_attribute('fruit'));
+    $this->assertEquals('apple', $user->proxy()->read_cached_attribute('fruit'));
+    
+    $user2 = unserialize(serialize($user));
+    $proxy2 = $user2->proxy();
+    $this->assertFalse($proxy2->has_cached_attribute('fruit'));
+  }
+  
+  public function testDeleteCachedAttribute() {
+    $user = new Base_UnprotectedUser();
+    $proxy = $user->proxy();
+
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+    $proxy->delete_cached_attribute('fruit');
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+
+    $proxy->write_cached_attribute('fruit', 'apple');
+    $this->assertTrue($proxy->has_cached_attribute('fruit'));
+    $proxy->delete_cached_attribute('fruit');
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+
+    $proxy->write_cached_attribute('fruit', null);
+    $this->assertTrue($proxy->has_cached_attribute('fruit'));
+    $proxy->delete_cached_attribute('fruit');
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+  }
+  
 }
 
 ?>

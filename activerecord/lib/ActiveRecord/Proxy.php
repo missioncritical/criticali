@@ -71,7 +71,7 @@ class ActiveRecord_Proxy {
    * @return boolean
    */
   public function has_cached_attribute($name) {
-    return is_null($this->cached_attributes) ? false : isset($this->cached_attributes[$name]);
+    return is_null($this->cached_attributes) ? false : array_key_exists($name, $this->cached_attributes);
   }
   
   /**
@@ -96,6 +96,16 @@ class ActiveRecord_Proxy {
     if (is_null($this->cached_attributes))
       $this->cached_attributes = array();
     $this->cached_attributes[$name] = $value;
+  }
+
+  /**
+   * Calls delete_cached_attribute on the object the method was originally invoked on.
+   *
+   * @param string $name  The attribute name
+   */
+  public function delete_cached_attribute($name) {
+    if ((!is_null($this->cached_attributes)) && array_key_exists($name, $this->cached_attributes))
+      unset($this->cached_attributes[$name]);
   }
 
   /**

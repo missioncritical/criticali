@@ -67,6 +67,11 @@ class ActiveRecord_Base_BelongsToTest extends CriticalI_DBTestCase {
     $user = new BelongsTo_User(array('username'=>'testing', 'password'=>'*',
       'disabled'=>false, 'last_login'=>date('Y-m-d H:i:s')));
     $profile->user = $user;
+    
+    $user->username = '_testing';
+    $this->assertEquals('_testing', $user->username);
+    $this->assertEquals('_testing', $profile->user->username);
+    
     $this->assertTrue($user->new_record());
     $profile->save_or_fail();
     $this->assertFalse($user->new_record());

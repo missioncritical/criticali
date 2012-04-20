@@ -15,3 +15,4 @@
  * Added support for camelizing names like "foo/bar" to "Foo/Bar"
  * Added Support_ArrayHelper::is_associative method
  * Added Support_Util::options_from_argument_list method
+ * Added Support_Util::model convenience method

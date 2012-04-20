@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) 2008-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// Copyright (c) 2008-2012, Jeffrey Hunter and Mission Critical Labs, Inc.
 // See the LICENSE file distributed with this work for restrictions.
 /** @package support */
 
@@ -7,6 +7,8 @@
  * Shared utility functions for common tasks
  */
 class Support_Util {
+  
+  protected static $cached_models;
   
   /**
    * Constructor -- no, you can't instantiate this class; it's just
@@ -95,6 +97,38 @@ class Support_Util {
       return array_pop($arguments);
     else
       return array();
+  }
+  
+  /**
+   * Returns an instance of the named class. This is a convenience method
+   * intended for performing class-level operations on models. Constructed
+   * instances are cached and returned to any future callers requesting
+   * the same class. If the class provides a method named set_readonly,
+   * it is invoked with a value of true.
+   *
+   * In other words, this utility is a simple way to grab an immutable
+   * instance of a model class without littering up memory with lots of
+   * short-lived objects not associated with data records.
+   *
+   * @param string $className The name of the class to instantiate
+   * @return object
+   */
+  public static function model($className) {
+    if (!self::$cached_models)
+      self::$cached_models = array();
+    
+    if (!isset(self::$cached_models[$className])) {
+      if (!class_exists($className))
+        throw new Support_UnknownClassError($className);
+      
+      $model = new $className();
+      if (method_exists($model, 'set_readonly'))
+        $model->set_readonly(true);
+      
+      self::$cached_models[$className] = $model;
+    }
+    
+    return self::$cached_models[$className];
   }
   
 }

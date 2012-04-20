@@ -513,6 +513,72 @@ class ActiveRecord_BaseTest extends CriticalI_DBTestCase {
     $this->assertEquals($janeA->first_name, $janeB->first_name);
     $this->assertEquals($janeA->last_name,  $janeB->last_name);
   }
+  
+  public function testReload() {
+    $jane = new Name();
+    $jane = $jane->find(1);
+    
+    $this->assertEquals(1,       $jane->id);
+    $this->assertEquals('Jane',  $jane->first_name);
+    $this->assertEquals('Smith', $jane->last_name);
+    
+    $jane->first_name = 'Sally';
+    $jane->last_name  = 'Jones';
+
+    $this->assertEquals(1,       $jane->id);
+    $this->assertEquals('Sally', $jane->first_name);
+    $this->assertEquals('Jones', $jane->last_name);
+    
+    $jane->reload();
+
+    $this->assertEquals(1,       $jane->id);
+    $this->assertEquals('Jane',  $jane->first_name);
+    $this->assertEquals('Smith', $jane->last_name);
+  }
+  
+  public function testReadonly() {
+    $jane = new Name();
+    $jane = $jane->find(1);
+    
+    $this->assertFalse($jane->readonly());
+    
+    $this->assertEquals('Smith', $jane->last_name);
+    $jane->last_name = 'Doe';
+    $this->assertEquals('Doe', $jane->last_name);
+    
+    $jane->reload();
+    $this->assertEquals('Smith', $jane->last_name);
+
+    $jane->set_readonly(true);
+    
+    try {
+      $jane->last_name = 'Doe';
+      $this->fail('Allowed attribute assignment on read-only record');
+    } catch (ActiveRecord_ReadOnlyRecord $ex) {
+      // expected
+    }
+
+    try {
+      $jane->save();
+      $this->fail('Allowed update of read-only record');
+    } catch (ActiveRecord_ReadOnlyRecord $ex) {
+      // expected
+    }
+  }
+  
+  public function testDestroy() {
+    $name = new Name();
+
+    $this->assertTrue($name->exists(14));
+    
+    $jacques = $name->find(14);
+    $this->assertFalse($jacques->readonly());
+
+    $jacques->destroy();
+    
+    $this->assertTrue($jacques->readonly());
+    $this->assertFalse($name->exists(14));
+  }
 
   /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    * TESTS FOR MASS ASSIGNMENT PROTECTION

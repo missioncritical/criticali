@@ -29,3 +29,6 @@
  * Change proxy method to public scope
  * Change has_cached_attribute method to recognize attributes with a
    value of null as present.
+ * Fix reload method
+ * Change readonly behavior of records to disallow attribute assignment
+ * Change destroy method to set readonly flag on the record

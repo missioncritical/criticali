@@ -146,7 +146,7 @@ class ActiveRecord_ReadOnlyRecord extends ActiveRecord_Error {
    * Constructor
    */
   public function __construct() {
-    parent::__construct("Cannot save a read-only record.");
+    parent::__construct("Cannot save or modify a read-only record.");
   }
 }
 
@@ -2514,6 +2514,8 @@ abstract class ActiveRecord_Base {
       $this->logger()->debug("ERROR executing SQL ($sql) ".get_class($e).": ".$e->getMessage());
       throw $e;
     }
+    
+    $this->set_readonly(true);
 
     $this->fire_event('after_destroy');
   }
@@ -2642,7 +2644,7 @@ abstract class ActiveRecord_Base {
    */
   public function reload() {
     $obj = $this->find($this->id());
-    $this->attributes = array_merge($obj->attributes(), $this->attributes);
+    $this->attributes = array_merge($this->attributes, $obj->attributes());
     return $this;
   }
 
@@ -3276,6 +3278,9 @@ abstract class ActiveRecord_Base {
    * @param mixed  $value The new value for the attribute
    */
   protected function write_attribute($name, $value) {
+    if ($this->readonly)
+      throw new ActiveRecord_ReadOnlyRecord();
+
     $col = $this->column_for_attribute($name);
     $this->attributes[$name] = $this->reverse_type_cast($value, $col);
   }

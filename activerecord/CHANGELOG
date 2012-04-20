@@ -32,3 +32,4 @@
  * Fix reload method
  * Change readonly behavior of records to disallow attribute assignment
  * Change destroy method to set readonly flag on the record
+ * Add model method as a convenience for Support_Util::model

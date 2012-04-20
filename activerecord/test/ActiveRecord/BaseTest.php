@@ -496,6 +496,16 @@ class ActiveRecord_BaseTest extends CriticalI_DBTestCase {
     $this->assertEquals('first_name', $student->column_for_attribute('first_name')->name());
     $this->assertNull($student->column_for_attribute('bogus'));
   }
+  
+  public function testModel() {
+    $user = new Base_UnprotectedUser();
+    
+    $name = $user->model('Name');
+    $this->assertTrue(($name instanceof Name));
+    
+    $jane = $user->model('Name')->find_by_first_name_and_last_name('Jane', 'Smith');
+    $this->assertEquals(1, $jane->id);
+  }
 
 
   /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -3,8 +3,8 @@
 // See the LICENSE file distributed with this work for restrictions.
 
 /**
- * An ActiveRecord implementation for PHP 5 based on the far-superior
- * Ruby on Rails implemenation.
+ * An ActiveRecord implementation for PHP 5 inspired by the superior
+ * Ruby on Rails implementation.
  *
  * @package activerecord
  */

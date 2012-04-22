@@ -64,6 +64,17 @@ class Controller_BaseTest_TestRandomController extends Controller_Base {
   protected function cache_options() { return array('engine'=>'memory'); }
 }
 
+class Controller_BaseTest_SimpleModel {
+}
+
+class Controller_BaseTest_SimpleController extends Controller_Base {
+  
+  public function model_instance() {
+    return $this->model('Controller_BaseTest_SimpleModel');
+  }
+  
+}
+
 class Controller_BaseTest extends CriticalI_TestCase {
   
   public function testBeforeFilter() {
@@ -123,6 +134,12 @@ class Controller_BaseTest extends CriticalI_TestCase {
     
     $controller->expire_action(array('action'=>'random_cached'));
     $this->assertNotEquals($val, $this->run_request($controller, 'random_cached'));
+  }
+  
+  public function testModel() {
+    $controller = new Controller_BaseTest_SimpleController();
+    
+    $this->assertTrue(($controller->model_instance() instanceof Controller_BaseTest_SimpleModel));
   }
   
   protected function run_request($controller, $action, $params = array()) {

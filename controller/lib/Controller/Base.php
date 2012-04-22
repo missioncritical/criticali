@@ -1043,6 +1043,30 @@ abstract class Controller_Base {
   }
   
   /**
+   * A convenience method that calls Support_Util::model()
+   *
+   * This method exists purely for more concise code creation. All three
+   * of the examples below perform the same operation:
+   * <code>
+   *   // write this:
+   *   $post = $this->model('BlogPost')->find($id);
+   *
+   *   // instead of:
+   *   $post = Support_Util::model('BlogPost')->find($id);
+   *
+   *   // or
+   *   $BlogPost = new BlogPost();
+   *   $post = $BlogPost->find($id);
+   * </code>
+   *
+   * @param string $className The name of the model class to return
+   * @return object
+   */
+  protected function model($className) {
+    return Support_Util::model($className);
+  }
+
+  /**
    * Invoked when an attempt is made to set an undeclared instance
    * variable
    *

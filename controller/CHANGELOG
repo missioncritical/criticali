@@ -28,3 +28,4 @@
  * Add simple caching support (requires the cache package to be
    installed) through the methods caches_action, expire_action, and
    expire_fragment
+ * Add model method as a convenience for Support_Util::model

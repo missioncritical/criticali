@@ -35,4 +35,13 @@ class Migration_Record extends ActiveRecord_Base {
     $parts = explode('_', $this->name, 2);
     return $parts[1];
   }
+  
+  /**
+   * Migration_Records cannot be made readonly. Any attempt to change the
+   * readonly setting is silently ignored.
+   */
+  public function set_readonly($flag) {
+    // silently ignore
+  }
+  
 }

@@ -21,7 +21,7 @@
    protected proxy method in their place.
 0.2.9 2011-01-15
  * Fix include queries for empty sets.
-0.2.10 (not yet released)
+0.2.10 2012-04-25
  * Fix for ActiveRecord_AssociationTypeMismatch on PHP 5.3 and above when
    used with non-object types
  * Fix an issue with infinite recursion if a proxied method is called

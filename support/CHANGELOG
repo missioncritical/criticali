@@ -10,7 +10,7 @@
 0.2.5 2010-07-31
  * Added Support_ErrorLogger class and updated the init script to
    register it by default.
-0.2.6 (not yet released)
+0.2.6 2012-04-25
  * Added cache as a new resource type
  * Added support for camelizing names like "foo/bar" to "Foo/Bar"
  * Added Support_ArrayHelper::is_associative method

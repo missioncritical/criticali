@@ -20,7 +20,7 @@
    templates as public in the controller under some versions of PHP
  * Add the render_error method
  * Minor documentation improvements
-0.3.1 (not yet released)
+0.3.1 2012-04-25
  * Added protect_from_forgery() filter
  * Added require_post() filter
  * Fix issue with reverse routing that would use routes with different

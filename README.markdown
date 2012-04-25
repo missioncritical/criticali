@@ -104,8 +104,7 @@ goes in private/controllers/NotesController.php and looks like:
     
     class NotesController extends Controller_Base {
       public function index() {
-        $note = new Note();
-        $this->notes = $note->find_all();
+        $this->notes = $this->model('Note')->find_all();
       }
       
       public function add() {
@@ -124,13 +123,11 @@ goes in private/controllers/NotesController.php and looks like:
       }
       
       public function edit() {
-        $this->note = new Note();
-        $this->note = $this->note->find($_REQUEST['id']);
+        $this->note = $this->model('Note')->find($_REQUEST['id']);
       }
       
       public function update() {
-        $this->note = new Note();
-        $this->note = $this->note->find($_REQUEST['id']);
+        $this->note = $this->model('Note')->find($_REQUEST['id']);
         if ($this->note->update_attributes($_POST['note'])) {
           $this->set_flash('notice', 'Note updated.');
           $this->redirect_to('/notes');
@@ -141,8 +138,7 @@ goes in private/controllers/NotesController.php and looks like:
       }
       
       public function delete() {
-        $this->note = new Note();
-        $this->note = $this->note->find($_REQUEST['id']);
+        $this->note = $this->model('Note')->find($_REQUEST['id']);
         $this->note->destroy();
         $this->set_flash('notice', 'Note deleted.');
         $this->redirect_to('/notes');

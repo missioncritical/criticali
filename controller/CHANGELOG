@@ -20,6 +20,12 @@
    templates as public in the controller under some versions of PHP
  * Add the render_error method
  * Minor documentation improvements
-0.3.1 (not yet released)
+0.3.1 2012-04-25
  * Added protect_from_forgery() filter
  * Added require_post() filter
+ * Fix issue with reverse routing that would use routes with different
+   actions for the index route
+ * Add simple caching support (requires the cache package to be
+   installed) through the methods caches_action, expire_action, and
+   expire_fragment
+ * Add model method as a convenience for Support_Util::model

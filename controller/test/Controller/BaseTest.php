@@ -47,6 +47,33 @@ class ExceptTestController extends EmptyTestController {
 class Controller_BaseTest_TestAController extends Controller_Base {
 }
 
+class Controller_BaseTest_TestRandomController extends Controller_Base {
+  public function __construct() {
+    $this->caches_action('random_cached');
+  }
+  
+  public function random() {
+    print mt_rand();
+    $this->set_rendered(true);
+  }
+  
+  public function random_cached() {
+    $this->random();
+  }
+  
+  protected function cache_options() { return array('engine'=>'memory'); }
+}
+
+class Controller_BaseTest_SimpleModel {
+}
+
+class Controller_BaseTest_SimpleController extends Controller_Base {
+  
+  public function model_instance() {
+    return $this->model('Controller_BaseTest_SimpleModel');
+  }
+  
+}
 
 class Controller_BaseTest extends CriticalI_TestCase {
   
@@ -88,6 +115,43 @@ class Controller_BaseTest extends CriticalI_TestCase {
     
     $this->assertEquals('empty_test', $empty->controller_name());
     $this->assertEquals('controller/base_test/test_a', $testA->controller_name());
+  }
+  
+  public function testCache() {
+    $pkgs = CriticalI_Package_List::get();
+    if (!isset($pkgs['cache']))
+      $this->markTestSkipped("The cache package is not installed");
+    
+    CriticalI_Package_List::add_package_to_autoloader('cache', '0.1.0');
+    Support_Resources::register_cache(new Cache_Provider(), 'php', true);
+
+    $controller = new Controller_BaseTest_TestRandomController();
+    
+    $val = $this->run_request($controller, 'random_cached');
+    
+    $this->assertNotEquals($val, $this->run_request($controller, 'random'));
+    $this->assertEquals($val, $this->run_request($controller, 'random_cached'));
+    
+    $controller->expire_action(array('action'=>'random_cached'));
+    $this->assertNotEquals($val, $this->run_request($controller, 'random_cached'));
+  }
+  
+  public function testModel() {
+    $controller = new Controller_BaseTest_SimpleController();
+    
+    $this->assertTrue(($controller->model_instance() instanceof Controller_BaseTest_SimpleModel));
+  }
+  
+  protected function run_request($controller, $action, $params = array()) {
+    $oldRequest = $_REQUEST;
+    $_REQUEST = $params;
+    $_REQUEST['action'] = $action;
+    
+    ob_start();
+    $controller->handle_request();
+    
+    $_REQUEST = $oldRequest;
+    return ob_get_clean();
   }
   
 }

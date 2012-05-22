@@ -8,6 +8,9 @@ class Support_InflectorTest extends CriticalI_TestCase {
     $this->assertEquals('TableName', Support_Inflector::camelize('TableName'));
     $this->assertEquals('TableName', Support_Inflector::camelize('Table name'));
     $this->assertEquals('tableName', Support_Inflector::camelize('table_name', false));
+    $this->assertEquals('Table/Name', Support_Inflector::camelize('table/name'));
+    $this->assertEquals('table/name', Support_Inflector::camelize('table/name', false));
+    $this->assertEquals('tableName/more', Support_Inflector::camelize('table_name/more', false));
   }
   
   public function testUnderscore() {

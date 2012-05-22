@@ -21,8 +21,15 @@
    protected proxy method in their place.
 0.2.9 2011-01-15
  * Fix include queries for empty sets.
-0.2.10 (not yet released)
+0.2.10 2012-04-25
  * Fix for ActiveRecord_AssociationTypeMismatch on PHP 5.3 and above when
    used with non-object types
  * Fix an issue with infinite recursion if a proxied method is called
    from within the init_class method of an ActiveRecord object.
+ * Change proxy method to public scope
+ * Change has_cached_attribute method to recognize attributes with a
+   value of null as present.
+ * Fix reload method
+ * Change readonly behavior of records to disallow attribute assignment
+ * Change destroy method to set readonly flag on the record
+ * Add model method as a convenience for Support_Util::model

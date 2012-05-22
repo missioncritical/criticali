@@ -1,0 +1,7 @@
+0.1.1 2012-04-25
+ * Fix issue when reversing migrations where a previously reversed or not
+   yet performed migration is reversed simply because it is greater than
+   the target version.
+ * Update to work correctly with new ActiveRecord behavior that marks
+   records as readonly when you destroy them
+ * Add model method as a convenience for Support_Util::model

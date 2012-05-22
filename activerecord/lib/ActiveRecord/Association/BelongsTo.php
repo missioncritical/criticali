@@ -103,7 +103,7 @@ class ActiveRecord_Association_BelongsTo extends ActiveRecord_Association {
     $oldValue = $proxy->read_attribute($this->foreign_key);
     if ($oldValue !== $value) {
       $proxy->write_attribute($this->foreign_key, $value);
-      $proxy->write_cached_attribute($this->name, null);
+      $proxy->delete_cached_attribute($this->name);
     }
   }
 

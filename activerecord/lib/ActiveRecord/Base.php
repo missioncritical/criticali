@@ -3,8 +3,8 @@
 // See the LICENSE file distributed with this work for restrictions.
 
 /**
- * An ActiveRecord implementation for PHP 5 based on the far-superior
- * Ruby on Rails implemenation.
+ * An ActiveRecord implementation for PHP 5 inspired by the superior
+ * Ruby on Rails implementation.
  *
  * @package activerecord
  */
@@ -146,7 +146,7 @@ class ActiveRecord_ReadOnlyRecord extends ActiveRecord_Error {
    * Constructor
    */
   public function __construct() {
-    parent::__construct("Cannot save a read-only record.");
+    parent::__construct("Cannot save or modify a read-only record.");
   }
 }
 
@@ -2137,6 +2137,30 @@ abstract class ActiveRecord_Base {
     $inf->associations[$association_name] = $assoc;
   }
   
+  /**
+   * A convenience method that calls Support_Util::model()
+   *
+   * This method exists purely for more concise code creation. All three
+   * of the examples below perform the same operation:
+   * <code>
+   *   // write this:
+   *   $post = $this->model('BlogPost')->find($id);
+   *
+   *   // instead of:
+   *   $post = Support_Util::model('BlogPost')->find($id);
+   *
+   *   // or
+   *   $BlogPost = new BlogPost();
+   *   $post = $BlogPost->find($id);
+   * </code>
+   *
+   * @param string $className The name of the model class to return
+   * @return object
+   */
+  public function model($className) {
+    return Support_Util::model($className);
+  }
+  
 
 
 
@@ -2514,6 +2538,8 @@ abstract class ActiveRecord_Base {
       $this->logger()->debug("ERROR executing SQL ($sql) ".get_class($e).": ".$e->getMessage());
       throw $e;
     }
+    
+    $this->set_readonly(true);
 
     $this->fire_event('after_destroy');
   }
@@ -2642,7 +2668,7 @@ abstract class ActiveRecord_Base {
    */
   public function reload() {
     $obj = $this->find($this->id());
-    $this->attributes = array_merge($obj->attributes(), $this->attributes);
+    $this->attributes = array_merge($this->attributes, $obj->attributes());
     return $this;
   }
 
@@ -2743,6 +2769,21 @@ abstract class ActiveRecord_Base {
     $this->fire_event($this->new_record() ? 'after_validation_on_create' : 'after_validation_on_update');
 
     return $this->errors()->is_empty();
+  }
+  
+  /**
+   * Return a proxy object for this class.
+   *
+   * Proxies are used by external classes which dynamically extend the
+   * functionality of an ActiveRecord class.
+   *
+   * @return ActiveRecord_Proxy
+   */
+  public function proxy() {
+    $inf = $this->get_meta_info();
+    $proxy = new ActiveRecord_Proxy();
+    $proxy->initialize($this, $this->attributes, $this->cached_attributes, $inf);
+    return $proxy;
   }
 
 
@@ -3261,6 +3302,9 @@ abstract class ActiveRecord_Base {
    * @param mixed  $value The new value for the attribute
    */
   protected function write_attribute($name, $value) {
+    if ($this->readonly)
+      throw new ActiveRecord_ReadOnlyRecord();
+
     $col = $this->column_for_attribute($name);
     $this->attributes[$name] = $this->reverse_type_cast($value, $col);
   }
@@ -3274,7 +3318,7 @@ abstract class ActiveRecord_Base {
    * @return boolean
    */
   protected function has_cached_attribute($name) {
-    return is_null($this->cached_attributes) ? false : isset($this->cached_attributes[$name]);
+    return is_null($this->cached_attributes) ? false : array_key_exists($name, $this->cached_attributes);
   }
   
   /**
@@ -3311,6 +3355,17 @@ abstract class ActiveRecord_Base {
     if (is_null($this->cached_attributes))
       $this->cached_attributes = array();
     $this->cached_attributes[$name] = $value;
+  }
+  
+  /**
+   * delete_cached_attribute removes a temporary value previously set
+   * with write_cached_attribute
+   *
+   * @param string $name  The attribute name
+   */
+  protected function delete_cached_attribute($name) {
+    if ((!is_null($this->cached_attributes)) && array_key_exists($name, $this->cached_attributes))
+      unset($this->cached_attributes[$name]);
   }
 
   /**
@@ -3510,18 +3565,6 @@ abstract class ActiveRecord_Base {
       return ActiveRecord_Validation::ON_UPDATE;
 
     throw new Exception("Unrecognized value for on: $name");
-  }
-  
-  /**
-   * Return a proxy object for this class.
-   *
-   * @return ActiveRecord_Proxy
-   */
-  protected function proxy() {
-    $inf = $this->get_meta_info();
-    $proxy = new ActiveRecord_Proxy();
-    $proxy->initialize($this, $this->attributes, $this->cached_attributes, $inf);
-    return $proxy;
   }
 
 }

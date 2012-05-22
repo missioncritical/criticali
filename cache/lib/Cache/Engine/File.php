@@ -362,7 +362,6 @@ class Cache_Engine_File_Item extends Cache_ItemBase {
     // determine the name of the file
     $filename = $this->engine->cache_file_path($this->key(), $this->options);
     @unlink($filename);
-    @unlink($filename . '.lock');
   }
   
   /**

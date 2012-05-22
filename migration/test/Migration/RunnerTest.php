@@ -53,6 +53,17 @@ class Migration_RunnerTest extends CriticalI_DBTestCase {
     $this->assertTrue($this->hasTable('example_records'));
     $this->assertEquals(null, $conn->selectValue("SELECT value FROM example_records WHERE value='one'"));
     $this->assertEquals(null, $conn->selectValue("SELECT value FROM example_records WHERE value='two'"));
+    
+    $runner->run('002');
+    $this->assertTrue($this->hasTable('example_records'));
+    $this->assertEquals('one', $conn->selectValue("SELECT value FROM example_records WHERE value='one'"));
+    $this->assertEquals(null, $conn->selectValue("SELECT value FROM example_records WHERE value='two'"));
+    
+    $conn->exec("INSERT INTO example_records (value) VALUES ('two')");
+    $runner->run('001');
+    $this->assertTrue($this->hasTable('example_records'));
+    $this->assertEquals(null, $conn->selectValue("SELECT value FROM example_records WHERE value='one'"));
+    $this->assertEquals('two', $conn->selectValue("SELECT value FROM example_records WHERE value='two'"));
   }
 
   protected function hasTable($name) {

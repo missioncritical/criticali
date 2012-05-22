@@ -496,6 +496,16 @@ class ActiveRecord_BaseTest extends CriticalI_DBTestCase {
     $this->assertEquals('first_name', $student->column_for_attribute('first_name')->name());
     $this->assertNull($student->column_for_attribute('bogus'));
   }
+  
+  public function testModel() {
+    $user = new Base_UnprotectedUser();
+    
+    $name = $user->model('Name');
+    $this->assertTrue(($name instanceof Name));
+    
+    $jane = $user->model('Name')->find_by_first_name_and_last_name('Jane', 'Smith');
+    $this->assertEquals(1, $jane->id);
+  }
 
 
   /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -512,6 +522,72 @@ class ActiveRecord_BaseTest extends CriticalI_DBTestCase {
     $this->assertEquals($janeA->id,         $janeB->id);
     $this->assertEquals($janeA->first_name, $janeB->first_name);
     $this->assertEquals($janeA->last_name,  $janeB->last_name);
+  }
+  
+  public function testReload() {
+    $jane = new Name();
+    $jane = $jane->find(1);
+    
+    $this->assertEquals(1,       $jane->id);
+    $this->assertEquals('Jane',  $jane->first_name);
+    $this->assertEquals('Smith', $jane->last_name);
+    
+    $jane->first_name = 'Sally';
+    $jane->last_name  = 'Jones';
+
+    $this->assertEquals(1,       $jane->id);
+    $this->assertEquals('Sally', $jane->first_name);
+    $this->assertEquals('Jones', $jane->last_name);
+    
+    $jane->reload();
+
+    $this->assertEquals(1,       $jane->id);
+    $this->assertEquals('Jane',  $jane->first_name);
+    $this->assertEquals('Smith', $jane->last_name);
+  }
+  
+  public function testReadonly() {
+    $jane = new Name();
+    $jane = $jane->find(1);
+    
+    $this->assertFalse($jane->readonly());
+    
+    $this->assertEquals('Smith', $jane->last_name);
+    $jane->last_name = 'Doe';
+    $this->assertEquals('Doe', $jane->last_name);
+    
+    $jane->reload();
+    $this->assertEquals('Smith', $jane->last_name);
+
+    $jane->set_readonly(true);
+    
+    try {
+      $jane->last_name = 'Doe';
+      $this->fail('Allowed attribute assignment on read-only record');
+    } catch (ActiveRecord_ReadOnlyRecord $ex) {
+      // expected
+    }
+
+    try {
+      $jane->save();
+      $this->fail('Allowed update of read-only record');
+    } catch (ActiveRecord_ReadOnlyRecord $ex) {
+      // expected
+    }
+  }
+  
+  public function testDestroy() {
+    $name = new Name();
+
+    $this->assertTrue($name->exists(14));
+    
+    $jacques = $name->find(14);
+    $this->assertFalse($jacques->readonly());
+
+    $jacques->destroy();
+    
+    $this->assertTrue($jacques->readonly());
+    $this->assertFalse($name->exists(14));
   }
 
   /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -533,6 +609,76 @@ class ActiveRecord_BaseTest extends CriticalI_DBTestCase {
     $this->assertEquals('2010-06-11 10:57:24', $jwong->last_login);
   }
 
+
+  /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   * TESTS FOR PROTECTED INSTANCE OPERATIONS
+   *++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+  public function testHasCachedAttribute() {
+    $user = new Base_UnprotectedUser();
+    $proxy = $user->proxy();
+    
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+    
+    $proxy->write_cached_attribute('fruit', 'banana');
+    $this->assertTrue($proxy->has_cached_attribute('fruit'));
+
+    $this->assertFalse($proxy->has_cached_attribute('color'));
+    $proxy->write_cached_attribute('color', null);
+    $this->assertTrue($proxy->has_cached_attribute('color'));
+  }
+
+  public function testReadCachedAttribute() {
+    $user = new Base_UnprotectedUser();
+    $proxy = $user->proxy();
+    
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+    
+    $proxy->write_cached_attribute('fruit', 'banana');
+    $this->assertEquals('banana', $proxy->read_cached_attribute('fruit'));
+
+    $proxy->write_cached_attribute('fruit', 'apple');
+    $this->assertEquals('apple', $proxy->read_cached_attribute('fruit'));
+  }
+
+  public function testWriteCachedAttribute() {
+    $user = new Base_UnprotectedUser();
+    $proxy = $user->proxy();
+    
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+    
+    $proxy->write_cached_attribute('fruit', 'banana');
+    $this->assertEquals('banana', $proxy->read_cached_attribute('fruit'));
+    $this->assertEquals('banana', $user->proxy()->read_cached_attribute('fruit'));
+
+    $proxy->write_cached_attribute('fruit', 'apple');
+    $this->assertEquals('apple', $proxy->read_cached_attribute('fruit'));
+    $this->assertEquals('apple', $user->proxy()->read_cached_attribute('fruit'));
+    
+    $user2 = unserialize(serialize($user));
+    $proxy2 = $user2->proxy();
+    $this->assertFalse($proxy2->has_cached_attribute('fruit'));
+  }
+  
+  public function testDeleteCachedAttribute() {
+    $user = new Base_UnprotectedUser();
+    $proxy = $user->proxy();
+
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+    $proxy->delete_cached_attribute('fruit');
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+
+    $proxy->write_cached_attribute('fruit', 'apple');
+    $this->assertTrue($proxy->has_cached_attribute('fruit'));
+    $proxy->delete_cached_attribute('fruit');
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+
+    $proxy->write_cached_attribute('fruit', null);
+    $this->assertTrue($proxy->has_cached_attribute('fruit'));
+    $proxy->delete_cached_attribute('fruit');
+    $this->assertFalse($proxy->has_cached_attribute('fruit'));
+  }
+  
 }
 
 ?>

@@ -30,7 +30,9 @@ class Migration_Runner {
   /**
    * Run migrations.
    *
-   * If no version is given, runs all available migrations which have not yet been run (runs migrations up to the latest), otherwise runs and/or reverses migrations up to the specified version number.
+   * If no version is given, runs all available migrations which have not
+   * yet been run (runs migrations up to the latest), otherwise runs
+   * and/or reverses migrations up to the specified version number.
    *
    * @param string $version  Optional target version number
    */
@@ -45,10 +47,10 @@ class Migration_Runner {
         $this->perform_migration($migration);
     }
     
-    // then undo anything beyond the target version
+    // then undo anything beyond the target version that has been performed
     foreach (array_reverse($this->migrations->keys()) as $name) {
       $migration = $this->migrations[$name];
-      if (strnatcmp($migration->version, $version) > 0)
+      if ($migration->performed && (strnatcmp($migration->version, $version) > 0))
         $this->reverse_migration($migration);
     }
   }

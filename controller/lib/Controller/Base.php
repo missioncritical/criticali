@@ -31,6 +31,19 @@ class Controller_Base_EventListener {
 }
 
 /**
+ * Class for cached action configuration
+ */
+class Controller_Base_CachedActionInfo {
+  public $action;
+  public $if_callback;
+  
+  public function __construct($action, $if_callback = null) {
+    $this->action = $action;
+    $this->if_callback = $if_callback;
+  }
+}
+
+/**
  * Controller_Base is an abstract base class for implementing controllers.
  *
  * Controllers are expected to provide one or more public methods which
@@ -126,6 +139,9 @@ abstract class Controller_Base {
   protected $_routing = null;
   protected $_runtime_variables = array();
   protected $_is_error = false;
+  protected $_cache_actions = array();
+  protected $_will_cache_action = false;
+  protected $_action_method = null;
 
   protected $hidden_actions = array('__construct'=>1,
                                     'action'=>1,
@@ -134,7 +150,14 @@ abstract class Controller_Base {
                                     'handle_request'=>1,
                                     'layout'=>1,
                                     'rendered'=>1,
-                                    'form_authenticity_token'=>1);
+                                    'form_authenticity_token'=>1,
+                                    'expire_action',
+                                    'expire_fragment');
+
+  protected $_cache_headers = array('content-type'=>1,
+                                    'content-disposition'=>1,
+                                    'content-length'=>1,
+                                    'content-encoding');
 
   /**
    * Constructor
@@ -159,7 +182,7 @@ abstract class Controller_Base {
   public function set_action($action) {
     $this->action = $action;
   }
-
+  
   /**
    * Accessor for this controller's layout name
    *
@@ -268,6 +291,57 @@ abstract class Controller_Base {
   }
   
   /**
+   * Expire a cached action. Defaults to the current action.
+   *
+   * For example:
+   * <code>
+   *   $this->expire_action(array('action'=>'index'));
+   * </code>
+   *
+   * Would expire any cached content for the index action.
+   */
+  public function expire_action($options = null) {
+    if (!is_array($options)) $options = array();
+    
+    $key = array_merge(array(
+        'controller'=>$this->controller_name(),
+        'action'=>$this->action()
+      ), $options);
+    
+    $cache = Support_Resources::cache();
+    $cache->expire($key, $this->cache_options());
+  }
+  
+  /**
+   * Expire a cached fragment. Defaults to the current action and a null
+   * fragment name.
+   *
+   * For example:
+   * <code>
+   *   $this->expire_fragment(array('action'=>'index', 'fragment'=>'total_entries'));
+   * </code>
+   *
+   * Would expire a block in the index view that looked like:
+   * <code>
+   *   {cache name="total_entries"}
+   *     Total entries: {$entries->count()}<br/>
+   *   {/cache}
+   * </code>
+   */
+  public function expire_fragment($options = null) {
+    if (!is_array($options)) $options = array();
+    
+    $key = array_merge(array(
+        'controller'=>$this->controller_name(),
+        'action'=>$this->action(),
+        'fragment'=>null
+      ), $options);
+    
+    $cache = Support_Resources::cache();
+    $cache->expire($key, $this->cache_options());
+  }
+
+  /**
    * Return the URL for a given set of parameters.
    * 
    * For example:
@@ -336,18 +410,28 @@ abstract class Controller_Base {
 
         $this->set_action($action);
         $this->set_rendered(false);
+        $this->_action_method = $meth;
 
         try {
           if (!$this->fire_event('before_filter', true))
             return;
 
-          $meth->invoke($this);
+          // use the cache, if requested
+          if ($this->_will_cache_action = $this->will_cache($action)) {
+            $cache = Support_Resources::cache();
+            $data = $cache->get(array('controller'=>$this->controller_name(), 'action'=>$action),
+              $this->cache_options(), array($this, 'perform_action'));
+            
+            foreach ($data['headers'] as $header) { header($header); }
+            print $data['content'];
+
+          } else {
+            $this->perform_action();
+          }
+          
         } catch ( Exception $e ) {
           $this->on_exception($e);
         }
-
-        if (!$this->rendered())
-          $this->render_action();
 
         $this->fire_event('after_filter');
         
@@ -362,6 +446,34 @@ abstract class Controller_Base {
     $this->logger()->error("Unknown action \"$action\" in controller ".get_class($this));
 
     $this->not_found();
+  }
+
+  /**
+   * Perform the current action. This method is intended only for use by
+   * handle_request().
+   */
+  public function perform_action() {
+    if (!$this->_action_method)
+      throw new Exception("Perform action method called incorrectly");
+    
+    if ($this->_will_cache_action) ob_start();
+    
+    try {
+      $this->_action_method->invoke($this);
+
+      if (!$this->rendered())
+        $this->render_action();
+
+    } catch (Exception $e) {
+      if ($this->_will_cache_action)
+        print ob_get_clean();
+      throw $e;
+    }
+    
+    if ($this->_will_cache_action) {
+      $output = ob_get_clean();
+      return array('headers'=>$this->headers_for_cache(), 'content'=>$output);
+    }
   }
 
 
@@ -379,6 +491,79 @@ abstract class Controller_Base {
       'description'=>'The requested document could not be found.'));
   }
   
+  /**
+   * Enable caching for one or more actions on this controller. Accepts
+   * one or more action names as parameters or an array of action names.
+   *
+   * Actions may be conditionally cached by passing a list of options as
+   * the last argument to caches_action and specifying a callback with
+   * the 'if' option.
+   *
+   * For example:
+   * <code>
+   *   $this->caches_action('index', 'show', array('if'=>'not_logged_in'));
+   * </code>
+   *
+   * The above would then cause the controller to call the method
+   * not_logged_in to determine if the index and show actions would be
+   * cached.
+   */
+  protected function caches_action() {
+    $args = func_get_args();
+    
+    $options = Support_Util::options_from_argument_list($args);
+    Support_Util::validate_options($options, array('if'=>1));
+    
+    foreach ($args as $arg) {
+      
+      if (is_array($arg)) {
+        foreach ($arg as $a) {
+          $this->_cache_actions[$a] = new Controller_Base_CachedActionInfo($a, @$options['if']);
+        }
+      } else {
+        $this->_cache_actions[$arg] = new Controller_Base_CachedActionInfo($arg, @$options['if']);
+      }
+      
+    }
+  }
+  
+  /**
+   * Returns true if the given action name will be cached
+   *
+   * @param string $action The name of the action to test
+   * @return boolean
+   */
+  protected function will_cache($action) {
+    if (!isset($this->_cache_actions[$action]))
+      return false;
+    
+    $info = $this->_cache_actions[$action];
+    if ($info->if_callback)
+      return call_user_func(array($this, $info->if_callback));
+    
+    return true;
+  }
+
+  /**
+   * Returns the list of headers which have been output that should be
+   * cached (or an empty list if none).
+   *
+   * @return boolean
+   */
+  protected function headers_for_cache() {
+    $headers = array();
+    
+    foreach (headers_list() as $header) {
+      if (preg_match("/\\A([^:]+):/", $header, $matches)) {
+        $name = trim(strtolower($matches[1]));
+        if (isset($this->_cache_headers[$name]))
+          $headers[] = $header;
+      }
+    }
+    
+    return $headers;
+  }
+
   /**
    * Accepts the names of one or more public methods which are
    * protected from invocation as an action.
@@ -725,6 +910,19 @@ abstract class Controller_Base {
 
 
   /**
+   * Return the cache options to use when caching an action
+   */
+  protected function cache_options() {
+    if (Cfg::exists('cache/profiles/action'))
+      return 'action';
+    else
+      return array(
+          'engine'=>'file',
+          'cache_dir'=>(Cfg::get('cache/cache_dir', "$GLOBALS[ROOT_DIR]/var/cache") . '/actions')
+        );
+  }
+  
+  /**
    * Add an event listener to this class.
    *
    * Options for the listener are:
@@ -844,6 +1042,30 @@ abstract class Controller_Base {
     }
   }
   
+  /**
+   * A convenience method that calls Support_Util::model()
+   *
+   * This method exists purely for more concise code creation. All three
+   * of the examples below perform the same operation:
+   * <code>
+   *   // write this:
+   *   $post = $this->model('BlogPost')->find($id);
+   *
+   *   // instead of:
+   *   $post = Support_Util::model('BlogPost')->find($id);
+   *
+   *   // or
+   *   $BlogPost = new BlogPost();
+   *   $post = $BlogPost->find($id);
+   * </code>
+   *
+   * @param string $className The name of the model class to return
+   * @return object
+   */
+  protected function model($className) {
+    return Support_Util::model($className);
+  }
+
   /**
    * Invoked when an attempt is made to set an undeclared instance
    * variable

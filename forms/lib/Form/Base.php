@@ -16,7 +16,7 @@ abstract class Form_Base extends Form_Object_Container {
    * Constructor
    */
   public function __construct($name = null) {
-    parent::__construct($name, null);
+    parent::__construct(null, $name);
   }
   
   /**

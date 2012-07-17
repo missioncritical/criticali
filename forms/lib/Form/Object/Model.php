@@ -94,4 +94,26 @@ class Form_Object_Model extends Form_Object_Container {
     return $this->include_field($name, $options);
   }
   
+  /**
+   * Include an entire associated model. This currently only works for has many type associates.
+   *
+   * @param string $name  The name of the association to include
+   * @param array  $options Options for field (see Form_Object_ModelCollection for supported options)
+   * @return Form_Object_ModelCollection A reference to the included association
+   */
+  public function include_association($name, $options = null) {
+    $options = is_array($options) ? $options : array();
+    
+    $model = $this->model_instance();
+    $assoc = $model->proxy()->get_meta_info()->get_association($name);
+    
+    if ($assoc)
+      $options = array_merge(array('class_name'=>$assoc->class_name()), $options);
+
+    $obj = new Form_Object_ModelCollection($this->form(), $name, $options);
+    $this->add_object($obj);
+    
+    return $obj;
+  }
+  
 }

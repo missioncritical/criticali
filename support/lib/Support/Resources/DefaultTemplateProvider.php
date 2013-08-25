@@ -27,12 +27,14 @@ class Support_Resources_DefaultTemplateProvider implements Support_Resources_Tem
 class Support_Resources_DefaultTemplateEngine {
   public $template_dir = '.';
   protected $variables;
+  protected $helpers;
   
   /**
    * Constructor
    */
   public function __construct() {
     $this->variables = array();
+    $this->helpers = array();
   }
   
   /**
@@ -95,6 +97,31 @@ class Support_Resources_DefaultTemplateEngine {
   public function get_template_vars($variable = null) {
     return is_null($variable) ? $this->variables : $this->variables[$variable];
   }
+  
+  /**
+   * Register a list of helper functions to be made available to the view
+   *
+   * @param array $helpers  An array of Helper_MethodInfo objects
+   */
+  public function register_helpers($helpers) {
+    if (is_array($helpers))
+      $this->helpers = $helpers;
+  }
+  
+  /**
+   * Called when an unknown function is invoked
+   */
+  public function __call($name, $args) {
+    // see if we have a helper by that name
+    if (isset($this->helpers[$name])) {
+      
+      return call_user_func_array($this->helpers[$name]->callback, $args);
+      
+    } else {
+      throw new Exception("Invoked unknown method \"$name\".");
+    }
+  }
+  
 }
 
 ?>

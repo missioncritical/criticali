@@ -16,3 +16,5 @@
  * Added Support_ArrayHelper::is_associative method
  * Added Support_Util::options_from_argument_list method
  * Added Support_Util::model convenience method
+0.2.7 (not yet released)
+ * Added simple helper support to the default template provider

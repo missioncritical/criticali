@@ -25,7 +25,7 @@ class Smarty_TemplateProvider implements Support_Resources_TemplateProvider {
     $smarty->plugins_dir[] = "$here/../framework_plugins";
     $smarty->plugins_dir[] = Cfg::get('Smarty/PluginsDir',  "$here/../../../helper_plugins");
 
-    return $smarty;
+    return new Smarty_Wrapper($smarty);
   }
 }
 

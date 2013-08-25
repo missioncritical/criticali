@@ -129,6 +129,8 @@ class Controller_Base_CachedActionInfo {
  * </code>
  */
 abstract class Controller_Base {
+  
+  public $blocks = array();
 
   protected $layout = NULL;
   protected $event_listeners = array();
@@ -142,6 +144,8 @@ abstract class Controller_Base {
   protected $_cache_actions = array();
   protected $_will_cache_action = false;
   protected $_action_method = null;
+  protected $_only_helpers = array();
+  protected $_exclude_helpers = array();
 
   protected $hidden_actions = array('__construct'=>1,
                                     'action'=>1,
@@ -152,7 +156,8 @@ abstract class Controller_Base {
                                     'rendered'=>1,
                                     'form_authenticity_token'=>1,
                                     'expire_action',
-                                    'expire_fragment');
+                                    'expire_fragment',
+                                    'set_block'=>1);
 
   protected $_cache_headers = array('content-type'=>1,
                                     'content-disposition'=>1,
@@ -393,7 +398,7 @@ abstract class Controller_Base {
   public function form_authenticity_token() {
     return Controller_ForgeryProtection::authenticity_token();
   }
-
+  
   /** 
    * Process an incoming HTTP request
    */
@@ -602,6 +607,46 @@ abstract class Controller_Base {
     return isset($this->hidden_actions[$actionName]) ? false : true;
   }
 
+  
+  /**
+   * Include only the listed helpers. Note that by default, all helpers
+   * are included when the helper package is present. Invoking this
+   * method changes that behavior to include only the helpers passed to
+   * include_helper().
+   *
+   * Accepts a single helper name (e.g. 'foo' for the helper class
+   * 'FooHelper'), multiple names, or one or more arrays of helper names.
+   */
+  protected function include_helper() {
+    $args = func_get_args();
+    
+    foreach ($args as $arg) {
+      if (is_array($arg)) {
+        foreach ($arg as $a) { $this->_only_helpers[] = $a; }
+      } else {
+        $this->_only_helpers[] = $arg;
+      }
+    }
+  }
+  
+  /**
+   * Exclude the listed helpers (by default, all helpers are
+   * included when present). Accepts a single helper name (e.g.
+   * 'foo' for the helper class 'FooHelper'), multiple names, or one
+   * or more arrays of helper names.
+   */
+  protected function exclude_helper() {
+    $args = func_get_args();
+    
+    foreach ($args as $arg) {
+      if (is_array($arg)) {
+        foreach ($arg as $a) { $this->_exclude_helpers[] = $a; }
+      } else {
+        $this->_exclude_helpers[] = $arg;
+      }
+    }
+  }
+
   /**
    * Output a redirect header to the browser
    *
@@ -736,6 +781,8 @@ abstract class Controller_Base {
    */
   protected function prepare_for_render($options) {
     $tpl = Support_Resources::template_engine();
+    $hasLayout = true;
+    $this->blocks = array();
 
     $tpl->assign('controller', $this);
 
@@ -744,20 +791,40 @@ abstract class Controller_Base {
     $layout = "layouts/" . $this->layout() . ".tpl";
     $act = isset($options['action']) ? $options['action'] : $this->action();
 
-    if ((!isset($options['layout'])) || ($options['layout'] !== false))
-      $tpl->assign('content', $this->controller_name()."/${act}.tpl");
-
     if (isset($options['layout'])) {
       if ($options['layout'] === false) {
         $layout = $this->controller_name() . "/${act}.tpl";
+        $hasLayout = false;
       } else {
         $layout = "layouts/${options['layout']}.tpl";
       }
     }
     
+    if ($hasLayout)
+      $tpl->assign('content', $this->controller_name()."/${act}.tpl");
+    
     $this->set_template_defaults($tpl);
+    $this->load_helpers($tpl);
+    
+    if ($hasLayout && (!@$options['skip_block_render'])) {
+      $content = $this->render_action_block($tpl, $this->controller_name()."/${act}.tpl");
+      
+      $this->blocks = $tpl->get_template_vars('blocks');
+      if (!is_array($this->blocks))
+        $this->blocks = array();
+      $this->blocks['content'] = $content;
+      
+      $tpl->assign('blocks', $this->blocks);
+    }
 
     return array($tpl, $layout);
+  }
+  
+  /**
+   * Return the content for the action block in the layout
+   */
+  protected function render_action_block($tpl, $template) {
+    return $tpl->fetch($template, $this->template_cache_id(), $this->template_compile_id());
   }
   
   /**
@@ -805,6 +872,32 @@ abstract class Controller_Base {
     }
   }
   
+  /**
+   * Load helpers if the helper package is present and the template
+   * engine supports them
+   */
+  protected function load_helpers($tpl) {
+    if ((!class_exists('Helper_Loader')) || (!method_exists($tpl, 'register_helpers')))
+      return;
+    
+    $loader = new Helper_Loader();
+    
+    $options = array();
+    if ($this->_only_helpers)
+      $options['only'] = $this->_only_helpers;
+    elseif ($this->_exclude_helpers)
+      $options['exclude'] = $this->_exclude_helpers;
+    
+    $loader->load($options);
+    
+    foreach ($loader->helpers() as $helper) {
+      $helper->set_controller($this);
+      $helper->set_template_engine($tpl);
+    }
+    
+    $tpl->register_helpers($loader->helper_functions());
+  }
+
   /**
    * Returns the current template cache ID, in case you want to vary the cached
    * output based on some condition.
@@ -1029,7 +1122,14 @@ abstract class Controller_Base {
     $this->logger()->error($msg);
 
     $this->error = $exception->getMessage();
-    $this->render_action(array('layout'=>'exception'));
+
+    // display the exception page
+    $tpl = Support_Resources::template_engine();
+    $tpl->assign('controller', $this);
+    $this->assign_template_vars($tpl);
+    $this->set_template_defaults($tpl);
+    $this->load_helpers($tpl);
+    $tpl->display('layouts/exception.tpl', $this->template_cache_id(), $this->template_compile_id());
 
     if ($to = Cfg::get('mail/exception_to')) {
       $msg = "Server: $_SERVER[SERVER_NAME]\n\n" .

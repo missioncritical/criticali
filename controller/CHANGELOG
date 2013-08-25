@@ -29,3 +29,7 @@
    installed) through the methods caches_action, expire_action, and
    expire_fragment
  * Add model method as a convenience for Support_Util::model
+0.3.2 (not yet released)
+ * Add support for view helpers when the package is present
+ * Change render behavior to pre-fetch actions into the $blocks.content
+   (or $blocks['content']) variable.

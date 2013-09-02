@@ -37,6 +37,9 @@ class SimpleDoc_Model_Class extends SimpleDoc_Model_Commentable {
   /** An array of SimpleDoc_Model_Property objects, one object for each property declared in the class */
   public $properties;
   
+  /** An array of SimpleDoc_Model_Method objects, one object for each method declared in the class */
+  public $methods;
+
   /**
    * Constructor
    *
@@ -56,6 +59,7 @@ class SimpleDoc_Model_Class extends SimpleDoc_Model_Commentable {
     $this->interface_names = array();
     $this->constants = array();
     $this->properties = array();
+    $this->methods = array();
   }
   
   /**
@@ -140,4 +144,73 @@ class SimpleDoc_Model_Class extends SimpleDoc_Model_Commentable {
     return false;
   }
   
+  /**
+   * Add a method declaration to the class
+   *
+   * @param string $name The name of the method
+   * @param string $type The type of the method
+   * @param boolean $is_byref Flag indicating if the method returns by reference
+   * @param boolean $is_public Flag indicating if the method is public
+   * @param boolean $is_protected Flag indicating if the method is protected
+   * @param boolean $is_private Flag indicating if the method is private
+   * @param boolean $is_abstract Flag indicating if the method is abstract
+   * @param boolean $is_final Flag indicating if the method is final
+   * @param boolean $is_static Flag indicating if the method is static
+   * @param boolean $is_synthetic Flag indicating if the method was declared by tags (synthetically)
+   * @param SimpleDoc_Model_Comment Any doc comment associated with the property
+   * @return SimpleDoc_Model_Method The added method object
+   */
+  public function add_method($name = null, $type = null, $is_byref = false, $is_public = null,
+                              $is_protected = null, $is_private = null, $is_abstract = null,
+                              $is_final = null, $is_static = null, $is_synthetic = null, $comment = null) {
+    // nodoc methods are ignored
+    if ($comment && $comment->tags['nodoc'])
+      return;
+    
+    $method = $this->method_with_name($name);
+    if ($method === false) {
+
+      $method = new SimpleDoc_Model_Method($name, $type, $is_byref, $is_public,
+        $is_protected, $is_private, $is_abstract, $is_final, $is_static, $is_synthetic, $comment);
+
+      $this->methods[] = $method;
+
+    } else {
+      if (is_string($type)) $existing->type = $type;
+      if (is_bool($is_byref)) $existing->is_byref = $is_byref;
+      if (is_bool($is_public)) $existing->is_public = $is_public;
+      if (is_bool($is_protected)) $existing->is_protected = $is_protected;
+      if (is_bool($is_private)) $existing->is_private = $is_private;
+      if (is_bool($is_abstract)) $existing->is_abstract = $is_final;
+      if (is_bool($is_final)) $existing->is_abstract = $is_final;
+      if (is_bool($is_static)) $existing->is_static = $is_static;
+      if (is_bool($is_synthetic)) $existing->is_synthetic = $is_synthetic;
+      if ($comment instanceof SimpleDoc_Model_Comment) $existing->comment = $comment;
+    }
+    
+    return $method;
+  }
+  
+  /**
+   * Return the named method declaration, or false if not found.
+   *
+   * @param string $name The name of the method to find
+   * @return SimpleDoc_Model_Method
+   */
+  public function method_with_name($name) {
+    foreach ($this->methods as $method) {
+      if ($method->name == $name)
+        return $method;
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Test if this is an interface
+   */
+  public function is_interface() {
+    return false;
+  }
+
 }

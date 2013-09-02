@@ -41,7 +41,7 @@ class SimpleDoc_Model_Property extends SimpleDoc_Model_Commentable {
    * Constructor
    *
    * @param string $name The name of the property
-   * @param string $default The default value of the constant (if any)
+   * @param string $default The default value of the property (if any)
    * @param string $type The type of the property
    * @param boolean $is_public Flag indicating if the property is public
    * @param boolean $is_protected Flag indicating if the property is protected

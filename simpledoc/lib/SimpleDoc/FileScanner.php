@@ -21,6 +21,9 @@ class SimpleDoc_FileScanner {
   protected $printer;
   protected $showPrivate = false;
   protected $showProtected = true;
+  protected $sourceExtensions;
+  protected $guideExtensions;
+  protected $guideIndex;
   
   /**
    * Constructor
@@ -29,6 +32,9 @@ class SimpleDoc_FileScanner {
     $this->packages = array();
     $this->defaultPackage = 'default';
     $this->filePrefix = '';
+    $this->sourceExtensions = array('php');
+    $this->guideExtensions = array('md', 'markdown');
+    $this->guideIndex = array('readme.md', 'readme.markdown', 'index.md', 'index.markdown');
     
     $this->parser = new PHPParser_Parser(new PHPParser_Lexer());
     
@@ -139,9 +145,11 @@ class SimpleDoc_FileScanner {
         
       // 2) interface declarations
       } elseif ($node instanceof PHPParser_Node_Stmt_Interface) {
+        $this->scan_interface($pkg, $file, $node);
 
       // 3) function declarations
       } elseif ($node instanceof PHPParser_Node_Stmt_Function) {
+        $this->scan_function($pkg, $file, $node);
         
       // 4) variable assignments
       } elseif ($node instanceof PHPParser_Node_Expr_Assign) {
@@ -186,10 +194,7 @@ class SimpleDoc_FileScanner {
     $this->process_property_tags($klass, $docComment);
     
     // process any method tags
-    if ($docComment && $docComment->tags['methods']) {
-      foreach ($docComment->tags['methods'] as $prop) {
-      }
-    }
+    $this->process_method_tags($klass, $docComment);
     
     $klass->is_final = $classNode->isFinal();
     
@@ -203,6 +208,40 @@ class SimpleDoc_FileScanner {
     $this->scan_class_body($curPkg, $classNode, $klass);
   }
   
+  /**
+   * Add interface definition information from an interface declaration
+   */
+  protected function scan_interface($pkg, $file, $ifaceNode) {
+    $curPkg = $pkg;
+    $docComment = null;
+
+    $commentNode = $ifaceNode->getDocComment;
+
+    if ($commentNode) {
+      $docComment = new SimpleDoc_Model_Comment($commentNode);
+      
+      if ($docComment->tags['nodoc'])
+        return;
+
+      if ($docComment->tags['package'] && $docComment->tags['package'] != $pkg->name)
+        $curPkg = $this->named_package($docComment->tags['package']);
+    }
+    
+    $iface = new SimpleDoc_Model_Interface($ifaceNode->name, $file->filename, $curPkg->name);
+    $iface->comment = $docComment;
+    
+    $curPkg->classes[] = $iface;
+    $file->class_names[] = $iface->name;
+    
+    $iface->is_final = false;
+    $iface->is_abstract = true;
+    
+    if ($ifaceNode->extends) $iface->extends = $ifaceNode->extends;
+    
+    // process the interface body
+    $this->scan_class_body($curPkg, $ifaceNode, $iface);
+  }
+
   /**
    * Process any property tags present in a class's doc comment
    */
@@ -230,6 +269,104 @@ class SimpleDoc_FileScanner {
   }
   
   /**
+   * Add function definition information from a function declaration
+   */
+  protected function scan_function($pkg, $file, $node) {
+    if (!$this->include_node_in_docs($node))
+      return;
+    
+    $curPkg = $pkg;
+    
+    $comment = $node->getDocComment();
+    $comment = $comment ? new SimpleDoc_Model_Comment($comment) : null;
+    
+    if ($comment) {
+      if ($docComment->tags['nodoc'])
+        return;
+
+      if ($docComment->tags['package'] && $docComment->tags['package'] != $pkg->name)
+        $curPkg = $this->named_package($docComment->tags['package']);
+    }
+    
+    $func = new SimpleDoc_Model_Function($node->name, null, $node->byRef, $comment);
+    
+    // handle return information
+    if ($comment && isset($comment->tags['return'])) {
+      $func->type = $comment->tags['return']['type'];
+      $func->return_description = $comment->tags['return']['description'];
+    }
+    
+    // add parameters
+    foreach ($node->params as $param) {
+      if ($comment && isset($comment->tags['params'])) {
+        $ptag = $this->tag_info_for_name($comment->tags['params'], '$' . $param->name);
+      } else {
+        $pTag = array();
+      }
+      
+      $func->add_parameter(
+          $param->name,
+          ($param->default ? $this->printer->prettyPrintExpr($param->default) : null),
+          ($param->type ? strval($param->type) : $pTag['type']),
+          $param->byRef,
+          $pTag['description']
+        );
+    }
+
+    $curPkg->functions[] = $func;
+    $file->function_names[] = $func->name;
+  }
+
+  /**
+   * Process any method tags present in a class's doc comment
+   */
+  protected function process_method_tags($klass, $docComment) {
+    if ( (!$docComment) || (!isset($docComment->tags['methods'])) )
+      return;
+      
+    foreach ($docComment->tags['methods'] as $methInfo) {
+      $methComment = new SimpleDoc_Model_Comment('');
+      $methComment->text = $methInfo['description'];
+
+      $name = $methInfo['name'];
+      $byRef = false;
+      if ($name[0] === '&') {
+        $name = substr($name, 1);
+        $byRef = true;
+      }
+      
+      $method = $klass->add_method(
+        $name,
+        $methInfo['type'],
+        $byRef,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        $methComment
+      );
+      
+      foreach ($methInfo['params'] as $p) {
+        $name = $p['name'];
+        $byRef = false;
+        if ($name[0] === '&') { $byRef = true; $name = substr($name, 1); }
+        if ($name[0] === '$') $name = substr($name, 1);
+        
+        $method->add_parameter(
+            $name,
+            null,
+            $p['type'],
+            $byRef,
+            null
+        );
+      }
+    }
+  }
+
+  /**
    * Add class definition information contained in the body of a class
    * declaration
    */
@@ -242,6 +379,7 @@ class SimpleDoc_FileScanner {
       
       // method declarations
       } elseif ($node instanceof PHPParser_Node_Stmt_ClassMethod) {
+        $this->process_class_method($klass, $node);
         
       // property declarations
       } elseif ($node instanceof PHPParser_Node_Stmt_Property) {
@@ -282,7 +420,7 @@ class SimpleDoc_FileScanner {
       $propComment = $comment;
     
       if ($comment && isset($comment->tags['vars'])) {
-        $varTag = $this->var_info_for_name($comment->tags['vars'], $prop->name);
+        $varTag = $this->tag_info_for_name($comment->tags['vars'], $prop->name);
         $propType = $varTag['type'];
         if ($varTag['description'] && (!trim($comment->text))) {
           $propComment = new SimpleDoc_Model_Comment('');
@@ -292,7 +430,7 @@ class SimpleDoc_FileScanner {
 
       $klass->add_property(
         $prop->name,
-        ($default ? $this->printer->prettyPrintExpr($prop->default) : null),
+        ($prop->default ? $this->printer->prettyPrintExpr($prop->default) : null),
         $propType,
         $node->isPublic(),
         $node->isProtected(),
@@ -306,6 +444,55 @@ class SimpleDoc_FileScanner {
   }
   
   /**
+   * Process a class method node
+   */
+  protected function process_class_method($klass, $node) {
+    if (!$this->include_node_in_docs($node))
+      return;
+  
+    $comment = $node->getDocComment();
+    $comment = $comment ? new SimpleDoc_Model_Comment($comment) : null;
+    
+    $method = $klass->add_method(
+        $node->name,
+        null,
+        $node->byRef,
+        $node->isPublic(),
+        $node->isProtected(),
+        $node->isPrivate(),
+        $node->isAbstract(),
+        $node->isFinal(),
+        $node->isStatic(),
+        false,
+        $comment
+      );
+    
+    // handle return information
+    if ($comment && isset($comment->tags['return'])) {
+      $method->type = $comment->tags['return']['type'];
+      $method->return_description = $comment->tags['return']['description'];
+    }
+    
+    // add parameters
+    foreach ($node->params as $param) {
+      if ($comment && isset($comment->tags['params'])) {
+        $ptag = $this->tag_info_for_name($comment->tags['params'], '$' . $param->name);
+      } else {
+        $pTag = array();
+      }
+      
+      $method->add_parameter(
+          $param->name,
+          ($param->default ? $this->printer->prettyPrintExpr($param->default) : null),
+          ($param->type ? strval($param->type) : $pTag['type']),
+          $param->byRef,
+          $pTag['description']
+        );
+    }
+
+  }
+
+  /**
    * Return true if `$node` should be included in the documentation, false otherwise
    * @return bool
    */
@@ -315,16 +502,17 @@ class SimpleDoc_FileScanner {
   }
 
   /**
-   * Returns the var info to use from a collection of var tags for a named variable
+   * Returns the info to use from a collection of tag details (such as
+   * vars or params) for a named item.
    */
-  protected function var_info_for_name($vars, $name) {
+  protected function tag_info_for_name($vars, $name) {
     $last = array();
     
     if (!$vars)
       return $last;
     
     foreach ($vars as $var) {
-      if ($var['name'] === $name)
+      if (($var['name'] === $name) || ("&$var[name]" === $name))
         return $var;
       else
         $last = $var;

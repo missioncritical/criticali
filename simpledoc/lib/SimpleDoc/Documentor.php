@@ -63,7 +63,11 @@ class SimpleDoc_Documentor {
     $this->scanner->set_default_package($packageName ? $packageName : 'default');
     $this->scanner->set_file_prefix($prefix ? $prefix : '');
     
+    $was = error_reporting(E_ERROR | E_WARNING | E_PARSE);
+
     $this->scan_directory($directory);
+
+    error_reporting($was);
   }
 
   /**

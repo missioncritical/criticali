@@ -20,6 +20,9 @@ class SimpleDoc_Model_Package {
   /** An array of SimpleDoc_Model_Classes contained in this package */
   public $classes;
   
+  /** An array of SimpleDoc_Model_Functions contained in this package */
+  public $functions;
+  
   /**
    * Constructor
    *
@@ -29,6 +32,7 @@ class SimpleDoc_Model_Package {
     $this->name = $name;
     $this->files = array();
     $this->classes = array();
+    $this->functions = array();
   }
 
 }

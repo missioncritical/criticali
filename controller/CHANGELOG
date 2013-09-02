@@ -33,3 +33,6 @@
  * Add support for view helpers when the package is present
  * Change render behavior to pre-fetch actions into the $blocks.content
    (or $blocks['content']) variable.
+ * Fix typo in render_error method.
+ * Change __get in Controller_Base to return by reference so that
+   template variables work as expected.

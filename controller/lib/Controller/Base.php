@@ -713,7 +713,7 @@ abstract class Controller_Base {
       $controller = $this->_routing->error_route($error_code, $message,
         $_SERVER['REQUEST_METHOD'], $parameters);
       $controller->set_routing($this->_routing);
-      $controlelr->set_error(true);
+      $controller->set_error(true);
       $controller->handle_request();
 
     } else {
@@ -1185,8 +1185,8 @@ abstract class Controller_Base {
    *
    * @return mixed
    */
-  public function __get($name) {
-    return isset($this->_runtime_variables[$name]) ? $this->_runtime_variables[$name] : null;
+  public function &__get($name) {
+    return $this->_runtime_variables[$name];
   }
 
   /**

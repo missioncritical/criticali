@@ -1,11 +1,11 @@
 <?php
-// Copyright (c) 2009-2010, Jeffrey Hunter and Mission Critical Labs, Inc.
+// Copyright (c) 2009-2013, Jeffrey Hunter and Mission Critical Labs, Inc.
 // See the LICENSE file distributed with this work for restrictions.
 
 /**
  * Doc command
  */
-class CriticalI_Command_Doc extends CriticalI_Command {
+class SimpleDoc_Command_Doc extends CriticalI_Command {
   /**
    * Constructor
    */
@@ -26,7 +26,7 @@ DESC
    * Run the command
    */
   protected function run_command() {
-    $this->init_doc_framework();
+    CriticalI_Package_List::add_package_to_autoloader('simpledoc');
     
     if ( (isset($this->options['all-packages']) && count($this->args) > 0) ||
          ((!isset($this->options['all-packages'])) && count($this->args) < 1) ) {
@@ -80,39 +80,6 @@ DESC
   }
   
   /**
-   * Initialize the documentation framework
-   */
-  protected function init_doc_framework() {
-    // PhpDocumentor is required
-    $phpDocumentorLoc = false;
-    $dirs = explode($GLOBALS['PATH_SEPARATOR'], $GLOBALS['INCLUDE_PATH']);
-    foreach ($dirs as $dir) {
-      if (file_exists("$dir/PhpDocumentor/phpDocumentor/Setup.inc.php")) {
-        $phpDocumentorLoc = "$dir/PhpDocumentor";
-        break;
-      }
-    }
-    if ($phpDocumentorLoc === false) {
-      fwrite(STDERR, "PhpDocumentor is required in order to generate documentation.  If you wish\n" .
-        "to generate documentation, please install PhpDocumentor (this may be done\n" .
-        "using pear).  If you have already installed PhpDocumentor, check that the\n" .
-        "installation directory is correctly included in your default PHP include\n" .
-        "path (it must be possible to\n" .
-        "\"require('PhpDocumentor/phpDocumentor/Setup.inc.php');\").\n");
-      exit(1);
-    }
-    
-    // global var for PhpDocumentor
-    $GLOBALS['_phpDocumentor_install_dir'] = $phpDocumentorLoc;
-    
-    // alter the include path
-    $GLOBALS['INCLUDE_PATH'] .= $GLOBALS['PATH_SEPARATOR'] . $phpDocumentorLoc;
-    ini_set('include_path', $GLOBALS['INCLUDE_PATH']);
-    
-    require_once('phpDocumentor/Setup.inc.php');
-  }
-  
-  /**
    * Generate documentation for a collection of packages
    *
    * @param array $pkgs An array of package and version pairs
@@ -129,37 +96,27 @@ DESC
       
       foreach (explode(',', $dirs) as $dir) {
         $path = $GLOBALS['CRITICALI_ROOT'] . '/' . $ver->installation_directory() . "/$dir";
-        if (is_dir($path)) $searchDirs[] = $path;
+        if (is_dir($path)) {
+          $searchDirs[] = array(
+              'name'=>$pkg->name(),
+              'dir'=>$path,
+              'dirPrefix'=> $GLOBALS['CRITICALI_ROOT'] . '/' . $ver->installation_directory() . "/"
+            );
+        }
       }
     }
+
+    SimpleDoc_ConfigProvider::register();
     
-    // the calls to class_exists by the documentor will wreak havoc when
-    // it tries to load everything we're documenting, so turn that off
-    // temporarily
-    $savedAutoloadDirs = $GLOBALS['CRITICALI_SEARCH_DIRECTORIES'];
-    $GLOBALS['CRITICALI_SEARCH_DIRECTORIES'] = array();
+    $engine = new SimpleDoc_Documentor();
+    $engine->set_output_location(isset($this->options['output']) ? $this->options['output'] : 'docs');
+    $engine->set_title(isset($this->options['title']) ? $this->options['title'] : 'Generated Documentation');
     
-    // assemble the set of options
-    $cfg['hidden'] = 'off';
-    $cfg['ignoresymlinks'] = 'off';
-    $cfg['template'] = 'templates/default/';
-    $cfg['output'] = 'HTML:frames:earthli';
-    $cfg['target'] = 'docs';
+    foreach ($searchDirs as $dir) {
+      $engine->document_directory($dir['dir'], $dir['dirPrefix'], $dir['name']);
+    }
     
-    $cfg['directory'] = implode(',', $searchDirs);
-    if (isset($this->options['output'])) $cfg['target'] = $this->options['output'];
-    if (isset($this->options['title'])) $cfg['title'] = $this->options['title'];
-    
-    // now, kick it off
-    $GLOBALS['_phpDocumentor_setting'] = $cfg;
-    
-    $phpDoc = new phpDocumentor_setup();
-    $phpDoc->readCommandLineSettings();
-    $phpDoc->setupConverters();
-    $phpDoc->createDocs();
-    
-    // restore the autoload path
-    $GLOBALS['CRITICALI_SEARCH_DIRECTORIES'] = $savedAutoloadDirs;
+    $engine->output_documents();
   }
   
 }

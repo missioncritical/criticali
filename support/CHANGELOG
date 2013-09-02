@@ -18,3 +18,4 @@
  * Added Support_Util::model convenience method
 0.2.7 (not yet released)
  * Added simple helper support to the default template provider
+ * Added clear_all_assign() method to default template interface

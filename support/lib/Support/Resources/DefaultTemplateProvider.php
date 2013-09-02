@@ -87,6 +87,13 @@ class Support_Resources_DefaultTemplateEngine {
   }
   
   /**
+   * Clear all assigned variables
+   */
+  public function clear_all_assign() {
+    $this->variables = array();
+  }
+  
+  /**
    * Return the value assigned to the named variable, or all assigned
    * variables if not provided.
    *

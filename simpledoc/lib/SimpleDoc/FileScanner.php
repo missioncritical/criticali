@@ -24,6 +24,7 @@ class SimpleDoc_FileScanner {
   protected $sourceExtensions;
   protected $guideExtensions;
   protected $guideIndex;
+  protected $topIndex;
   
   /**
    * Constructor
@@ -32,9 +33,10 @@ class SimpleDoc_FileScanner {
     $this->packages = array();
     $this->defaultPackage = 'default';
     $this->filePrefix = '';
-    $this->sourceExtensions = array('php');
-    $this->guideExtensions = array('md', 'markdown');
-    $this->guideIndex = array('readme.md', 'readme.markdown', 'index.md', 'index.markdown');
+    $this->sourceExtensions = array('php'=>1);
+    $this->guideExtensions = array('md'=>1, 'markdown'=>1);
+    $this->guideIndex = array('readme.md'=>1, 'readme.markdown'=>1, 'index.md'=>1, 'index.markdown'=>1);
+    $this->topIndex = null;
     
     $this->parser = new PHPParser_Parser(new PHPParser_Lexer());
     
@@ -70,6 +72,34 @@ class SimpleDoc_FileScanner {
    * Scan a file and add its documentation information to the collection.
    */
   public function scan($filename) {
+    $finfo = pathinfo($filename);
+
+    if (isset($this->sourceExtensions[$finfo['extension']]))
+      $this->scan_source_file($filename);
+    elseif (isset($this->guideExtensions[$finfo['extension']]))
+      $this->scan_guide_file($filename, $finfo);
+  }
+  
+  /**
+   * Scan a file and use it as the top-level index for the collection
+   */
+  public function scan_as_index($filename) {
+    $finfo = pathinfo($filename);
+    $this->scan_guide_file($filename, $finfo, true);
+  }
+  
+  /**
+   * Return the index to use for the entire collection, if any
+   * @return SimpleDoc_Model_Guide
+   */
+  protected function index_guide() {
+    return $this->topIndex;
+  }
+  
+  /**
+   * Scan a source file
+   */
+  protected function scan_source_file($filename) {
     $file = new SimpleDoc_Model_File($filename, $this->filePrefix);
     
     $aast = $this->parser->parse(file_get_contents($file->path));
@@ -89,6 +119,33 @@ class SimpleDoc_FileScanner {
     $currentPkg = $this->named_package($pkgName);
     
     $this->add_file_contents_to_package($currentPkg, $file, $aast);
+  }
+  
+  /**
+   * Scan a guide/tutorial file
+   */
+  protected function scan_guide_file($filename, $pathinfo, $asIndex = false) {
+    $text = file_get_contents($filename);
+    $name = ucwords(Support_Inflector::humanize($pathinfo['filename']));
+    
+    $guide = new Support_Model_Guide($name, $text);
+    
+    $pkgName = isset($guide->tags['package']) ? $guide->tags['package'] : $this->defaultPackage;
+    
+    if (!$asIndex) $currentPkg = $this->named_package($pkgName);
+    
+    if ($asIndex) {
+      $this->topIndex = $guide;
+
+    } elseif ( isset($this->guideIndex[strtolower($pathinfo['basename'])]) &&
+               (count($currentPkg->guides) > 0) && (!$currentPkg->guides[0]->is_index) ) {
+
+      $guide->is_index = true;
+      array_unshift($currentPkg->guides, $guide);
+      
+    } else {
+      $currentPkg->guides[] = $guide;
+    }
   }
   
   /**

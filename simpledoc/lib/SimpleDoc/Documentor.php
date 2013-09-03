@@ -71,6 +71,19 @@ class SimpleDoc_Documentor {
   }
 
   /**
+   * Set the file to use for the documentation index
+   *
+   * @param string $filename The file to document
+   */
+  public function set_documentation_index($filename) {
+    $was = error_reporting(E_ERROR | E_WARNING | E_PARSE);
+
+    $this->scan_as_index($filename);
+
+    error_reporting($was);
+  }
+
+  /**
    * Output the documentation
    */
   public function output_documents() {

@@ -19,7 +19,8 @@ DESC
 , array(new CriticalI_OptionSpec('version', CriticalI_OptionSpec::REQUIRED, 'number', 'Generate documentation for the specified version (by default, only the most recent version is documented)'),
         new CriticalI_OptionSpec('output', CriticalI_OptionSpec::REQUIRED, 'directory', 'Output documentation to the named directory.  Default is "docs".'),
         new CriticalI_OptionSpec('all-packages', CriticalI_OptionSpec::NONE, null, 'Generate documentation for all installed packages.'),
-        new CriticalI_OptionSpec('title', CriticalI_OptionSpec::REQUIRED, 'title', 'Global title for the generated documentation.')));
+        new CriticalI_OptionSpec('title', CriticalI_OptionSpec::REQUIRED, 'title', 'Global title for the generated documentation.'),
+        new CriticalI_OptionSpec('index', CriticalI_OptionSpec::REQUIRED, 'file', 'The file to use as the index content for the generated document set.')));
   }
   
   /**
@@ -93,6 +94,7 @@ DESC
     foreach ($pkgs as $coll) {
       list($pkg, $ver) = $coll;
       $dirs = $ver->property('document.directory', 'lib');
+      $dirs .= ',' . $ver->property('document.directory.guides', 'doc');
       
       foreach (explode(',', $dirs) as $dir) {
         $path = $GLOBALS['CRITICALI_ROOT'] . '/' . $ver->installation_directory() . "/$dir";
@@ -111,6 +113,9 @@ DESC
     $engine = new SimpleDoc_Documentor();
     $engine->set_output_location(isset($this->options['output']) ? $this->options['output'] : 'docs');
     $engine->set_title(isset($this->options['title']) ? $this->options['title'] : 'Generated Documentation');
+    
+    if (isset($this->options['index']))
+      $engine->set_documentation_index($this->options['index']);
     
     foreach ($searchDirs as $dir) {
       $engine->document_directory($dir['dir'], $dir['dirPrefix'], $dir['name']);

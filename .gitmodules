@@ -1,3 +1,6 @@
 [submodule "php-parser/PHP-Parser"]
 	path = php-parser/PHP-Parser
 	url = git@github.com:nikic/PHP-Parser.git
+[submodule "php-markdown"]
+	path = php-markdown
+	url = git@github.com:missioncritical/php-markdown.git

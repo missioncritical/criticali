@@ -67,4 +67,19 @@ class SimpleDoc_Model_Property extends SimpleDoc_Model_Commentable {
     $this->rw = $rw;
   }
   
+  /**
+   * Return the visibility of this property as a string
+   * @return string
+   */
+  public function visibility() {
+    if ($this->is_public)
+      return 'public';
+    if ($this->is_protected)
+      return 'protected';
+    if ($this->is_private)
+      return 'private';
+
+    return '';
+  }
+  
 }

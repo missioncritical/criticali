@@ -82,7 +82,7 @@ abstract class SimpleDoc_Generator_Base {
   /**
    * Ensure a value is safe for use in a file name
    * @param string $value The value to use
-   * @return A copy of the original value with any unsafe or unpermitted
+   * @return string A copy of the original value with any unsafe or unpermitted
    * characters converted to underscores.
    */
   protected function file_safe($name) {
@@ -207,6 +207,7 @@ abstract class SimpleDoc_Generator_Base {
       $dest = null;
     }
     if (!$dest) $dest = $template;
+    $this->set_path_to_root($dest);
     
     list($tpl, $layout) = $this->prepare_for_render($template, $options);
     
@@ -215,6 +216,28 @@ abstract class SimpleDoc_Generator_Base {
       mkdir(dirname($destPath), 0777, true);
     
     file_put_contents($destPath, $tpl->fetch($layout));
+  }
+  
+  /**
+   * Determine the path to the root output directory for the current
+   * render operation.
+   */
+  protected function set_path_to_root($dest) {
+    $path = pathinfo($dest, PATHINFO_DIRNAME);
+
+    $path = preg_replace("/^\\/+/", '', $path);
+    
+    $parts = explode('/', $path);
+    $rootParts = array();
+    
+    foreach($parts as $item) {
+      $rootParts[] = $item == '.' ? $item : '..';
+    }
+    
+    $this->path_to_root = implode('/', $rootParts);
+    
+    if (strlen($this->path_to_root) > 0)
+      $this->path_to_root .= '/';
   }
   
   /**
@@ -245,7 +268,7 @@ abstract class SimpleDoc_Generator_Base {
     }
 
     $this->set_template_defaults($tpl);
-    //$this->load_helpers($tpl);
+    $this->load_helpers($tpl);
     
     if ($hasLayout && (!@$options['skip_block_render'])) {
       $content = $tpl->fetch($template . '.' . $ext);
@@ -311,6 +334,35 @@ abstract class SimpleDoc_Generator_Base {
       $tpl->plugins_dir[] = $this->templateDir . '/helper_plugins';
     
     $tpl->assign('controller', $this);
+  }
+
+  /**
+   * Load helpers if the helper package is present and the template
+   * engine supports them
+   */
+  protected function load_helpers($tpl) {
+    if ((!class_exists('Helper_Loader')) || (!method_exists($tpl, 'register_helpers')))
+      return;
+
+    // mimick web configuration for Helper_Loader class
+    if (!$GLOBALS['CRITICALI_RUNTIME_SEARCH_DIRECTORIES'])
+      $GLOBALS['CRITICALI_RUNTIME_SEARCH_DIRECTORIES'] = array();
+    
+    $loader = new Helper_Loader();
+    
+    $options = array();
+
+    $libDir = dirname(__FILE__) . '/../..';
+    $options['directories'] = array($libDir=>"$libDir/SimpleDoc/Helper");
+    
+    $loader->load($options);
+    
+    foreach ($loader->helpers() as $helper) {
+      $helper->set_controller($this);
+      $helper->set_template_engine($tpl);
+    }
+    
+    $tpl->register_helpers($loader->helper_functions());
   }
 
   /**

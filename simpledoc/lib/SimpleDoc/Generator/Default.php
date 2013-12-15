@@ -16,10 +16,16 @@ class SimpleDoc_Generator_Default extends SimpleDoc_Generator_Base {
     $this->title = $this->documentor->title();
     $this->packages = $this->scanner->package_list();
     
+    $this->render('index.html', 'index.html');
+    
     foreach ($this->packages as $pkg) {
       $this->package = $pkg;
-      $this->files = $pkg->files;
-      $this->render('files.html', $this->file_safe($this->package->name) . '-files.html');
+      
+      foreach ($pkg->classes as $class) {
+        $this->class = $class;
+        
+        $this->render('class.html', $this->file_safe($pkg->name) . '/' . $this->file_safe($class->name) . '.html');
+      }
     }
   }
 

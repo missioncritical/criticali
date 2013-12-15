@@ -28,6 +28,29 @@ class SimpleDoc_Model_Comment {
   }
   
   /**
+   * Return this comment as HTML markup
+   */
+  public function html() {
+    $parser = new Markdown_Parser();
+    return $parser->transform($this->text);
+  }
+  
+  /**
+   * Return the short description HTML (first sentence only)
+   */
+  public function short_description_html() {
+    $parser = new Markdown_Parser();
+    
+    $paragraphs = explode("\n\n", $this->normalized_comment_text());
+    $intro = $paragraphs[0];
+    
+    if (preg_match("/^([^\\.]+\\.?)/", $intro, $matches))
+      $intro = $matches[1];
+    
+    return $parser->transform($intro);
+  }
+  
+  /**
    * Strip the comment start, end, and optional leading * from a comment
    */
   protected function strip_delimiters($text) {
@@ -73,5 +96,19 @@ class SimpleDoc_Model_Comment {
     }
     
     return $text;
+  }
+  
+  /**
+   * Returns text with normalized whitespace content for easier processing
+   */
+  protected function normalized_comment_text() {
+    // normalize line endings
+    $text = preg_replace("/\\r\\n?/", "\n", $this->text);
+    
+    // simplified tab conversion
+    $text = str_replace("\t", '    ', $text);
+
+    // strip extraneous whitespace from blank lines
+    return preg_replace("/^[ ]+$/m", '', $text);
   }
 }

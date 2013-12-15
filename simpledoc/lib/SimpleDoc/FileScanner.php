@@ -229,7 +229,7 @@ class SimpleDoc_FileScanner {
     $curPkg = $pkg;
     $docComment = null;
 
-    $commentNode = $classNode->getDocComment;
+    $commentNode = $classNode->getDocComment();
 
     if ($commentNode) {
       $docComment = new SimpleDoc_Model_Comment($commentNode);
@@ -257,9 +257,9 @@ class SimpleDoc_FileScanner {
     
     $klass->is_abstract = $classNode->isAbstract();
     
-    if ($classNode->extends) $klass->extends = $classNode->extends;
+    if ($classNode->extends) $klass->parent_class_name = (string)$classNode->extends;
     
-    foreach ($classNode->implements as $iface) $klass->add_implemented_interface($iface);
+    foreach ($classNode->implements as $iface) $klass->add_implemented_interface((string)$iface);
     
     // process the class body
     $this->scan_class_body($curPkg, $classNode, $klass);
@@ -272,7 +272,7 @@ class SimpleDoc_FileScanner {
     $curPkg = $pkg;
     $docComment = null;
 
-    $commentNode = $ifaceNode->getDocComment;
+    $commentNode = $ifaceNode->getDocComment();
 
     if ($commentNode) {
       $docComment = new SimpleDoc_Model_Comment($commentNode);

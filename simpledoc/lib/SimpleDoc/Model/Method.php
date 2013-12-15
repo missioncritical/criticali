@@ -120,5 +120,42 @@ class SimpleDoc_Model_Method extends SimpleDoc_Model_Commentable {
       if (is_string($description)) $existing->description = $description;
     }
   }
+  
+  /**
+   * Return the visibility of this method as a string
+   * @return string
+   */
+  public function visibility() {
+    if ($this->is_public)
+      return 'public';
+    if ($this->is_protected)
+      return 'protected';
+    if ($this->is_private)
+      return 'private';
 
+    return '';
+  }
+
+  /**
+   * Return the parameters as a string matching how they would be declared in PHP
+   * @return string
+   */
+  public function parameter_declaration() {
+    $p = array();
+    
+    foreach ($this->parameters as $param) {
+      $str = '';
+      
+      if ($param->is_byref) $str .= '&';
+      
+      $str .= '$' . $param->name;
+      
+      if ($param->default) $str .= ' = ' . $param->default;
+      
+      $p[] = $str;
+    }
+    
+    return implode(', ', $p);
+  }
+  
 }

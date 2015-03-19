@@ -201,7 +201,7 @@ class LoggerConfigXmlParser {
                 $appender =& LoggerAppender::singleton($appenderName);
                 $layout =& $appender->getLayout();
                 $methodName = 'set'.ucfirst($attribs['NAME']);                
-                if (method_exists(&$layout, $methodName)) {
+                if (method_exists($layout, $methodName)) {
                     LoggerLog::log("Calling ".get_class($layout)."::$methodName({$attribs['VALUE']})");                
                     call_user_func(array(&$layout, $methodName), $attribs['VALUE']);
                 } else {

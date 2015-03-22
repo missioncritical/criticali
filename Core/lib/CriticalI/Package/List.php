@@ -90,13 +90,13 @@ class CriticalI_Package_List implements IteratorAggregate, ArrayAccess {
         $version = $pkg->version();
       
         if (isset($data['packages'][$name]))
-            $data['packages'][$name] = self::add_version_to_list($data['packages'][$name], $version);
+            $data['packages'][$name] = self::add_to_version_list($data['packages'][$name], $version);
         else
           $data['packages'][$name] = $version;
         $data['directories']["$name-$version"] = $filename;
         if ($pkg->has_commands()) {
           if (isset($data['commands'][$name]))
-            $data['commands'][$name] = self::add_version_to_list($data['commands'][$name], $version);
+            $data['commands'][$name] = self::add_to_version_list($data['commands'][$name], $version);
           else
             $data['commands'][$name] = $version;
         }

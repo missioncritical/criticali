@@ -3,8 +3,8 @@
 // See the LICENSE file distributed with this work for restrictions.
 
 /**
- * This class is the producer of a a compilation (a compiler) in the
- * original sense of the word. It parses a PHP file and compiles a set
+ * This class is the producer of a a compilation (a compiler in the
+ * original sense of the word). It parses a PHP file and compiles a set
  * of information relevant to documentation.
  *
  * An instance of this class can be used to scan multiple files and the
@@ -92,7 +92,7 @@ class SimpleDoc_FileScanner {
    * Return the index to use for the entire collection, if any
    * @return SimpleDoc_Model_Guide
    */
-  protected function index_guide() {
+  public function index_guide() {
     return $this->topIndex;
   }
   
@@ -128,9 +128,11 @@ class SimpleDoc_FileScanner {
     $text = file_get_contents($filename);
     $name = ucwords(Support_Inflector::humanize($pathinfo['filename']));
     
-    $guide = new Support_Model_Guide($name, $text);
+    $guide = new SimpleDoc_Model_Guide($name, $text);
     
     $pkgName = isset($guide->tags['package']) ? $guide->tags['package'] : $this->defaultPackage;
+    
+    $guide->package_name = $pkgName;
     
     if (!$asIndex) $currentPkg = $this->named_package($pkgName);
     
@@ -138,7 +140,7 @@ class SimpleDoc_FileScanner {
       $this->topIndex = $guide;
 
     } elseif ( isset($this->guideIndex[strtolower($pathinfo['basename'])]) &&
-               (count($currentPkg->guides) > 0) && (!$currentPkg->guides[0]->is_index) ) {
+               ((count($currentPkg->guides) == 0) || (!$currentPkg->guides[0]->is_index)) ) {
 
       $guide->is_index = true;
       array_unshift($currentPkg->guides, $guide);

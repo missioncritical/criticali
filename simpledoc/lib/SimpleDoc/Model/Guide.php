@@ -14,6 +14,9 @@ class SimpleDoc_Model_Guide {
   /** The name of the guide */
   public $name;
 
+  /** The name of the package associated with the guide */
+  public $package_name;
+
   /** The guide text */
   public $text;
   
@@ -48,4 +51,12 @@ class SimpleDoc_Model_Guide {
     $this->text = SimpleDoc_TagReader::parse_tags($text, $this->tags);
   }
   
+  /**
+   * Return the text of the guide as HTML markup
+   */
+  public function html() {
+    $parser = new Markdown_Parser();
+    return $parser->transform($this->text);
+  }
+
 }

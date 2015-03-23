@@ -83,4 +83,26 @@ class SimpleDoc_Model_Function extends SimpleDoc_Model_Commentable {
     }
   }
 
+  /**
+   * Return the parameters as a string matching how they would be declared in PHP
+   * @return string
+   */
+  public function parameter_declaration() {
+    $p = array();
+    
+    foreach ($this->parameters as $param) {
+      $str = '';
+      
+      if ($param->is_byref) $str .= '&';
+      
+      $str .= '$' . $param->name;
+      
+      if ($param->default) $str .= ' = ' . $param->default;
+      
+      $p[] = $str;
+    }
+    
+    return implode(', ', $p);
+  }
+
 }

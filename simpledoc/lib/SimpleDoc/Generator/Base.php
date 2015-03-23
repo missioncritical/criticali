@@ -355,6 +355,15 @@ abstract class SimpleDoc_Generator_Base {
     $libDir = dirname(__FILE__) . '/../..';
     $options['directories'] = array($libDir=>"$libDir/SimpleDoc/Helper");
     
+    if (class_exists('CriticalI_Package_List')) {
+      $pkgList = CriticalI_Package_List::get();
+      if (isset($pkgList['helper']))
+        $options['directories'][
+          "$GLOBALS[CRITICALI_ROOT]/" . $pkgList['helper']->newest()->installation_directory() . "/lib"] = 
+          "$GLOBALS[CRITICALI_ROOT]/" . $pkgList['helper']->newest()->installation_directory() .
+          "/lib/Helper/DefaultHelpers";
+    }
+    
     $loader->load($options);
     
     foreach ($loader->helpers() as $helper) {

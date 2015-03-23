@@ -38,5 +38,18 @@ class SimpleDoc_Model_Package {
     $this->functions = array();
     $this->guides = array();
   }
+  
+  /**
+   * Return the index guide, if any, for this package
+   * @return SimpleDoc_Model_Guide
+   */
+  public function index_guide() {
+    foreach ($this->guides as $guide) {
+      if ($guide->is_index)
+        return $guide;
+    }
+    
+    return null;
+  }
 
 }

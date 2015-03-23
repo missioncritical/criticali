@@ -48,6 +48,27 @@ class SimpleDoc_Helper_UtilHelper extends Helper_Base {
   }
   
   /**
+   * Return the full signature HTML for a function
+   * @param SimpleDoc_Model_Function $function The function to use
+   * @return string The HTML of the full signature
+   */
+  public function modifier_function_signature($function) {
+    $html = '';
+    
+    if ($function->type)
+      $html .= ' <span class="return_type">' . htmlspecialchars($function->type) . '</span>';
+    
+    $html .=' <span class="name">' .
+      ($function->is_byref ? '&amp;' : '') .
+      htmlspecialchars($function->name) .
+      '</span>';
+    
+    $html .= '<span class="params">(' . $function->parameter_declaration() . ')</span>';
+    
+    return $html;
+  }
+
+  /**
    * Output HTML from a markdown source string
    * @param string $markup The markdown source
    * @return string

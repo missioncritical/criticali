@@ -47,3 +47,5 @@
 {include file="_methods.tpl"}
 {include file="_method_details.tpl"}
 {/if}
+
+{add_to_block block=nav}{navlist selected=$class}{/add_to_block}

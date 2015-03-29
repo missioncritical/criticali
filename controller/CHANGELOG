@@ -36,3 +36,4 @@
  * Fix typo in render_error method.
  * Change __get in Controller_Base to return by reference so that
    template variables work as expected.
+ * Prevent .git directory from being served in addition to .svn

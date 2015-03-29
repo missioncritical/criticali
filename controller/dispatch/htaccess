@@ -1,6 +1,7 @@
 RewriteEngine On
 RewriteBase /
 RewriteRule ^(.*/)*\.svn(/.*)?$ - [F,L]
+RewriteRule ^(.*/)*\.git(/.*)?$ - [F,L]
 
 # special rule for index
 RewriteCond %{REQUEST_FILENAME} -d

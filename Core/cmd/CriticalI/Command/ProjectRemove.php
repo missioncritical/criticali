@@ -79,7 +79,7 @@ DESC
       $plan = $planner->remove_plan(
                     $this->args,
                     null,
-                    isset($this->options['ignore-dependencies']) ? false : true
+                    isset($this->options['force']) ? false : true
               );
     } catch (CriticalI_ChangeManager_HasDependentError $e) {
       $this->show_dependency_errors($prj, $this->args);
